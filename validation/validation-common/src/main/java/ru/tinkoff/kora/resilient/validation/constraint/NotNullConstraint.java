@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Please add Description Here.
  */
-public class NotNullConstraint implements Constraint{
+public class NotNullConstraint implements Constraint<Object>{
 
     @Override
     public Violation validate(Object fieldValue) {

@@ -12,5 +12,5 @@ import java.lang.annotation.*;
 @Target(value = {ElementType.ANNOTATION_TYPE})
 public @interface Constrainted {
 
-    Class<? extends Constraint<?>> value();
+    Class<? extends Constraint> value();
 }

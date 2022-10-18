@@ -9,4 +9,6 @@ import java.lang.annotation.*;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.TYPE})
 public @interface Validated {
+
+    boolean failFast() default false;
 }

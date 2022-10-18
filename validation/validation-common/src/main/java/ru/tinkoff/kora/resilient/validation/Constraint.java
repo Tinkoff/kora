@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Please add Description Here.
  */
-public interface Constraint {
+public interface Constraint<T> {
 
-    Violation validate(Object fieldValue);
+    Violation validate(T fieldValue);
 }

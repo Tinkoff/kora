@@ -12,4 +12,11 @@ public interface Validator<T> {
 
     @NotNull
     List<Violation> validate(@Nullable T value);
+
+    default void validateAndThrow(@Nullable T value) throws ViolationException {
+        final List<Violation> violations = validate(value);
+        if(!violations.isEmpty()) {
+            throw new ViolationException(violations);
+        }
+    }
 }
