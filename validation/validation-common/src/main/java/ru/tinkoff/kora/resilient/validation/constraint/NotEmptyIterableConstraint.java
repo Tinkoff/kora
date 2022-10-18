@@ -7,10 +7,10 @@ import ru.tinkoff.kora.resilient.validation.Violation;
 /**
  * Please add Description Here.
  */
-public class NotEmptyIterableConstraint implements NotEmptyConstraint<Iterable> {
+public class NotEmptyIterableConstraint<T> implements NotEmptyConstraint<Iterable<T>> {
 
     @Override
-    public Violation validate(Iterable fieldValue) {
+    public Violation validate(Iterable<T> fieldValue) {
         if (fieldValue == null) {
             return Violation.of("Should be not empty, but was null");
         }
