@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.resilient.validation.example;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.tinkoff.kora.resilient.validation.*;
 import ru.tinkoff.kora.resilient.validation.constraint.NotNullConstraint;
 
@@ -16,14 +17,14 @@ public class BabyValidator implements FieldValidator<Baby> {
 
     // generated constraint declaration
     private final NotNullConstraint constraint1;
-    private final NotEmptyConstraint<String> constraint2;
+    private final LengthConstraint<String> constraint2;
 
     // generated validator declaration
     private FieldValidator<Yoda> validator1;
 
-    public BabyValidator(NotNullConstraint constraint1, NotEmptyConstraint<String> constraint2) {
+    public BabyValidator(NotNullConstraint constraint1, LengthConstraintFactory<String> constraint2) {
         this.constraint1 = constraint1;
-        this.constraint2 = constraint2;
+        this.constraint2 = constraint2.create(1, 5);
     }
 
     public void setValidator1(FieldValidator<Yoda> validator1) {
