@@ -11,11 +11,11 @@ import java.util.List;
 public interface FieldValidator<T> extends Validator<T> {
 
     @NotNull
-    List<Violation> validate(Field<T> field);
+    List<Violation> validate(Field<T> field, Options options);
 
     @NotNull
     @Override
     default List<Violation> validate(@Nullable T value) {
-        return validate(Field.of(value));
+        return validate(Field.of(value), new SimpleOptions(false));
     }
 }
