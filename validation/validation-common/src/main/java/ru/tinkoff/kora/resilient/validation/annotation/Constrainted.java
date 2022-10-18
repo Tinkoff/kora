@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.resilient.validation.annotation;
 
 import ru.tinkoff.kora.resilient.validation.Constraint;
+import ru.tinkoff.kora.resilient.validation.ConstraintFactory;
 
 import java.lang.annotation.*;
 
@@ -12,5 +13,5 @@ import java.lang.annotation.*;
 @Target(value = {ElementType.ANNOTATION_TYPE})
 public @interface Constrainted {
 
-    Class<? extends Constraint> value();
+    Class<? extends ConstraintFactory> value();
 }
