@@ -10,5 +10,4 @@ import java.lang.annotation.*;
 @Target(value = {ElementType.TYPE})
 public @interface Validated {
 
-    boolean failFast() default false;
 }

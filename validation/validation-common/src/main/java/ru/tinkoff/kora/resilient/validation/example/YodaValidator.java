@@ -21,15 +21,12 @@ public class YodaValidator implements FieldValidator<Yoda> {
 
     // generated validator declaration
     private FieldValidator<Baby> validator1;
+//    private ListFieldValidator<Baby> validator1;
 
     public YodaValidator(NotNullConstraint constraint1, NotEmptyConstraint<String> constraint2, NotEmptyConstraint<Iterable> constraint3) {
         this.constraint1 = constraint1;
         this.constraint2 = constraint2;
         this.constraint3 = constraint3;
-    }
-
-    public void setValidator1(FieldValidator<Baby> validator1) {
-        this.validator1 = validator1;
     }
 
     @NotNull
