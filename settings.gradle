@@ -87,6 +87,7 @@ include(
     'cache:cache-caffeine',
     'cache:cache-redis',
     'validation:validation-common',
+    'validation:validation-annotation-processor',
 )
 
 apply from: 'dependencies.gradle'
