@@ -11,6 +11,10 @@ public interface Field<T> {
 
     T value();
 
+    default boolean isNotEmpty() {
+        return value() != null;
+    }
+
     static <T> Field<T> of(@Nullable T value) {
         return new SimpleField<>("", value);
     }
@@ -19,10 +23,10 @@ public interface Field<T> {
         return new SimpleField<>(name, value);
     }
 
-    static <T> Field<T> of(@Nullable T value, String name, String pathToField) {
-        final String fieldNameWithPath = (pathToField == null || pathToField.isBlank())
+    static <T> Field<T> of(@Nullable T value, String name, String rootPathToField) {
+        final String fieldNameWithPath = (rootPathToField == null || rootPathToField.isBlank())
             ? name
-            : pathToField + "." + name;
+            : rootPathToField + "." + name;
 
         return new SimpleField<>(fieldNameWithPath, value);
     }

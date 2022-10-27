@@ -7,7 +7,7 @@ import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
-import ru.tinkoff.kora.validation.annotation.processor.testdata.AppWithConfig;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.*;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public abstract class TestAppRunner extends Assertions {
 
     protected static InitializedGraph createGraphDraw() {
         if (GRAPH == null) {
-            GRAPH = createGraphDraw(AppWithConfig.class);
+            GRAPH = createGraphDraw(AppWithConfig.class, Baby.class, Yoda.class, BabyValidator.class, YodaValidator.class);
         }
         return GRAPH;
     }
@@ -31,7 +31,7 @@ public abstract class TestAppRunner extends Assertions {
         try {
             final List<Class<?>> classes = new ArrayList<>(List.of(targetClasses));
             classes.add(app);
-            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new ConfigRootAnnotationProcessor(), new ConfigSourceAnnotationProcessor());
+            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new ConfigRootAnnotationProcessor(), new ConfigSourceAnnotationProcessor(), new ValidationAnnotationProcessor());
             var clazz = classLoader.loadClass(app.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphDraw = constructors[0].newInstance().get();

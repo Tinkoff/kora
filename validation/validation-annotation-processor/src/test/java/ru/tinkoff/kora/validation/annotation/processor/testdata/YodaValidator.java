@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.validation.example;
+package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
 import org.jetbrains.annotations.NotNull;
 import ru.tinkoff.kora.validation.*;
@@ -13,7 +13,7 @@ import java.util.List;
  * Please add Description Here.
  */
 @Generated("blabla")
-public class YodaValidator implements FieldValidator<Yoda> {
+public final class YodaValidator implements FieldValidator<Yoda> {
 
     // generated constraint declaration
     private final Constraint<String> constraint1;
@@ -21,7 +21,7 @@ public class YodaValidator implements FieldValidator<Yoda> {
     private final Constraint<List<Baby>> constraint3;
 
     // generated validator declaration
-    private FieldValidator<Baby> validator1;
+    private FieldValidator<List<Baby>> validator1;
 //    private ListFieldValidator<Baby> validator1;
 
     public YodaValidator(NotNullConstraintFactory<String> constraint1,
@@ -34,7 +34,7 @@ public class YodaValidator implements FieldValidator<Yoda> {
 
     @NotNull
     @Override
-    public List<Violation> validate(Field<Yoda> field, Options options) {
+    public List<Violation> validate(@NotNull Field<Yoda> field, @NotNull ValidationOptions options) {
         // generated field declaration
         var f1 = Field.of(field.value().id(), "id", field.name());
         var f2 = Field.of(field.value().codes(), "codes", field.name());
@@ -48,10 +48,7 @@ public class YodaValidator implements FieldValidator<Yoda> {
 
         // generated inner field validation declaration
         if(f3.value() != null) {
-            for (int i = 0; i < f3.value().size(); i++) {
-                var v = Field.of(f3.value().get(i), "[" + i + "]", f3.name());
-                violations.addAll(validator1.validate(v, options));
-            }
+            violations.addAll(validator1.validate(f3, options));
         }
 
         return violations;

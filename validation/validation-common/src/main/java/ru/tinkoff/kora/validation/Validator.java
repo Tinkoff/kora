@@ -11,7 +11,19 @@ import java.util.List;
 public interface Validator<T> {
 
     @NotNull
-    List<Violation> validate(@Nullable T value);
+    List<Violation> validate(@Nullable T value, @NotNull ValidationOptions options);
+
+    @NotNull
+    default List<Violation> validate(@Nullable T value) {
+        return validate(value, new SimpleValidationOptions(false));
+    }
+
+    default void validateAndThrow(@Nullable T value, @NotNull ValidationOptions options) throws ViolationException {
+        final List<Violation> violations = validate(value, options);
+        if(!violations.isEmpty()) {
+            throw new ViolationException(violations);
+        }
+    }
 
     default void validateAndThrow(@Nullable T value) throws ViolationException {
         final List<Violation> violations = validate(value);

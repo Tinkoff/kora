@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.validation.constraint;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.common.Module;
 import ru.tinkoff.kora.validation.*;
@@ -10,21 +8,25 @@ import ru.tinkoff.kora.validation.constraint.factory.NotNullConstraintFactory;
 import ru.tinkoff.kora.validation.constraint.factory.RangeConstraintFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@Module
 public interface ValidationModule {
 
     default <T> FieldValidator<List<T>> listValidator(FieldValidator<T> validator, TypeRef<T> valueRef) {
         return (field, options) -> {
-            final List<Violation> violations = new ArrayList<>();
-            for (int i = 0; i < field.value().size(); i++) {
-                final T value = field.value().get(i);
-                var v = Field.of(value, "[" + i + "]", field.name());
-                violations.addAll(validator.validate(v, options));
+            if(field.isNotEmpty()) {
+                final List<Violation> violations = new ArrayList<>();
+                for (int i = 0; i < field.value().size(); i++) {
+                    final T value = field.value().get(i);
+                    var v = Field.of(value, "[" + i + "]", field.name());
+                    violations.addAll(validator.validate(v, options));
+                }
+                return violations;
             }
-            return violations;
+
+            return Collections.emptyList();
         };
     }
 
