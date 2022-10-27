@@ -8,9 +8,6 @@ import ru.tinkoff.kora.validation.constraint.ValidationModule;
 import ru.tinkoff.kora.validation.constraint.factory.NotEmptyConstraintFactory;
 import ru.tinkoff.kora.validation.constraint.factory.NotNullConstraintFactory;
 import ru.tinkoff.kora.validation.constraint.factory.RangeConstraintFactory;
-import ru.tinkoff.kora.validation.example.Baby;
-import ru.tinkoff.kora.validation.example.BabyValidator;
-import ru.tinkoff.kora.validation.example.YodaValidator;
 
 import java.util.List;
 

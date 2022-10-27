@@ -10,7 +10,7 @@ public interface Violation {
     @NotNull
     String message();
 
-    String fieldPath();
+    String path();
 
     static Violation of(String message) {
         return new SimpleViolation(message, null);

@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.validation.example;
+package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
 import ru.tinkoff.kora.validation.annotation.NotEmpty;
 import ru.tinkoff.kora.validation.annotation.NotNull;

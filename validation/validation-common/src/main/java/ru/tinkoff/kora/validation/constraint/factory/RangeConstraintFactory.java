@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.validation.constraint.factory;
 
+import org.jetbrains.annotations.NotNull;
 import ru.tinkoff.kora.validation.Constraint;
 import ru.tinkoff.kora.validation.ConstraintFactory;
 
@@ -8,10 +9,12 @@ import ru.tinkoff.kora.validation.ConstraintFactory;
  */
 public interface RangeConstraintFactory<T> extends ConstraintFactory<T> {
 
+    @NotNull
     @Override
     default Constraint<T> create() {
         return create(Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
-    Constraint<T> create(Long from, Long to);
+    @NotNull
+    Constraint<T> create(long from, long to);
 }

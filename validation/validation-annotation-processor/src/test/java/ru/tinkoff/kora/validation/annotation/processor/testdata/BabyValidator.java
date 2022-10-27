@@ -1,8 +1,7 @@
-package ru.tinkoff.kora.validation.example;
+package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
 import org.jetbrains.annotations.NotNull;
 import ru.tinkoff.kora.validation.*;
-import ru.tinkoff.kora.validation.constraint.NotNullConstraint;
 import ru.tinkoff.kora.validation.constraint.factory.NotEmptyConstraintFactory;
 import ru.tinkoff.kora.validation.constraint.factory.NotNullConstraintFactory;
 import ru.tinkoff.kora.validation.constraint.factory.RangeConstraintFactory;
@@ -15,7 +14,7 @@ import java.util.List;
  * Please add Description Here.
  */
 @Generated("blabla")
-public class BabyValidator implements FieldValidator<Baby> {
+public final class BabyValidator implements FieldValidator<Baby> {
 
     // generated constraint declaration
     private final Constraint<String> constraint1;
@@ -39,7 +38,7 @@ public class BabyValidator implements FieldValidator<Baby> {
 
     @NotNull
     @Override
-    public List<Violation> validate(Field<Baby> field, Options options) {
+    public List<Violation> validate(@NotNull Field<Baby> field, @NotNull ValidationOptions options) {
         // generated field declaration
         var f1 = Field.of(field.value().number(), "number", field.name());
         var f2 = Field.of(field.value().code(), "code", field.name());
@@ -47,12 +46,16 @@ public class BabyValidator implements FieldValidator<Baby> {
 
         // generated constraint validation declaration
         final List<Violation> violations = new ArrayList<>();
-        checkConstraint(constraint1, f1, f1.value(), violations);
-        checkConstraint(constraint2, f1, f1.value(), violations);
-        checkConstraint(constraint3, f2, f2.value(), violations);
+        final Violation violation1 = constraint1.validate(f1.value());
+        if(violation1 != null) {
+            violations.add(Violation.of(violation1.message(), f1.name()));
+        }
+        checkConstraint(constraint1, f1.value(), f1.name(), violations);
+        checkConstraint(constraint2, f1.value(), f1.name(), violations);
+        checkConstraint(constraint3, f2.value(), f2.name(), violations);
 
         // generated inner field validation declaration
-        if(f3.value() != null) {
+        if(f3.isNotEmpty()) {
             violations.addAll(validator1.validate(f3, options));
         }
 
@@ -60,14 +63,10 @@ public class BabyValidator implements FieldValidator<Baby> {
     }
 
     // generated
-    private static <T> void checkConstraint(Constraint<T> constraint, Field<?> field, T t, List<Violation> violations) {
-        try {
-            Violation violation = constraint.validate(t);
-            if(violation != null) {
-                violations.add(Violation.of(violation.message(), field.name()));
-            }
-        } catch (Exception e) {
-            violations.add(Violation.of(e.getMessage(), field.name()));
+    private static <T> void checkConstraint(Constraint<T> constraint, T fieldValue, String fieldName, List<Violation> violations) {
+        Violation violation = constraint.validate(fieldValue);
+        if(violation != null) {
+            violations.add(Violation.of(violation.message(), fieldName));
         }
     }
 }
