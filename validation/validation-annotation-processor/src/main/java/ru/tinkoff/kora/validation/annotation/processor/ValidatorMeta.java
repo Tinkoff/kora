@@ -1,5 +1,8 @@
 package ru.tinkoff.kora.validation.annotation.processor;
 
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -9,13 +12,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> fields) {
+public record ValidatorMeta(Type source, Validator validator, TypeElement sourceElement, List<Field> fields) {
 
-    public String name() {
-        return "$Validator_" + source().simpleName();
+    public ValidatorMeta(Type source, TypeElement sourceElement, List<Field> fields) {
+        this(source,
+            new Validator(
+                Type.ofClass(ru.tinkoff.kora.validation.Validator.class, List.of(source)),
+                new Type(source.packageName, "$Validator_" + source.simpleName(), List.of(source))
+            ),
+            sourceElement, fields);
     }
 
-    public record Field(Type type, String name, boolean isRecord, List<Constraint> constraint, List<Validated> validates) {
+    public record Validated(Type target) {}
+
+    public record Validator(Type contract, Type implementation) {}
+
+    public record Field(Type type, String name, boolean isRecord, boolean isNullable, List<Constraint> constraint, List<Validated> validates) {
+
+        public boolean isNotNull() {
+            return !isNullable;
+        }
 
         public String accessor() {
             return (isRecord)
@@ -24,24 +40,19 @@ public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> 
         }
     }
 
-    public record Validated(Type target) { }
-
     public record Constraint(Type annotation, Factory factory) {
 
-        public record Factory(Type type, boolean isClass, Map<String, Object> parameters) { }
+        public record Factory(Type type, Map<String, Object> parameters) {}
     }
 
     public record Type(String packageName, String simpleName, List<Type> generic) {
 
         public static Type ofType(TypeMirror type) {
-            if(type instanceof DeclaredType) {
+            if (type instanceof DeclaredType) {
                 return ofType(((DeclaredType) type));
             }
 
-            final String canonicalName = type.toString();
-            return new Type(canonicalName.substring(0, canonicalName.lastIndexOf('.')),
-                canonicalName.substring(canonicalName.lastIndexOf('.') + 1),
-                Collections.emptyList());
+            return ofName(type.toString());
         }
 
         public static Type ofType(DeclaredType type) {
@@ -49,14 +60,11 @@ public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> 
                 .map(Type::ofType)
                 .toList();
 
-            final String canonicalName = type.asElement().toString();
-            return new Type(canonicalName.substring(0, canonicalName.lastIndexOf('.')),
-                canonicalName.substring(canonicalName.lastIndexOf('.') + 1),
-                generics);
+            return ofName(type.asElement().toString(), generics);
         }
 
         public static Type ofClass(Class<?> clazz) {
-            return new Type(clazz.getPackageName(), clazz.getSimpleName(), Collections.emptyList());
+            return ofClass(clazz, Collections.emptyList());
         }
 
         public static Type ofClass(Class<?> clazz, List<Type> generic) {
@@ -64,9 +72,13 @@ public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> 
         }
 
         public static Type ofName(String canonicalName) {
+            return ofName(canonicalName, Collections.emptyList());
+        }
+
+        public static Type ofName(String canonicalName, List<Type> generic) {
             return new Type(canonicalName.substring(0, canonicalName.lastIndexOf('.')),
                 canonicalName.substring(canonicalName.lastIndexOf('.') + 1),
-                Collections.emptyList());
+                generic);
         }
 
         public String canonicalName() {
@@ -74,7 +86,7 @@ public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> 
         }
 
         public TypeMirror asMirror(ProcessingEnvironment env) {
-            if(generic.isEmpty()) {
+            if (generic.isEmpty()) {
                 return env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement(canonicalName()));
             } else {
                 final TypeMirror[] generics = generic().stream()
@@ -83,6 +95,12 @@ public record ValidatorMeta(Type source, TypeElement sourceElement, List<Field> 
 
                 return env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement(canonicalName()), generics);
             }
+        }
+
+        public TypeName asPoetType(ProcessingEnvironment env) {
+            return (generic.isEmpty())
+                ? TypeName.get(asMirror(env))
+                : ParameterizedTypeName.get(asMirror(env));
         }
 
         @Override

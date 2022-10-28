@@ -22,7 +22,7 @@ public abstract class TestAppRunner extends Assertions {
 
     protected static InitializedGraph createGraphDraw() {
         if (GRAPH == null) {
-            GRAPH = createGraphDraw(AppWithConfig.class, Baby.class, Yoda.class, BabyValidator.class, YodaValidator.class);
+            GRAPH = createGraphDraw(AppWithConfig.class, Baby.class, Yoda.class);
         }
         return GRAPH;
     }

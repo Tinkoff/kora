@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.validation.annotation;
 
-import ru.tinkoff.kora.validation.ConstraintFactory;
-
 import java.lang.annotation.*;
 
 /**
@@ -10,7 +8,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.ANNOTATION_TYPE})
-public @interface Constrainted {
+public @interface ValidatedBy {
 
-    Class<? extends ConstraintFactory> value();
+    Class<? extends ru.tinkoff.kora.validation.ValidatorFactory> value();
 }

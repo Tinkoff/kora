@@ -6,8 +6,5 @@ import ru.tinkoff.kora.validation.annotation.Validated;
 
 import java.util.List;
 
-/**
- * Please add Description Here.
- */
 @Validated
-public record Yoda(@Nullable @NotEmpty String id, @NotEmpty List<Integer> codes, List<Baby> babies) { }
+public record Yoda(@Nullable @NotEmpty String id, @NotEmpty List<Integer> codes, List<Baby> babies) {}
