@@ -1,11 +1,10 @@
 package ru.tinkoff.kora.validation.constraint;
 
 import ru.tinkoff.kora.application.graph.TypeRef;
-import ru.tinkoff.kora.common.Module;
-import ru.tinkoff.kora.validation.*;
-import ru.tinkoff.kora.validation.constraint.factory.NotEmptyConstraintFactory;
-import ru.tinkoff.kora.validation.constraint.factory.NotNullConstraintFactory;
-import ru.tinkoff.kora.validation.constraint.factory.RangeConstraintFactory;
+import ru.tinkoff.kora.validation.Validator;
+import ru.tinkoff.kora.validation.Violation;
+import ru.tinkoff.kora.validation.constraint.factory.NotEmptyValidatorFactory;
+import ru.tinkoff.kora.validation.constraint.factory.RangeValidatorFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,14 +13,13 @@ import java.util.Map;
 
 public interface ValidationModule {
 
-    default <T> FieldValidator<List<T>> listValidator(FieldValidator<T> validator, TypeRef<T> valueRef) {
-        return (field, options) -> {
-            if(field.isNotEmpty()) {
+    default <T> Validator<List<T>> listValidator(Validator<T> validator, TypeRef<T> valueRef) {
+        return (value, context) -> {
+            if (value != null) {
                 final List<Violation> violations = new ArrayList<>();
-                for (int i = 0; i < field.value().size(); i++) {
-                    final T value = field.value().get(i);
-                    var v = Field.of(value, "[" + i + "]", field.name());
-                    violations.addAll(validator.validate(v, options));
+                for (int i = 0; i < value.size(); i++) {
+                    final T t = value.get(i);
+                    violations.addAll(validator.validate(t, context.addPath("[" + i + "]")));
                 }
                 return violations;
             }
@@ -30,31 +28,27 @@ public interface ValidationModule {
         };
     }
 
-    default <K, V> NotEmptyConstraintFactory<Map<K, V>> notEmptyMapConstraintFactory(TypeRef<K> keyRef, TypeRef<V> valueRef) {
-        return NotEmptyMapConstraint::new;
+    default <K, V> NotEmptyValidatorFactory<Map<K, V>> notEmptyMapConstraintFactory(TypeRef<K> keyRef, TypeRef<V> valueRef) {
+        return NotEmptyMapValidator::new;
     }
 
-    default <T> NotEmptyConstraintFactory<Iterable<T>> notEmptyIterableConstraintFactory(TypeRef<T> valueRef) {
-        return NotEmptyIterableConstraint::new;
+    default <T> NotEmptyValidatorFactory<Iterable<T>> notEmptyIterableConstraintFactory(TypeRef<T> valueRef) {
+        return NotEmptyIterableValidator::new;
     }
 
-    default <T> NotEmptyConstraintFactory<List<T>> notEmptyListConstraintFactory(TypeRef<T> valueRef) {
-        return NotEmptyIterableConstraint::new;
+    default <T> NotEmptyValidatorFactory<List<T>> notEmptyListConstraintFactory(TypeRef<T> valueRef) {
+        return NotEmptyIterableValidator::new;
     }
 
-    default NotEmptyConstraintFactory<String> notEmptyStringConstraintFactory() {
-        return NotEmptyStringConstraint::new;
+    default NotEmptyValidatorFactory<String> notEmptyStringConstraintFactory() {
+        return NotEmptyStringValidator::new;
     }
 
-    default NotNullConstraintFactory<String> notNullConstraintFactory() {
-        return NotNullConstraint::new;
+    default RangeValidatorFactory<Integer> rangeIntConstraintFactory() {
+        return NumberRangeValidator::new;
     }
 
-    default RangeConstraintFactory<Integer> rangeIntConstraintFactory() {
-        return NumberRangeConstraint::new;
-    }
-
-    default RangeConstraintFactory<Long> rangeLongConstraintFactory() {
-        return NumberRangeConstraint::new;
+    default RangeValidatorFactory<Long> rangeLongConstraintFactory() {
+        return NumberRangeValidator::new;
     }
 }

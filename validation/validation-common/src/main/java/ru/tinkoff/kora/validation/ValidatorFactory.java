@@ -3,8 +3,8 @@ package ru.tinkoff.kora.validation;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface ConstraintFactory<T> {
+public interface ValidatorFactory<T> {
 
     @NotNull
-    Constraint<T> create();
+    Validator<T> create();
 }

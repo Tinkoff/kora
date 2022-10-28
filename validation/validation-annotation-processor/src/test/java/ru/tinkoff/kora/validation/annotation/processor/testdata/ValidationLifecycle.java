@@ -1,9 +1,6 @@
 package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
 import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
+import ru.tinkoff.kora.validation.Validator;
 
-/**
- * Please add Description Here.
- */
-public record ValidationLifecycle(BabyValidator babyValidator, YodaValidator yodaValidator) implements MockLifecycle {
-}
+public record ValidationLifecycle(Validator<Baby> babyValidator, Validator<Yoda> yodaValidator) implements MockLifecycle {}

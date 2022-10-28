@@ -15,7 +15,7 @@ public class ViolationException extends RuntimeException {
         final StringBuilder builder = new StringBuilder("Validation failed due to violations:\n");
         for (int i = 0; i < violations.size(); i++) {
             builder.append(i + 1).append(") ").append(violations.get(i)).append(';');
-            if(i + 1 != violations.size()) {
+            if (i + 1 != violations.size()) {
                 builder.append("\n");
             }
         }
