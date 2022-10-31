@@ -11,16 +11,14 @@ import java.util.List;
 /**
  * Please add Description Here.
  */
-public final class NotEmptyStringValidator implements Validator<String> {
+final class NotEmptyStringValidator implements Validator<String> {
 
     @NotNull
     @Override
     public List<Violation> validate(String value, @NotNull ValidationContext context) {
         if (value == null) {
             return context.eraseAsList("Should be not empty, but was null");
-        }
-
-        if (value.isEmpty()) {
+        } else if (value.isEmpty()) {
             return context.eraseAsList("Should be not empty, but was empty");
         }
 

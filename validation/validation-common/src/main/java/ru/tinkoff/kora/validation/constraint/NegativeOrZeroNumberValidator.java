@@ -7,20 +7,19 @@ import ru.tinkoff.kora.validation.Violation;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Please add Description Here.
  */
-final class NotEmptyMapValidator<K, V> implements Validator<Map<K, V>> {
+final class NegativeOrZeroNumberValidator<T extends Number> implements Validator<T> {
 
     @NotNull
     @Override
-    public List<Violation> validate(Map<K, V> value, @NotNull ValidationContext context) {
+    public List<Violation> validate(T value, @NotNull ValidationContext context) {
         if (value == null) {
-            return context.eraseAsList("Should be not empty, but was null");
-        } else if (value.isEmpty()) {
-            return context.eraseAsList("Should be not empty, but was empty");
+            return context.eraseAsList("Should not negative or zero, but was null");
+        } else if (value.longValue() > 0 || value.doubleValue() > 0) {
+            return context.eraseAsList("Should be negative or zero, but was: " + value);
         }
 
         return Collections.emptyList();

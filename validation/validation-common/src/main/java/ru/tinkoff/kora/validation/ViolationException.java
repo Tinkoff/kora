@@ -12,10 +12,17 @@ public class ViolationException extends RuntimeException {
     }
 
     private static String buildViolationMessage(List<Violation> violations) {
-        final StringBuilder builder = new StringBuilder("Validation failed due to violations:\n");
-        for (int i = 0; i < violations.size(); i++) {
-            builder.append(i + 1).append(") ").append(violations.get(i)).append(';');
-            if (i + 1 != violations.size()) {
+        final StringBuilder builder = new StringBuilder("Validation failed with violations:\n");
+        for (int i = 1; i <= violations.size(); i++) {
+            final Violation violation = violations.get(i);
+            builder.append(i)
+                .append(") Path '")
+                .append(violation.path().full())
+                .append("' violation: ")
+                .append(violation.message())
+                .append(';');
+
+            if (i != violations.size()) {
                 builder.append("\n");
             }
         }

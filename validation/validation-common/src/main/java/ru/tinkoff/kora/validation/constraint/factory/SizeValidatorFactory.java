@@ -7,7 +7,7 @@ import ru.tinkoff.kora.validation.ValidatorFactory;
 /**
  * Please add Description Here.
  */
-public interface RangeValidatorFactory<T> extends ValidatorFactory<T> {
+public interface SizeValidatorFactory<T> extends ValidatorFactory<T> {
 
     @NotNull
     @Override
