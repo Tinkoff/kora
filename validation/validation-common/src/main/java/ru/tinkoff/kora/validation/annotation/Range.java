@@ -1,13 +1,13 @@
 package ru.tinkoff.kora.validation.annotation;
 
-import ru.tinkoff.kora.validation.constraint.factory.SizeValidatorFactory;
+import ru.tinkoff.kora.validation.constraint.factory.RangeValidatorFactory;
 
 import java.lang.annotation.*;
 
 @Documented
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.FIELD, ElementType.METHOD})
-@ValidatedBy(SizeValidatorFactory.class)
+@ValidatedBy(RangeValidatorFactory.class)
 public @interface Range {
 
     /**
