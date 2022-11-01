@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.validation.annotation;
 
 import org.intellij.lang.annotations.Language;
-import ru.tinkoff.kora.validation.constraint.factory.NotEmptyValidatorFactory;
 import ru.tinkoff.kora.validation.constraint.factory.PatternValidatorFactory;
 
 import java.lang.annotation.*;

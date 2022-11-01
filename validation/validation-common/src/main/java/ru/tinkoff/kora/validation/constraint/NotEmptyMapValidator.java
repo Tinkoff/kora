@@ -9,18 +9,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Please add Description Here.
- */
 final class NotEmptyMapValidator<K, V> implements Validator<Map<K, V>> {
 
     @NotNull
     @Override
     public List<Violation> validate(Map<K, V> value, @NotNull ValidationContext context) {
         if (value == null) {
-            return context.eraseAsList("Should be not empty, but was null");
+            return List.of(context.violates("Should be not empty, but was null"));
         } else if (value.isEmpty()) {
-            return context.eraseAsList("Should be not empty, but was empty");
+            return List.of(context.violates("Should be not empty, but was empty"));
         }
 
         return Collections.emptyList();

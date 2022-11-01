@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.validation.annotation;
 
 import ru.tinkoff.kora.validation.constraint.factory.NotBlankValidatorFactory;
-import ru.tinkoff.kora.validation.constraint.factory.NotEmptyValidatorFactory;
 
 import java.lang.annotation.*;
 

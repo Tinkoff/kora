@@ -14,9 +14,9 @@ final class NotEmptyIterableValidator<V, T extends Iterable<V>> implements Valid
     @Override
     public List<Violation> validate(T value, @NotNull ValidationContext context) {
         if (value == null) {
-            return context.eraseAsList("Should be not empty, but was null");
+            return List.of(context.violates("Should be not empty, but was null"));
         } else if (!value.iterator().hasNext()) {
-            return context.eraseAsList("Should be not empty, but was empty");
+            return List.of(context.violates("Should be not empty, but was empty"));
         }
 
         return Collections.emptyList();

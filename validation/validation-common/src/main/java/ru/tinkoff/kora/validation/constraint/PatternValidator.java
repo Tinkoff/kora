@@ -9,9 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Please add Description Here.
- */
 final class PatternValidator implements Validator<String> {
 
     private final Pattern pattern;
@@ -24,9 +21,9 @@ final class PatternValidator implements Validator<String> {
     @Override
     public List<Violation> validate(String value, @NotNull ValidationContext context) {
         if (value == null) {
-            return context.eraseAsList("Should match RegEx " + pattern + ", but was null");
+            return List.of(context.violates("Should match RegEx " + pattern + ", but was null"));
         } else if (!pattern.matcher(value).find()) {
-            return context.eraseAsList("Should match RegEx " + pattern + ", but was: " + value);
+            return List.of(context.violates("Should match RegEx " + pattern + ", but was: " + value));
         }
 
         return Collections.emptyList();
