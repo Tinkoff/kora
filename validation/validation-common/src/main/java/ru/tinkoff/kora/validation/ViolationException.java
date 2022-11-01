@@ -2,13 +2,27 @@ package ru.tinkoff.kora.validation;
 
 import java.util.List;
 
-/**
- * Please add Description Here.
- */
 public class ViolationException extends RuntimeException {
 
+    private String _message;
+    private final List<Violation> violations;
+
     public ViolationException(List<Violation> violations) {
-        super(buildViolationMessage(violations));
+        super();
+        this.violations = violations;
+    }
+
+    public List<Violation> getViolations() {
+        return violations;
+    }
+
+    @Override
+    public String getMessage() {
+        if (_message == null) {
+            _message = buildViolationMessage(violations);
+        }
+
+        return _message;
     }
 
     private static String buildViolationMessage(List<Violation> violations) {

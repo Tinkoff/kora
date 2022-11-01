@@ -1,20 +1,21 @@
 package ru.tinkoff.kora.validation.constraint;
 
-import org.jetbrains.annotations.NotNull;
 import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.validation.Validator;
-import ru.tinkoff.kora.validation.Violation;
 import ru.tinkoff.kora.validation.constraint.factory.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface ValidationModule {
 
-    default <T> Validator<List<T>> setValidator(Validator<T> validator, TypeRef<T> valueRef) {
+    default <T> Validator<List<T>> listValidator(Validator<T> validator, TypeRef<T> valueRef) {
         return new IterableValidator<>(validator);
     }
 
-    default <T> Validator<List<T>> listValidator(Validator<T> validator, TypeRef<T> valueRef) {
+    default <T> Validator<Set<T>> setValidator(Validator<T> validator, TypeRef<T> valueRef) {
         return new IterableValidator<>(validator);
     }
 
@@ -50,24 +51,24 @@ public interface ValidationModule {
         return NotBlankStringValidator::new;
     }
 
-    default SizeValidatorFactory<Short> sizeShortConstraintFactory() {
-        return SizeNumberValidator::new;
+    default RangeValidatorFactory<Short> sizeShortConstraintFactory() {
+        return RangeNumberValidator::new;
     }
 
-    default SizeValidatorFactory<Integer> sizeIntConstraintFactory() {
-        return SizeNumberValidator::new;
+    default RangeValidatorFactory<Integer> sizeIntConstraintFactory() {
+        return RangeNumberValidator::new;
     }
 
-    default SizeValidatorFactory<Long> sizeLongConstraintFactory() {
-        return SizeNumberValidator::new;
+    default RangeValidatorFactory<Long> sizeLongConstraintFactory() {
+        return RangeNumberValidator::new;
     }
 
-    default SizeValidatorFactory<Float> sizeFloatConstraintFactory() {
-        return SizeNumberValidator::new;
+    default RangeValidatorFactory<Float> sizeFloatConstraintFactory() {
+        return RangeNumberValidator::new;
     }
 
-    default SizeValidatorFactory<Double> sizeDoubleConstraintFactory() {
-        return SizeNumberValidator::new;
+    default RangeValidatorFactory<Double> sizeDoubleConstraintFactory() {
+        return RangeNumberValidator::new;
     }
 
     default SizeValidatorFactory<String> sizeStringConstraintFactory() {
@@ -88,134 +89,6 @@ public interface ValidationModule {
 
     default <V> SizeValidatorFactory<Set<V>> sizeSetConstraintFactory(TypeRef<V> valueRef) {
         return SizeCollectionValidator::new;
-    }
-
-    default NegativeValidatorFactory<Short> negativeShortConstraintFactory() {
-        return NegativeNumberValidator::new;
-    }
-
-    default NegativeValidatorFactory<Integer> negativeIntConstraintFactory() {
-        return NegativeNumberValidator::new;
-    }
-
-    default NegativeValidatorFactory<Long> negativeLongConstraintFactory() {
-        return NegativeNumberValidator::new;
-    }
-
-    default NegativeValidatorFactory<Float> negativeFloatConstraintFactory() {
-        return NegativeNumberValidator::new;
-    }
-
-    default NegativeValidatorFactory<Double> negativeDoubleConstraintFactory() {
-        return NegativeNumberValidator::new;
-    }
-
-    default NegativeOrZeroValidatorFactory<Short> negativeOrZeroShortConstraintFactory() {
-        return NegativeOrZeroNumberValidator::new;
-    }
-
-    default NegativeOrZeroValidatorFactory<Integer> negativeOrZeroIntConstraintFactory() {
-        return NegativeOrZeroNumberValidator::new;
-    }
-
-    default NegativeOrZeroValidatorFactory<Long> negativeOrZeroLongConstraintFactory() {
-        return NegativeOrZeroNumberValidator::new;
-    }
-
-    default NegativeOrZeroValidatorFactory<Float> negativeOrZeroFloatConstraintFactory() {
-        return NegativeOrZeroNumberValidator::new;
-    }
-
-    default NegativeOrZeroValidatorFactory<Double> negativeOrZeroDoubleConstraintFactory() {
-        return NegativeOrZeroNumberValidator::new;
-    }
-
-    default PositiveValidatorFactory<Short> positiveShortConstraintFactory() {
-        return PositiveNumberValidator::new;
-    }
-
-    default PositiveValidatorFactory<Integer> positiveIntConstraintFactory() {
-        return PositiveNumberValidator::new;
-    }
-
-    default PositiveValidatorFactory<Long> positiveLongConstraintFactory() {
-        return PositiveNumberValidator::new;
-    }
-
-    default PositiveValidatorFactory<Float> positiveFloatConstraintFactory() {
-        return PositiveNumberValidator::new;
-    }
-
-    default PositiveValidatorFactory<Double> positiveDoubleConstraintFactory() {
-        return PositiveNumberValidator::new;
-    }
-
-    default PositiveOrZeroValidatorFactory<Short> positiveOrZeroShortConstraintFactory() {
-        return PositiveOrZeroNumberValidator::new;
-    }
-
-    default PositiveOrZeroValidatorFactory<Integer> positiveOrZeroIntConstraintFactory() {
-        return PositiveOrZeroNumberValidator::new;
-    }
-
-    default PositiveOrZeroValidatorFactory<Long> positiveOrZeroLongConstraintFactory() {
-        return PositiveOrZeroNumberValidator::new;
-    }
-
-    default PositiveOrZeroValidatorFactory<Float> positiveOrZeroFloatConstraintFactory() {
-        return PositiveOrZeroNumberValidator::new;
-    }
-
-    default PositiveOrZeroValidatorFactory<Double> positiveOrZeroDoubleConstraintFactory() {
-        return PositiveOrZeroNumberValidator::new;
-    }
-
-    default IsTrueValidatorFactory<Boolean> isTrueBooleanConstraintFactory() {
-        return () -> (value, context) -> {
-            if (value == null) {
-                return context.eraseAsList("Should be True, but was null");
-            } else if (!value) {
-                return context.eraseAsList("Should be True, but was False");
-            }
-
-            return Collections.emptyList();
-        };
-    }
-
-    default IsTrueValidatorFactory<String> isTrueStringConstraintFactory() {
-        return () -> (value, context) -> {
-            if (value == null) {
-                return context.eraseAsList("Should be True, but was null");
-            } else if (!Boolean.parseBoolean(value)) {
-                return context.eraseAsList("Should be True, but was False");
-            }
-
-            return Collections.emptyList();
-        };
-    }
-
-    default IsFalseValidatorFactory<Boolean> isFalseBooleanConstraintFactory() {
-        return () -> (value, context) -> {
-            if (value == null) {
-                return context.eraseAsList("Should be False, but was null");
-            } else if (value) {
-                return context.eraseAsList("Should be False, but was True");
-            }
-
-            return Collections.emptyList();
-        };
-    }
-
-    default IsFalseValidatorFactory<String> isFalseStringConstraintFactory() {
-        return () -> (value, context) -> {
-            if (value == null) {
-                return context.eraseAsList("Should be False, but was null");
-            } else if (Boolean.parseBoolean(value)) {
-                return context.eraseAsList("Should be False, but was True");
-            }
-
-            return Collections.emptyList();
-        };
     }
 
     default PatternValidatorFactory<String> patternStringConstraintFactory() {

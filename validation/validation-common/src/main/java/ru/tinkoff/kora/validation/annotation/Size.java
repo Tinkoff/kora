@@ -13,10 +13,10 @@ public @interface Size {
     /**
      * @return minimum value should have (inclusive)
      */
-    long from();
+    int min() default 0;
 
     /**
      * @return maximum value should have (inclusive)
      */
-    long to();
+    int max();
 }

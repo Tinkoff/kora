@@ -1,10 +1,7 @@
 package ru.tinkoff.kora.validation;
 
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Please add Description Here.
- */
 public interface ValidationContext {
 
     interface Path {
@@ -22,15 +19,15 @@ public interface ValidationContext {
 
     boolean isFailFast();
 
-    default ValidationContext addPath(String path) {
-        return new SimpleValidationContext(new SimpleValidationContext.SimplePath(path(), path), isFailFast());
+    default ValidationContext addPath(@NotNull String path) {
+        return new SimpleValidationContext(new SimpleValidationContext.SimpleFieldPath(path(), path), isFailFast());
     }
 
-    default Violation erase(String message) {
+    default ValidationContext addPath(int pathIndex) {
+        return new SimpleValidationContext(new SimpleValidationContext.SimpleIndexPath(path(), pathIndex), isFailFast());
+    }
+
+    default Violation violates(@NotNull String message) {
         return new SimpleViolation(message, path());
-    }
-
-    default List<Violation> eraseAsList(String message) {
-        return List.of(new SimpleViolation(message, path()));
     }
 }

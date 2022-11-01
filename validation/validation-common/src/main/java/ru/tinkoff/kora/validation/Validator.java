@@ -4,9 +4,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Please add Description Here.
- */
 public interface Validator<T> {
 
     @NotNull
@@ -14,7 +11,7 @@ public interface Validator<T> {
 
     @NotNull
     default List<Violation> validate(T value) {
-        return validate(value, new SimpleValidationContext(SimpleValidationContext.SimplePath.EMPTY, false));
+        return validate(value, new SimpleValidationContext(SimpleValidationContext.SimpleFieldPath.EMPTY, false));
     }
 
     default void validateAndThrow(T value, @NotNull ValidationContext context) throws ViolationException {

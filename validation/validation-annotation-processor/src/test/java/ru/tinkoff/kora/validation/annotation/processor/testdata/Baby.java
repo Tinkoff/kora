@@ -10,7 +10,6 @@ import java.time.OffsetDateTime;
 
 @Validated
 public record Baby(@NotEmpty @Pattern("\\d+") String number,
-                   @Size(from = 1, to = 10) Long code,
+                   @Size(min = 1, max = 10) Long code,
                    @Nullable OffsetDateTime timestamp,
-                   Yoda yoda) {
-}
+                   @Validated Yoda yoda) {}

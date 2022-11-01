@@ -10,9 +10,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Please add Description Here.
- */
 final class IterableValidator<T, I extends Iterable<T>> implements Validator<I> {
 
     private final Validator<T> validator;
@@ -30,7 +27,7 @@ final class IterableValidator<T, I extends Iterable<T>> implements Validator<I> 
 
             while (iterator.hasNext()) {
                 final T t = iterator.next();
-                violations.addAll(validator.validate(t, context.addPath("[" + i++ + "]")));
+                violations.addAll(validator.validate(t, context.addPath(i++)));
             }
 
             return violations;
