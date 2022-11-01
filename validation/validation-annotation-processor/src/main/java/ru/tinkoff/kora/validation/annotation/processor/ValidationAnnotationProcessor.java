@@ -174,7 +174,7 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
                 var fieldMetaType = ValidatorMeta.Type.ofClass(Validator.class, factory.type().generic());
                 final String fieldName = factoryToField.getValue();
                 final String createParameters = factory.parameters().values().stream()
-                    .map(v -> v instanceof String ? "\"" + v + "\"" : v.toString())
+                    .map(Object::toString)
                     .collect(Collectors.joining(", "));
 
                 validatorSpecBuilder.addField(FieldSpec.builder(
@@ -273,12 +273,7 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
                     .map(v -> {
                         final DeclaredType factoryRawType = (DeclaredType) v;
                         final Map<String, Object> parameters = annotation.getElementValues().entrySet().stream()
-                            .collect(Collectors.toMap(ae -> ae.getKey().getSimpleName().toString(), ae -> {
-                                final Object value = ae.getValue().getValue();
-                                return (value instanceof List<?>)
-                                    ? ((List<?>) value).stream().map(ValidationAnnotationProcessor::castParameterValue).toList()
-                                    : castParameterValue(value);
-                            }));
+                            .collect(Collectors.toMap(ae -> ae.getKey().getSimpleName().toString(), ae -> castParameterValue(ae.getValue())));
 
                         final DeclaredType factoryDeclaredType = ((DeclaredType) factoryRawType.asElement().asType()).getTypeArguments().isEmpty()
                             ? env.getTypeUtils().getDeclaredType((TypeElement) factoryRawType.asElement())
@@ -307,7 +302,7 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             : Collections.emptyList();
     }
 
-    private static boolean isAnyValidated(TypeMirror typeMirror) {
+    private static Boolean isAnyValidated(TypeMirror typeMirror) {
         if (typeMirror instanceof DeclaredType dt) {
             if (dt.asElement().getAnnotationMirrors().stream().anyMatch(a -> a.getAnnotationType().toString().equals(Validated.class.getCanonicalName()))) {
                 return true;
@@ -342,13 +337,21 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             .map(e -> ((PackageElement) e.getEnclosingElement()));
     }
 
-    private static Object castParameterValue(Object value) {
-        if (value instanceof String) {
-            return value;
+    private static Object castParameterValue(AnnotationValue value) {
+        if (value.getValue() instanceof String) {
+            return value.toString();
         }
 
-        if (value instanceof Number) {
-            return value;
+        if (value.getValue() instanceof Number) {
+            return value.toString();
+        }
+
+        if(value.getValue() instanceof List<?>) {
+            return ((List<?>) value).stream()
+                .map(v -> v instanceof AnnotationValue
+                    ? castParameterValue((AnnotationValue) v)
+                    : v.toString())
+                .toList();
         }
 
         return value.toString();

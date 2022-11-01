@@ -18,5 +18,10 @@ public interface PatternValidatorFactory<T> extends ValidatorFactory<T> {
     }
 
     @NotNull
+    default Validator<T> create(String pattern) {
+        return create(pattern, 0);
+    }
+
+    @NotNull
     Validator<T> create(String pattern, int flags);
 }

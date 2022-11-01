@@ -16,7 +16,7 @@ public @interface Pattern {
      * @return RegEx pattern
      */
     @Language("RegExp")
-    String pattern();
+    String value();
 
     /**
      * @return {@link java.util.regex.Pattern#flags()} for RegEx

@@ -217,4 +217,8 @@ public interface ValidationModule {
             return Collections.emptyList();
         };
     }
+
+    default PatternValidatorFactory<String> patternStringConstraintFactory() {
+        return PatternValidator::new;
+    }
 }
