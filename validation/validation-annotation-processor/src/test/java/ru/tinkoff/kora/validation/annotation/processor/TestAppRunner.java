@@ -7,7 +7,9 @@ import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
-import ru.tinkoff.kora.validation.annotation.processor.testdata.*;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.AppWithConfig;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.Baby;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.Yoda;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
