@@ -1,5 +1,7 @@
 package ru.tinkoff.kora.validation;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public class ViolationException extends RuntimeException {
@@ -7,11 +9,12 @@ public class ViolationException extends RuntimeException {
     private String _message;
     private final List<Violation> violations;
 
-    public ViolationException(List<Violation> violations) {
+    public ViolationException(@NotNull List<Violation> violations) {
         super();
         this.violations = violations;
     }
 
+    @NotNull
     public List<Violation> getViolations() {
         return violations;
     }

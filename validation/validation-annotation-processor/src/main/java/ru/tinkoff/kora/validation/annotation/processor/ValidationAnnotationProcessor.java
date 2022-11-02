@@ -4,10 +4,8 @@ import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.common.Component;
-import ru.tinkoff.kora.common.DefaultComponent;
 import ru.tinkoff.kora.common.KoraApp;
 import ru.tinkoff.kora.validation.ValidationContext;
-import ru.tinkoff.kora.validation.Validator;
 import ru.tinkoff.kora.validation.Violation;
 import ru.tinkoff.kora.validation.annotation.Validated;
 import ru.tinkoff.kora.validation.annotation.ValidatedBy;
@@ -17,7 +15,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.*;
@@ -59,10 +56,7 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
         for (ValidatorMeta meta : metas) {
             final List<ParameterSpec> parameterSpecs = new ArrayList<>();
 
-            final TypeMirror validatorType = processingEnv.getTypeUtils().getDeclaredType(processingEnv.getElementUtils().getTypeElement(Validator.class.getCanonicalName()),
-                processingEnv.getElementUtils().getTypeElement(meta.source().canonicalName()).asType());
-
-            final TypeName typeName = ParameterizedTypeName.get(validatorType);
+            final TypeName typeName = meta.validator().contract().asPoetType(processingEnv);
             final TypeSpec.Builder validatorSpecBuilder = TypeSpec.classBuilder(meta.validator().implementation().simpleName())
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addSuperinterface(typeName)
@@ -120,14 +114,13 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             final MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC);
             for (var factoryToField : constraintToFieldName.entrySet()) {
                 var factory = factoryToField.getKey();
-                var fieldMetaType = ValidatorMeta.Type.ofClass(Validator.class, factory.type().generic());
                 final String fieldName = factoryToField.getValue();
                 final String createParameters = factory.parameters().values().stream()
                     .map(Object::toString)
                     .collect(Collectors.joining(", "));
 
                 validatorSpecBuilder.addField(FieldSpec.builder(
-                    fieldMetaType.asPoetType(processingEnv),
+                    factory.validator().asPoetType(processingEnv),
                     fieldName,
                     Modifier.PRIVATE, Modifier.FINAL).build());
 
@@ -139,9 +132,8 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             }
 
             for (var validatedToField : validatedToFieldName.entrySet()) {
-                var fieldMetaType = ValidatorMeta.Type.ofClass(Validator.class, List.of(validatedToField.getKey().target()));
                 final String fieldName = validatedToField.getValue();
-                final TypeName fieldType = fieldMetaType.asPoetType(processingEnv);
+                final TypeName fieldType = validatedToField.getKey().validator().asPoetType(processingEnv);
                 validatorSpecBuilder.addField(FieldSpec.builder(fieldType, fieldName, Modifier.PRIVATE, Modifier.FINAL).build());
 
                 final ParameterSpec parameterSpec = ParameterSpec.builder(fieldType, fieldName).build();
@@ -159,11 +151,12 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
                 .addParameter(ParameterSpec.builder(ValidatorMeta.Type.ofClass(ValidationContext.class).asPoetType(processingEnv), "context").build())
                 .addCode(CodeBlock.join(List.of(
                         CodeBlock.of("""
-                                    if(value == null) {
-                                        return $T.of(context.violates(\"Input value is null\"));
-                                    }
-                                
-                                    final $T<Violation> _violations = new $T<>();""",
+                                if(value == null) {
+                                    return $T.of(context.violates(\"Input value is null\"));
+                                }
+                                                                
+                                final $T<Violation> _violations = new $T<>();
+                                """,
                             List.class, List.class, ArrayList.class),
                         CodeBlock.join(contextBuilder, "\n"),
                         CodeBlock.join(constraintBuilder, "\n"),
@@ -222,7 +215,12 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
                     .map(v -> {
                         final DeclaredType factoryRawType = (DeclaredType) v;
                         final Map<String, Object> parameters = annotation.getElementValues().entrySet().stream()
-                            .collect(Collectors.toMap(ae -> ae.getKey().getSimpleName().toString(), ae -> castParameterValue(ae.getValue())));
+                            .collect(Collectors.toMap(
+                                ae -> ae.getKey().getSimpleName().toString(),
+                                ae -> castParameterValue(ae.getValue()),
+                                (v1, v2) -> v2,
+                                LinkedHashMap::new
+                            ));
 
                         final DeclaredType factoryDeclaredType = ((DeclaredType) factoryRawType.asElement().asType()).getTypeArguments().isEmpty()
                             ? env.getTypeUtils().getDeclaredType((TypeElement) factoryRawType.asElement())
@@ -246,7 +244,7 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
     }
 
     private static List<ValidatorMeta.Validated> getValidated(VariableElement field) {
-        if(field.getAnnotationMirrors().stream().anyMatch(a -> a.getAnnotationType().toString().equals(Validated.class.getCanonicalName()))) {
+        if (field.getAnnotationMirrors().stream().anyMatch(a -> a.getAnnotationType().toString().equals(Validated.class.getCanonicalName()))) {
             return List.of(new ValidatorMeta.Validated(ValidatorMeta.Type.ofType(field.asType())));
         }
 

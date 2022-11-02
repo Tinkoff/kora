@@ -23,7 +23,12 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
             sourceElement, fields);
     }
 
-    public record Validated(Type target) {}
+    public record Validated(Type target) {
+
+        public Type validator() {
+            return Type.ofClass(ru.tinkoff.kora.validation.Validator.class, List.of(target));
+        }
+    }
 
     public record Validator(Type contract, Type implementation) {}
 
@@ -42,7 +47,12 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
 
     public record Constraint(Type annotation, Factory factory) {
 
-        public record Factory(Type type, Map<String, Object> parameters) {}
+        public record Factory(Type type, Map<String, Object> parameters) {
+
+            public Type validator() {
+                return Type.ofClass(ru.tinkoff.kora.validation.Validator.class, type.generic());
+            }
+        }
     }
 
     public record Type(String packageName, String simpleName, List<Type> generic) {

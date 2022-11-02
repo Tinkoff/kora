@@ -8,5 +8,6 @@ public interface Violation {
     @NotNull
     String message();
 
+    @NotNull
     Path path();
 }

@@ -10,11 +10,13 @@ public interface ValidationContext {
 
         Path root();
 
+        @NotNull
         default String full() {
             return toString();
         }
     }
 
+    @NotNull
     Path path();
 
     boolean isFailFast();
@@ -27,6 +29,7 @@ public interface ValidationContext {
         return new SimpleValidationContext(new SimpleValidationContext.SimpleIndexPath(path(), pathIndex), isFailFast());
     }
 
+    @NotNull
     default Violation violates(@NotNull String message) {
         return new SimpleViolation(message, path());
     }
