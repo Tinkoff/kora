@@ -18,5 +18,5 @@ class Bar {
     var codes: List<Int> = emptyList()
 
     @Validated
-    var babies: List<Foo> = emptyList()
+    var tazs: List<Taz> = emptyList()
 }

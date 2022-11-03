@@ -3,60 +3,74 @@ package ru.tinkoff.kora.validation.symbol.processor
 import com.google.devtools.ksp.KspExperimental
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Assertions
-import ru.tinkoff.kora.application.graph.ApplicationGraphDraw
-import ru.tinkoff.kora.application.graph.RefreshableGraph
-import ru.tinkoff.kora.config.ksp.processor.ConfigRootSymbolProcessorProvider
-import ru.tinkoff.kora.config.ksp.processor.ConfigSourceSymbolProcessorProvider
-import ru.tinkoff.kora.kora.app.ksp.KoraAppProcessorProvider
+import ru.tinkoff.kora.application.graph.TypeRef
 import ru.tinkoff.kora.ksp.common.symbolProcess
-import ru.tinkoff.kora.validation.symbol.processor.testdata.AppWithConfig
+import ru.tinkoff.kora.validation.Validator
+import ru.tinkoff.kora.validation.constraint.ValidationModule
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Bar
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
-import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidationLifecycle
-import java.util.function.Supplier
+import ru.tinkoff.kora.validation.symbol.processor.testdata.Taz
 
 @KspExperimental
 @KotlinPoetKspPreview
-open class TestAppRunner : Assertions() {
+open class TestAppRunner : Assertions(), ValidationModule {
 
-    private var graph: InitializedGraph? = null
-
-    data class InitializedGraph(val graphDraw: ApplicationGraphDraw, val refreshableGraph: RefreshableGraph)
-
-    fun getService(): ValidationLifecycle {
-        val graph = getGraph()
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
-
-        return values.asSequence()
-            .filter { a -> a is ValidationLifecycle }
-            .map { a -> a as ValidationLifecycle }
-            .first()
+    companion object {
+        private var classLoader: ClassLoader? = null
     }
 
-    fun getGraph(): InitializedGraph {
-        if (graph != null) {
-            return graph as InitializedGraph
-        }
-
+    protected open fun getFooValidator(): Validator<Foo> {
         return try {
-            val app = AppWithConfig::class
-            val classLoader = symbolProcess(
-                listOf(app, Foo::class, Bar::class),
-                KoraAppProcessorProvider(),
-                ConfigRootSymbolProcessorProvider(),
-                ConfigSourceSymbolProcessorProvider(),
-                ValidationSymbolProcessorProvider()
-            )
-
-            val clazz = classLoader.loadClass(app.qualifiedName + "Graph")
-            val graphDraw = (clazz.constructors.first().newInstance() as Supplier<ApplicationGraphDraw>).get()
-            val graph = graphDraw.init().block()!!
-            InitializedGraph(graphDraw, graph)
+            val classLoader = getClassLoader()
+            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Foo")
+            clazz.constructors[0].newInstance(
+                patternStringConstraintFactory(),
+                rangeLongConstraintFactory(),
+                notEmptyStringConstraintFactory(),
+                getBarValidator()
+            ) as Validator<Foo>
         } catch (e: Exception) {
-            throw e
+            throw IllegalStateException(e)
+        }
+    }
+
+    protected open fun getBarValidator(): Validator<Bar> {
+        return try {
+            val classLoader = getClassLoader()
+            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Bar")
+            clazz.constructors[0].newInstance(
+                sizeListConstraintFactory(TypeRef.of(Int::class.java)),
+                notEmptyStringConstraintFactory(),
+                listValidator(getTazValidator(), TypeRef.of(Taz::class.java))
+            ) as Validator<Bar>
+        } catch (e: Exception) {
+            throw IllegalStateException(e)
+        }
+    }
+
+    protected open fun getTazValidator(): Validator<Taz> {
+        return try {
+            val classLoader = getClassLoader()
+            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Taz")
+            clazz.constructors[0].newInstance(patternStringConstraintFactory()) as Validator<Taz>
+        } catch (e: Exception) {
+            throw IllegalStateException(e)
+        }
+    }
+
+    private fun getClassLoader(): ClassLoader {
+        return try {
+            if (classLoader == null) {
+                val classes = listOf(
+                    Foo::class,
+                    Bar::class,
+                    Taz::class
+                )
+                classLoader = symbolProcess(classes, ValidationSymbolProcessorProvider())
+            }
+            classLoader!!
+        } catch (e: Exception) {
+            throw IllegalStateException(e)
         }
     }
 }
