@@ -1,34 +1,24 @@
 package ru.tinkoff.kora.resilient.symbol.processor.aop
 
 import com.google.devtools.ksp.KspExperimental
+import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerLifecycle
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class CircuitBreakerFallbackTests : CircuitBreakerRunner() {
-
-    private fun getService(graph: InitializedGraph): CircuitBreakerFallbackTarget {
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
-
-        return values.asSequence()
-            .filter { a -> a is CircuitBreakerLifecycle }
-            .map { a -> (a as CircuitBreakerLifecycle).targetFallback }
-            .first()
-    }
+@KotlinPoetKspPreview
+class CircuitBreakerFallbackTests : TestAppRunner() {
 
     @Test
     fun syncCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
+        val service = services.second
 
         // when
         try {
@@ -46,8 +36,8 @@ class CircuitBreakerFallbackTests : CircuitBreakerRunner() {
     @Test
     fun suspendCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
+        val service = services.second
 
         // when
         try {
@@ -65,8 +55,8 @@ class CircuitBreakerFallbackTests : CircuitBreakerRunner() {
     @Test
     fun flowCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
+        val service = services.second
 
         // when
         try {
