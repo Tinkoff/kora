@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-final class PatternValidator implements Validator<String> {
+final class PatternValidator<T extends CharSequence> implements Validator<T> {
 
     private final Pattern pattern;
 
@@ -19,7 +19,7 @@ final class PatternValidator implements Validator<String> {
 
     @NotNull
     @Override
-    public List<Violation> validate(String value, @NotNull ValidationContext context) {
+    public List<Violation> validate(T value, @NotNull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Should match RegEx " + pattern + ", but was null"));
         } else if (!pattern.matcher(value).find()) {

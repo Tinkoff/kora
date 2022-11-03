@@ -10,9 +10,16 @@ record SimpleValidationContext(Path path, boolean isFailFast) implements Validat
 
         @Override
         public String toString() {
-            return (root == null)
-                ? value
-                : root + "." + value;
+            if (root == null) {
+                return value;
+            }
+
+            final String rootFull = root.full();
+            if (rootFull.isBlank()) {
+                return value;
+            }
+
+            return rootFull + "." + value;
         }
     }
 
