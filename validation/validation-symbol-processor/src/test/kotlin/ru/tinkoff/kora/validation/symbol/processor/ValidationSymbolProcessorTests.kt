@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.validation.ValidationContext
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Bar
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
+import ru.tinkoff.kora.validation.symbol.processor.testdata.Taz
 import java.time.OffsetDateTime
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -17,46 +18,46 @@ class ValidationSymbolProcessorTests : TestAppRunner() {
     @Test
     fun validateSuccess() {
         // give
-        val lifecycle = getService()
+        val service = getBarValidator()
         val bar = Bar()
         bar.id = "1"
         bar.codes = listOf(1)
-        bar.babies = listOf(Foo("1", 1, OffsetDateTime.now(), null))
+        bar.tazs = listOf(Taz("1"))
 
         // then
-        val violations = lifecycle.bar.validate(bar);
-        assertTrue(violations.isEmpty())
+        val violations = service.validate(bar);
+        assertEquals(0, violations.size)
     }
 
     @Test
     fun validateRangeFail() {
         // give
-        val lifecycle = getService()
+        val service = getFooValidator()
         val value = Foo("1", 0, OffsetDateTime.now(), null)
 
         // then
-        val violations = lifecycle.foo.validate(value);
+        val violations = service.validate(value);
         assertEquals(1, violations.size)
     }
 
     @Test
     fun validateInnerValidatorForListFail() {
         // give
-        val lifecycle = getService()
+        val service = getBarValidator()
         val value = Bar()
         value.id = "1"
         value.codes = listOf(1)
-        value.babies = listOf(Foo("1", 0, OffsetDateTime.now(), null))
+        value.tazs = listOf(Taz("a"))
 
         // then
-        val violations = lifecycle.bar.validate(value);
+        val violations = service.validate(value);
         assertEquals(1, violations.size)
     }
 
     @Test
     fun validateInnerValidatorForValueFail() {
         // give
-        val lifecycle = getService()
+        val service = getFooValidator()
         val bar = Bar().apply {
             id = "1"
             codes = listOf()
@@ -64,14 +65,14 @@ class ValidationSymbolProcessorTests : TestAppRunner() {
         val value = Foo("1", 1, OffsetDateTime.now(), bar)
 
         // then
-        val violations = lifecycle.foo.validate(value);
+        val violations = service.validate(value);
         assertEquals(1, violations.size)
     }
 
     @Test
     fun validateFailFast() {
         // give
-        val lifecycle = getService()
+        val service = getFooValidator()
         val bar = Bar().apply {
             id = "1"
             codes = listOf(1, 2, 3, 4, 5, 6)
@@ -79,14 +80,14 @@ class ValidationSymbolProcessorTests : TestAppRunner() {
         val value = Foo("1", 0, OffsetDateTime.now(), bar)
 
         // then
-        val violations = lifecycle.foo.validate(value, ValidationContext.builder().failFast(true).build())
+        val violations = service.validate(value, ValidationContext.builder().failFast(true).build())
         assertEquals(1, violations.size)
     }
 
     @Test
     fun validateFailSlow() {
         // give
-        val lifecycle = getService()
+        val service = getFooValidator()
         val bar = Bar().apply {
             id = "1"
             codes = listOf(1, 2, 3, 4, 5, 6)
@@ -94,7 +95,7 @@ class ValidationSymbolProcessorTests : TestAppRunner() {
         val value = Foo("1", 0, OffsetDateTime.now(), bar)
 
         // then
-        val violations = lifecycle.foo.validate(value, ValidationContext.builder().failFast(false).build())
+        val violations = service.validate(value, ValidationContext.builder().failFast(false).build())
         assertEquals(2, violations.size)
     }
 }
