@@ -2,75 +2,99 @@ package ru.tinkoff.kora.validation.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.application.graph.ApplicationGraphDraw
-import ru.tinkoff.kora.application.graph.RefreshableGraph
-import ru.tinkoff.kora.config.ksp.processor.ConfigRootSymbolProcessorProvider
-import ru.tinkoff.kora.config.ksp.processor.ConfigSourceSymbolProcessorProvider
-import ru.tinkoff.kora.kora.app.ksp.KoraAppProcessorProvider
-import ru.tinkoff.kora.ksp.common.symbolProcess
-import ru.tinkoff.kora.validation.symbol.processor.testdata.AppWithConfig
-import ru.tinkoff.kora.validation.symbol.processor.testdata.Baby
-import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidationLifecycle
-import ru.tinkoff.kora.validation.symbol.processor.testdata.Yoda
+import ru.tinkoff.kora.validation.ValidationContext
+import ru.tinkoff.kora.validation.symbol.processor.testdata.Bar
+import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
 import java.time.OffsetDateTime
-import java.util.function.Supplier
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
 @KotlinPoetKspPreview
-class ValidationSymbolProcessorTests : Assertions() {
+class ValidationSymbolProcessorTests : TestAppRunner() {
 
-    private var graph: InitializedGraph? = null
+    @Test
+    fun validateSuccess() {
+        // give
+        val lifecycle = getService()
+        val bar = Bar()
+        bar.id = "1"
+        bar.codes = listOf(1)
+        bar.babies = listOf(Foo("1", 1, OffsetDateTime.now(), null))
 
-    data class InitializedGraph(val graphDraw: ApplicationGraphDraw, val refreshableGraph: RefreshableGraph)
-
-    private fun getService(): ValidationLifecycle {
-        val graph = getGraph()
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
-
-        return values.asSequence()
-            .filter { a -> a is ValidationLifecycle }
-            .map { a -> a as ValidationLifecycle }
-            .first()
-    }
-
-    private fun getGraph(): InitializedGraph {
-        if (graph != null) {
-            return graph as InitializedGraph
-        }
-
-        return try {
-            val app = AppWithConfig::class
-            val classLoader = symbolProcess(
-                listOf(app, Baby::class, Yoda::class),
-                KoraAppProcessorProvider(),
-                ConfigRootSymbolProcessorProvider(),
-                ConfigSourceSymbolProcessorProvider(),
-                ValidationSymbolProcessorProvider()
-            )
-
-            val clazz = classLoader.loadClass(app.qualifiedName + "Graph")
-            val graphDraw = (clazz.constructors.first().newInstance() as Supplier<ApplicationGraphDraw>).get()
-            val graph = graphDraw.init().block()!!
-            InitializedGraph(graphDraw, graph)
-        } catch (e: Exception) {
-            throw e
-        }
+        // then
+        val violations = lifecycle.bar.validate(bar);
+        assertTrue(violations.isEmpty())
     }
 
     @Test
-    fun test() {
+    fun validateRangeFail() {
+        // give
         val lifecycle = getService()
+        val value = Foo("1", 0, OffsetDateTime.now(), null)
 
-        val yoda = Yoda()
-        yoda.id = "1"
-        yoda.codes = listOf(1)
-        yoda.babies = listOf(Baby("1", 1, OffsetDateTime.now(), null))
+        // then
+        val violations = lifecycle.foo.validate(value);
+        assertEquals(1, violations.size)
+    }
+
+    @Test
+    fun validateInnerValidatorForListFail() {
+        // give
+        val lifecycle = getService()
+        val value = Bar()
+        value.id = "1"
+        value.codes = listOf(1)
+        value.babies = listOf(Foo("1", 0, OffsetDateTime.now(), null))
+
+        // then
+        val violations = lifecycle.bar.validate(value);
+        assertEquals(1, violations.size)
+    }
+
+    @Test
+    fun validateInnerValidatorForValueFail() {
+        // give
+        val lifecycle = getService()
+        val bar = Bar().apply {
+            id = "1"
+            codes = listOf()
+        }
+        val value = Foo("1", 1, OffsetDateTime.now(), bar)
+
+        // then
+        val violations = lifecycle.foo.validate(value);
+        assertEquals(1, violations.size)
+    }
+
+    @Test
+    fun validateFailFast() {
+        // give
+        val lifecycle = getService()
+        val bar = Bar().apply {
+            id = "1"
+            codes = listOf(1, 2, 3, 4, 5, 6)
+        }
+        val value = Foo("1", 0, OffsetDateTime.now(), bar)
+
+        // then
+        val violations = lifecycle.foo.validate(value, ValidationContext.builder().failFast(true).build())
+        assertEquals(1, violations.size)
+    }
+
+    @Test
+    fun validateFailSlow() {
+        // give
+        val lifecycle = getService()
+        val bar = Bar().apply {
+            id = "1"
+            codes = listOf(1, 2, 3, 4, 5, 6)
+        }
+        val value = Foo("1", 0, OffsetDateTime.now(), bar)
+
+        // then
+        val violations = lifecycle.foo.validate(value, ValidationContext.builder().failFast(false).build())
+        assertEquals(2, violations.size)
     }
 }

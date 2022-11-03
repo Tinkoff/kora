@@ -18,7 +18,7 @@ public interface AppWithConfig extends ConfigModule, ValidationModule {
         ).resolve();
     }
 
-    default ValidationLifecycle lifecycle(Validator<Baby> babyValidator, Validator<Yoda> yodaValidator) {
-        return new ValidationLifecycle(babyValidator, yodaValidator);
+    default ValidationLifecycle lifecycle(Validator<Foo> foo, Validator<Bar> bar) {
+        return new ValidationLifecycle(foo, bar);
     }
 }
