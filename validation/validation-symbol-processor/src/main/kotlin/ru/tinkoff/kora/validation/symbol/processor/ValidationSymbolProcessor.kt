@@ -21,7 +21,6 @@ import ru.tinkoff.kora.validation.Validator
 import ru.tinkoff.kora.validation.Violation
 import ru.tinkoff.kora.validation.annotation.Validated
 import ru.tinkoff.kora.validation.annotation.ValidatedBy
-import java.util.stream.Collectors
 import javax.annotation.processing.Generated
 
 @KspExperimental
@@ -137,9 +136,13 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
             val factory = entry.key
             val fieldName = entry.value
             val fieldMetaType = Validator::class.asType(factory.type.generic)
-            val createParameters = factory.parameters.values.stream()
-                .map { if (it is String) "\"$it\"" else it.toString() }
-                .collect(Collectors.joining(", "))
+            val createParameters = factory.parameters.values.joinToString(", ") {
+                if (it is String) {
+                    CodeBlock.of("%S", it).toString()
+                } else {
+                    CodeBlock.of("%L", it).toString()
+                }
+            }
 
             validatorSpecBuilder.addProperty(
                 PropertySpec.builder(

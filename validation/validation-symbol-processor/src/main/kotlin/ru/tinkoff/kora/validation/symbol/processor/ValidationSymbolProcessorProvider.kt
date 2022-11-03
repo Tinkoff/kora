@@ -10,7 +10,7 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 @KotlinPoetKspPreview
 class ValidationSymbolProcessorProvider : SymbolProcessorProvider {
 
-    override fun create( environment: SymbolProcessorEnvironment ): SymbolProcessor {
+    override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return ValidationSymbolProcessor(environment)
     }
 }

@@ -8,7 +8,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
-import com.squareup.kotlinpoet.ksp.toClassName
 import ru.tinkoff.kora.validation.Validator
 import kotlin.reflect.KClass
 
@@ -20,7 +19,7 @@ data class ValidatorMeta(
 )
 
 data class ValidatedTarget(val target: Type) {
-    fun validator() : Type = Validator::class.asType(listOf(target))
+    fun validator(): Type = Validator::class.asType(listOf(target))
 }
 
 data class ValidatorType(val contract: Type, val implementation: Type)

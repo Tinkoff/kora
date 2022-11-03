@@ -12,7 +12,7 @@ public interface Validator<T> {
 
     @NotNull
     default List<Violation> validate(@Nullable T value) {
-        return validate(value, new SimpleValidationContext(SimpleValidationContext.SimpleFieldPath.EMPTY, false));
+        return validate(value, new SimpleValidationContext(SimpleValidationContext.SimpleFieldPath.ROOT, false));
     }
 
     default void validateAndThrow(@Nullable T value, @NotNull ValidationContext context) throws ViolationException {
