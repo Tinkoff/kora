@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
 import org.jetbrains.annotations.Nullable;
-import ru.tinkoff.kora.validation.annotation.NotEmpty;
 import ru.tinkoff.kora.validation.annotation.Size;
 import ru.tinkoff.kora.validation.annotation.Validated;
 
@@ -14,7 +13,8 @@ public class Bar {
     @Size(min = 1, max = 5)
     private List<Integer> codes;
     @Validated
-    private List<Foo> foos;
+    @Nullable
+    private List<Taz> tazs;
 
     @Nullable
     public String getId() {
@@ -35,12 +35,12 @@ public class Bar {
         return this;
     }
 
-    public List<Foo> getFoos() {
-        return foos;
+    public List<Taz> getTazs() {
+        return tazs;
     }
 
-    public Bar setFoos(List<Foo> foos) {
-        this.foos = foos;
+    public Bar setTazs(List<Taz> tazs) {
+        this.tazs = tazs;
         return this;
     }
 }

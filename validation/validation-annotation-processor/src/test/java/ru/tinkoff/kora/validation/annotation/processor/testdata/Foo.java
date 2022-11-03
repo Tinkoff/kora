@@ -12,4 +12,4 @@ import java.time.OffsetDateTime;
 public record Foo(@NotEmpty @Pattern("\\d+") String number,
                   @Range(from = 1, to = 10) Long code,
                   @Nullable OffsetDateTime timestamp,
-                  @Validated Bar bar) {}
+                  @Validated @Nullable Bar bar) {}
