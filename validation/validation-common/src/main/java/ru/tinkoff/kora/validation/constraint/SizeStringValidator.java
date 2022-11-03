@@ -8,7 +8,7 @@ import ru.tinkoff.kora.validation.Violation;
 import java.util.Collections;
 import java.util.List;
 
-final class SizeStringValidator implements Validator<String> {
+final class SizeStringValidator<T extends CharSequence> implements Validator<T> {
 
     private final int from;
     private final int to;
@@ -23,7 +23,7 @@ final class SizeStringValidator implements Validator<String> {
 
     @NotNull
     @Override
-    public List<Violation> validate(String value, @NotNull ValidationContext context) {
+    public List<Violation> validate(T value, @NotNull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Length should be in range from '" + from + "' to '" + to + "', but was null"));
         } else if (value.length() < from) {

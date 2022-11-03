@@ -47,7 +47,15 @@ public interface ValidationModule {
         return NotEmptyStringValidator::new;
     }
 
+    default NotEmptyValidatorFactory<CharSequence> notEmptyCharSequenceConstraintFactory() {
+        return NotEmptyStringValidator::new;
+    }
+
     default NotBlankValidatorFactory<String> notBlankStringConstraintFactory() {
+        return NotBlankStringValidator::new;
+    }
+
+    default NotBlankValidatorFactory<CharSequence> notBlankCharSequenceConstraintFactory() {
         return NotBlankStringValidator::new;
     }
 
@@ -72,6 +80,10 @@ public interface ValidationModule {
     }
 
     default SizeValidatorFactory<String> sizeStringConstraintFactory() {
+        return SizeStringValidator::new;
+    }
+
+    default SizeValidatorFactory<CharSequence> sizeCharSequenceConstraintFactory() {
         return SizeStringValidator::new;
     }
 
