@@ -59,23 +59,23 @@ public interface ValidationModule {
         return NotBlankStringValidator::new;
     }
 
-    default RangeValidatorFactory<Short> sizeShortConstraintFactory() {
+    default RangeValidatorFactory<Short> rangeShortConstraintFactory() {
         return RangeNumberValidator::new;
     }
 
-    default RangeValidatorFactory<Integer> sizeIntConstraintFactory() {
+    default RangeValidatorFactory<Integer> rangeIntConstraintFactory() {
         return RangeNumberValidator::new;
     }
 
-    default RangeValidatorFactory<Long> sizeLongConstraintFactory() {
+    default RangeValidatorFactory<Long> rangeLongConstraintFactory() {
         return RangeNumberValidator::new;
     }
 
-    default RangeValidatorFactory<Float> sizeFloatConstraintFactory() {
+    default RangeValidatorFactory<Float> rangeFloatConstraintFactory() {
         return RangeNumberValidator::new;
     }
 
-    default RangeValidatorFactory<Double> sizeDoubleConstraintFactory() {
+    default RangeValidatorFactory<Double> rangeDoubleConstraintFactory() {
         return RangeNumberValidator::new;
     }
 
@@ -104,6 +104,10 @@ public interface ValidationModule {
     }
 
     default PatternValidatorFactory<String> patternStringConstraintFactory() {
+        return PatternValidator::new;
+    }
+
+    default PatternValidatorFactory<CharSequence> patternCharSequenceConstraintFactory() {
         return PatternValidator::new;
     }
 }
