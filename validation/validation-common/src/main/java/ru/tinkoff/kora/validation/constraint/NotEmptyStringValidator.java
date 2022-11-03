@@ -8,11 +8,11 @@ import ru.tinkoff.kora.validation.Violation;
 import java.util.Collections;
 import java.util.List;
 
-final class NotEmptyStringValidator implements Validator<String> {
+final class NotEmptyStringValidator<T extends CharSequence> implements Validator<T> {
 
     @NotNull
     @Override
-    public List<Violation> validate(String value, @NotNull ValidationContext context) {
+    public List<Violation> validate(T value, @NotNull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Should be not empty, but was null"));
         } else if (value.isEmpty()) {
