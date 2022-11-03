@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.concurrent.Immutable;
 
 /**
- *
+ * Context of current validation progress and validation options
  */
 @Immutable
 public interface ValidationContext {
