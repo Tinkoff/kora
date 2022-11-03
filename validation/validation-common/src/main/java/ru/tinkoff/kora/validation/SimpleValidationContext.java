@@ -1,10 +1,12 @@
 package ru.tinkoff.kora.validation;
 
+import org.jetbrains.annotations.NotNull;
+
 record SimpleValidationContext(Path path, boolean isFailFast) implements ValidationContext {
 
     record SimpleFieldPath(Path root, String value) implements ValidationContext.Path {
 
-        static final Path EMPTY = new SimpleFieldPath(null, "");
+        static final Path ROOT = new SimpleFieldPath(null, "");
 
         @Override
         public String toString() {
@@ -26,6 +28,27 @@ record SimpleValidationContext(Path path, boolean isFailFast) implements Validat
             return (root == null)
                 ? value()
                 : root + "." + value();
+        }
+    }
+
+    record SimpleBuilder(Path path, boolean failFast) implements ValidationContext.Builder {
+
+        @NotNull
+        @Override
+        public Builder path(@NotNull Path path) {
+            return new SimpleBuilder(path, failFast);
+        }
+
+        @NotNull
+        @Override
+        public Builder failFast(boolean isFailFast) {
+            return new SimpleBuilder(path, isFailFast);
+        }
+
+        @NotNull
+        @Override
+        public ValidationContext build() {
+            return new SimpleValidationContext(SimpleFieldPath.ROOT, failFast);
         }
     }
 }
