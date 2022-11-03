@@ -10,7 +10,6 @@ import java.util.List;
 @Validated
 public class Bar {
     @Nullable
-    @NotEmpty
     private String id;
     @Size(min = 1, max = 5)
     private List<Integer> codes;

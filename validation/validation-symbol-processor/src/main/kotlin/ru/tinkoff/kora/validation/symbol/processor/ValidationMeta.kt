@@ -13,8 +13,8 @@ import kotlin.reflect.KClass
 
 data class ValidatorMeta(
     val source: Type,
-    val validator: ValidatorType,
     val sourceDeclaration: KSClassDeclaration,
+    val validator: ValidatorType,
     val fields: List<Field>
 )
 
