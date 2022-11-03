@@ -18,9 +18,9 @@ interface AppWithConfig : ValidationModule, ConfigModule {
     }
 
     fun lifecycle(
-        babyValidator: Validator<Baby>,
-        yodaValidator: Validator<Yoda>
+        fooValidator: Validator<Foo>,
+        barValidator: Validator<Bar>
     ): ValidationLifecycle {
-        return ValidationLifecycle(babyValidator, yodaValidator)
+        return ValidationLifecycle(fooValidator, barValidator)
     }
 }

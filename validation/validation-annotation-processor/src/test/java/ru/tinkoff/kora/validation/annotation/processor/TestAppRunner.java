@@ -8,8 +8,8 @@ import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotatio
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.AppWithConfig;
-import ru.tinkoff.kora.validation.annotation.processor.testdata.Baby;
-import ru.tinkoff.kora.validation.annotation.processor.testdata.Yoda;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.Bar;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.Foo;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -18,18 +18,18 @@ import java.util.function.Supplier;
 
 public abstract class TestAppRunner extends Assertions {
 
-    private static InitializedGraph GRAPH = null;
-
     public record InitializedGraph(RefreshableGraph refreshableGraph, ApplicationGraphDraw graphDraw) {}
 
-    protected static InitializedGraph createGraphDraw() {
-        if (GRAPH == null) {
-            GRAPH = createGraphDraw(AppWithConfig.class, Baby.class, Yoda.class);
+    private InitializedGraph graph = null;
+
+    protected InitializedGraph getGraph() {
+        if (graph == null) {
+            graph = getGraph(AppWithConfig.class, Foo.class, Bar.class);
         }
-        return GRAPH;
+        return graph;
     }
 
-    protected static InitializedGraph createGraphDraw(Class<?> app, Class<?>... targetClasses) {
+    protected InitializedGraph getGraph(Class<?> app, Class<?>... targetClasses) {
         try {
             final List<Class<?>> classes = new ArrayList<>(List.of(targetClasses));
             classes.add(app);
@@ -45,5 +45,17 @@ public abstract class TestAppRunner extends Assertions {
 
             throw new IllegalStateException(e);
         }
+    }
+
+    protected <T> T getService(Class<T> tClass) {
+        final InitializedGraph graph = getGraph();
+        final List<?> nodeValues = graph.graphDraw().getNodes().stream()
+            .map(n -> graph.refreshableGraph().get(n))
+            .toList();
+
+        return nodeValues.stream()
+            .filter(v -> v.getClass().isAssignableFrom(tClass))
+            .map(v -> ((T) v))
+            .findFirst().orElseThrow();
     }
 }
