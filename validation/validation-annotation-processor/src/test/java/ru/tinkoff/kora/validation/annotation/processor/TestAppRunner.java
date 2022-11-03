@@ -2,60 +2,64 @@ package ru.tinkoff.kora.validation.annotation.processor;
 
 import org.junit.jupiter.api.Assertions;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
-import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
-import ru.tinkoff.kora.application.graph.RefreshableGraph;
-import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
-import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
-import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
-import ru.tinkoff.kora.validation.annotation.processor.testdata.AppWithConfig;
+import ru.tinkoff.kora.application.graph.TypeRef;
+import ru.tinkoff.kora.validation.Validator;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Bar;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Foo;
+import ru.tinkoff.kora.validation.annotation.processor.testdata.Taz;
+import ru.tinkoff.kora.validation.constraint.ValidationModule;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
-public abstract class TestAppRunner extends Assertions {
+public abstract class TestAppRunner extends Assertions implements ValidationModule {
 
-    public record InitializedGraph(RefreshableGraph refreshableGraph, ApplicationGraphDraw graphDraw) {}
+    private static ClassLoader classLoader = null;
 
-    private InitializedGraph graph = null;
-
-    protected InitializedGraph getGraph() {
-        if (graph == null) {
-            graph = getGraph(AppWithConfig.class, Foo.class, Bar.class);
-        }
-        return graph;
-    }
-
-    protected InitializedGraph getGraph(Class<?> app, Class<?>... targetClasses) {
+    protected Validator<Foo> getFooValidator() {
         try {
-            final List<Class<?>> classes = new ArrayList<>(List.of(targetClasses));
-            classes.add(app);
-            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new ConfigRootAnnotationProcessor(), new ConfigSourceAnnotationProcessor(), new ValidationAnnotationProcessor());
-            var clazz = classLoader.loadClass(app.getName() + "Graph");
-            var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
-            var graphDraw = constructors[0].newInstance().get();
-            return new InitializedGraph(graphDraw.init().block(), graphDraw);
+            final ClassLoader classLoader = getClassLoader();
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Foo");
+            return (Validator<Foo>) clazz.getConstructors()[0].newInstance(notEmptyStringConstraintFactory(),
+                rangeLongConstraintFactory(),
+                patternStringConstraintFactory(),
+                getBarValidator());
         } catch (Exception e) {
-            if (e.getCause() != null) {
-                throw new IllegalStateException(e.getCause());
-            }
-
             throw new IllegalStateException(e);
         }
     }
 
-    protected <T> T getService(Class<T> tClass) {
-        final InitializedGraph graph = getGraph();
-        final List<?> nodeValues = graph.graphDraw().getNodes().stream()
-            .map(n -> graph.refreshableGraph().get(n))
-            .toList();
+    protected Validator<Bar> getBarValidator() {
+        try {
+            final ClassLoader classLoader = getClassLoader();
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Bar");
+            return (Validator<Bar>) clazz.getConstructors()[0].newInstance(
+                sizeListConstraintFactory(TypeRef.of(Integer.class)),
+                listValidator(getTazValidator(), TypeRef.of(Taz.class)));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-        return nodeValues.stream()
-            .filter(v -> v.getClass().isAssignableFrom(tClass))
-            .map(v -> ((T) v))
-            .findFirst().orElseThrow();
+    protected Validator<Taz> getTazValidator() {
+        try {
+            final ClassLoader classLoader = getClassLoader();
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Taz");
+            return (Validator<Taz>) clazz.getConstructors()[0].newInstance(patternStringConstraintFactory());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private ClassLoader getClassLoader() {
+        try {
+            if (classLoader == null) {
+                final List<Class<?>> classes = List.of(Foo.class, Bar.class, Taz.class);
+                classLoader = TestUtils.annotationProcess(classes, new ValidationAnnotationProcessor());
+            }
+
+            return classLoader;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
