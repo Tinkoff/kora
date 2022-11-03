@@ -2,8 +2,12 @@ package ru.tinkoff.kora.validation;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public interface ValidationContext {
 
+    @Immutable
     interface Path {
 
         String value();
@@ -33,10 +37,12 @@ public interface ValidationContext {
 
     boolean isFailFast();
 
+    @NotNull
     default ValidationContext addPath(@NotNull String path) {
         return new SimpleValidationContext(path().add(path), isFailFast());
     }
 
+    @NotNull
     default ValidationContext addPath(int pathIndex) {
         return new SimpleValidationContext(path().add(pathIndex), isFailFast());
     }
@@ -51,9 +57,6 @@ public interface ValidationContext {
     }
 
     interface Builder {
-
-        @NotNull
-        Builder path(@NotNull Path path);
 
         @NotNull
         Builder failFast(boolean isFailFast);

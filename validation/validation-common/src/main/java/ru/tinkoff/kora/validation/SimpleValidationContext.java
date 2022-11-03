@@ -35,12 +35,6 @@ record SimpleValidationContext(Path path, boolean isFailFast) implements Validat
 
         @NotNull
         @Override
-        public Builder path(@NotNull Path path) {
-            return new SimpleBuilder(path, failFast);
-        }
-
-        @NotNull
-        @Override
         public Builder failFast(boolean isFailFast) {
             return new SimpleBuilder(path, isFailFast);
         }

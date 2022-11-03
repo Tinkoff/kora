@@ -5,22 +5,22 @@ import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.Modifier
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
+import ru.tinkoff.kora.ksp.common.exception.ProcessingError
+import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.visitClass
 import ru.tinkoff.kora.validation.ValidationContext
 import ru.tinkoff.kora.validation.Validator
 import ru.tinkoff.kora.validation.Violation
 import ru.tinkoff.kora.validation.annotation.Validated
 import ru.tinkoff.kora.validation.annotation.ValidatedBy
+import java.io.IOException
 import javax.annotation.processing.Generated
 
 @KspExperimental
@@ -33,18 +33,24 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         val symbols = resolver.getSymbolsWithAnnotation(Validated::class.qualifiedName!!)
             .toList()
 
-        val specs = symbols
-            .filter { it.validate() }
-            .mapNotNull { it.visitClass { clazz -> getValidatorMeta(clazz) } }
-            .map { getValidatorSpecs(it) }
-            .toList()
+        try {
+            val specs = symbols
+                .filter { it.validate() }
+                .mapNotNull { it.visitClass { clazz -> getValidatorMeta(clazz) } }
+                .map { getValidatorSpecs(it) }
+                .toList()
 
-        for (validatorSpec in specs) {
-            val fileSpec = FileSpec.builder(validatorSpec.meta.validator.implementation.packageName, validatorSpec.meta.validator.implementation.simpleName)
-                .addType(validatorSpec.spec)
-                .build()
+            for (validatorSpec in specs) {
+                val fileSpec = FileSpec.builder(validatorSpec.meta.validator.implementation.packageName, validatorSpec.meta.validator.implementation.simpleName)
+                    .addType(validatorSpec.spec)
+                    .build()
 
-            fileSpec.writeTo(codeGenerator = environment.codeGenerator, aggregating = false)
+                fileSpec.writeTo(codeGenerator = environment.codeGenerator, aggregating = false)
+            }
+        } catch (e: IOException) {
+            throw ProcessingErrorException(ProcessingError(e.message.toString(), null))
+        } catch (e: ValidationDeclarationException) {
+            throw ProcessingErrorException(ProcessingError(e.message.toString(), e.declaration))
         }
 
         return symbols.filterNot { it.validate() }.toList()
@@ -202,6 +208,10 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
     }
 
     private fun getValidatorMeta(declaration: KSClassDeclaration): ValidatorMeta {
+        if (declaration.classKind == ClassKind.INTERFACE || declaration.classKind == ClassKind.ENUM_CLASS) {
+            throw ValidationDeclarationException("Validation can't be generated for: ${declaration.classKind}", declaration)
+        }
+
         val elementFields = declaration.getAllProperties().toList()
         val fields = ArrayList<Field>()
         for (fieldProperty in elementFields) {
@@ -225,11 +235,11 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         val source = declaration.qualifiedName!!.asString().asType()
         return ValidatorMeta(
             source,
+            declaration,
             ValidatorType(
                 Validator::class.asType(listOf(source)),
                 Type(null, source.packageName, "\$Validator_" + source.simpleName, listOf(source)),
             ),
-            declaration,
             fields
         )
     }

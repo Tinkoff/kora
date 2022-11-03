@@ -7,7 +7,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.FIELD, ElementType.METHOD})
+@Target(value = {ElementType.FIELD})
 @ValidatedBy(PatternValidatorFactory.class)
 public @interface Pattern {
 

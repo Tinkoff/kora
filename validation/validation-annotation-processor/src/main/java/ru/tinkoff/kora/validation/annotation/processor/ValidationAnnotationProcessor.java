@@ -34,18 +34,23 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        final List<TypeElement> validatedElements = getValidatedElements(roundEnv);
-        final List<ValidatorMeta> validatorMetas = getValidatorMetas(validatedElements);
-        final List<ValidatorSpec> validatorSpecs = getValidatorSpecs(validatorMetas);
-        for (ValidatorSpec validator : validatorSpecs) {
-            final PackageElement packageElement = elements.getPackageOf(validator.meta().sourceElement());
-            final JavaFile javaFile = JavaFile.builder(packageElement.getQualifiedName().toString(), validator.spec()).build();
-            try {
-                javaFile.writeTo(processingEnv.getFiler());
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generated Validator for: " + validator.meta().source(), validator.meta().sourceElement());
-            } catch (IOException e) {
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error on writing file: " + e.getMessage(), validator.meta().sourceElement());
+        try {
+            final List<TypeElement> validatedElements = getValidatedElements(roundEnv);
+            final List<ValidatorMeta> validatorMetas = getValidatorMetas(validatedElements);
+            final List<ValidatorSpec> validatorSpecs = getValidatorSpecs(validatorMetas);
+            for (ValidatorSpec validator : validatorSpecs) {
+                final PackageElement packageElement = elements.getPackageOf(validator.meta().sourceElement());
+                final JavaFile javaFile = JavaFile.builder(packageElement.getQualifiedName().toString(), validator.spec()).build();
+                try {
+                    javaFile.writeTo(processingEnv.getFiler());
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Generated Validator for: " + validator.meta().source(), validator.meta().sourceElement());
+                } catch (IOException e) {
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error on writing file: " + e.getMessage(), validator.meta().sourceElement());
+                }
             }
+        } catch (ValidationElementException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage(), e.getElement());
+            return true;
         }
 
         return false;
@@ -252,11 +257,18 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
     }
 
     private List<TypeElement> getValidatedElements(RoundEnvironment roundEnv) {
-        return Stream.of(Validated.class)
+        final List<TypeElement> elements = Stream.of(Validated.class)
             .flatMap(a -> roundEnv.getElementsAnnotatedWith(a).stream())
             .filter(a -> a instanceof TypeElement)
-            .map(a -> ((TypeElement) a))
+            .map(element -> {
+                if (element.getKind() == ElementKind.ENUM || element.getKind() == ElementKind.INTERFACE) {
+                    throw new ValidationElementException("Validation can't be generated for: " + element.getKind(), element);
+                }
+                return ((TypeElement) element);
+            })
             .toList();
+
+        return elements;
     }
 
     private static Object castParameterValue(AnnotationValue value) {
