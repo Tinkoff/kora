@@ -20,42 +20,30 @@ open class TestAppRunner : Assertions(), ValidationModule {
     }
 
     protected open fun getFooValidator(): Validator<Foo> {
-        return try {
-            val classLoader = getClassLoader()
-            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Foo")
-            clazz.constructors[0].newInstance(
-                patternStringConstraintFactory(),
-                rangeLongConstraintFactory(),
-                notEmptyStringConstraintFactory(),
-                getBarValidator()
-            ) as Validator<Foo>
-        } catch (e: Exception) {
-            throw IllegalStateException(e)
-        }
+        val classLoader = getClassLoader()
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Foo")
+        return clazz.constructors[0].newInstance(
+            patternStringConstraintFactory(),
+            rangeLongConstraintFactory(),
+            notEmptyStringConstraintFactory(),
+            getBarValidator()
+        ) as Validator<Foo>
     }
 
     protected open fun getBarValidator(): Validator<Bar> {
-        return try {
-            val classLoader = getClassLoader()
-            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Bar")
-            clazz.constructors[0].newInstance(
-                sizeListConstraintFactory(TypeRef.of(Int::class.java)),
-                notEmptyStringConstraintFactory(),
-                listValidator(getTazValidator(), TypeRef.of(Taz::class.java))
-            ) as Validator<Bar>
-        } catch (e: Exception) {
-            throw IllegalStateException(e)
-        }
+        val classLoader = getClassLoader()
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Bar")
+        return clazz.constructors[0].newInstance(
+            sizeListConstraintFactory(TypeRef.of(Int::class.java)),
+            notEmptyStringConstraintFactory(),
+            listValidator(getTazValidator(), TypeRef.of(Taz::class.java))
+        ) as Validator<Bar>
     }
 
     protected open fun getTazValidator(): Validator<Taz> {
-        return try {
-            val classLoader = getClassLoader()
-            val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Taz")
-            clazz.constructors[0].newInstance(patternStringConstraintFactory()) as Validator<Taz>
-        } catch (e: Exception) {
-            throw IllegalStateException(e)
-        }
+        val classLoader = getClassLoader()
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Taz")
+        return clazz.constructors[0].newInstance(patternStringConstraintFactory()) as Validator<Taz>
     }
 
     private fun getClassLoader(): ClassLoader {

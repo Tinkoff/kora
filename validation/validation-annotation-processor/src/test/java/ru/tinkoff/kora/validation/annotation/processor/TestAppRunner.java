@@ -23,6 +23,8 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
                 rangeLongConstraintFactory(),
                 patternStringConstraintFactory(),
                 getBarValidator());
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -35,6 +37,8 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
             return (Validator<Bar>) clazz.getConstructors()[0].newInstance(
                 sizeListConstraintFactory(TypeRef.of(Integer.class)),
                 listValidator(getTazValidator(), TypeRef.of(Taz.class)));
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -45,6 +49,8 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Taz");
             return (Validator<Taz>) clazz.getConstructors()[0].newInstance(patternStringConstraintFactory());
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -58,6 +64,8 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
             }
 
             return classLoader;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -1,10 +1,10 @@
 dependencies {
     implementation project(":annotation-processor-common")
-    implementation project(":validation:validation-common")
 
     implementation libs.typesafe.config
 
     testImplementation testFixtures(project(":annotation-processor-common"))
+    testImplementation project(":validation:validation-common")
     testImplementation project(":annotation-processor-common")
     testImplementation project(":kora-app-annotation-processor")
     testImplementation project(":config:config-annotation-processor")
