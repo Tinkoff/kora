@@ -1,8 +1,6 @@
 package ru.tinkoff.kora.validation.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
-import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
@@ -15,11 +13,6 @@ import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
 import ru.tinkoff.kora.ksp.common.exception.ProcessingError
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.visitClass
-import ru.tinkoff.kora.validation.ValidationContext
-import ru.tinkoff.kora.validation.Validator
-import ru.tinkoff.kora.validation.Violation
-import ru.tinkoff.kora.validation.annotation.Validated
-import ru.tinkoff.kora.validation.annotation.ValidatedBy
 import java.io.IOException
 import javax.annotation.processing.Generated
 
@@ -30,7 +23,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
     data class ValidatorSpec(val meta: ValidatorMeta, val spec: TypeSpec, val parameterSpecs: List<ParameterSpec>)
 
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(Validated::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation("ru.tinkoff.kora.validation.annotation.Validated")
             .toList()
 
         try {
@@ -141,7 +134,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         for (entry in constraintToFieldName) {
             val factory = entry.key
             val fieldName = entry.value
-            val fieldMetaType = Validator::class.asType(factory.type.generic)
+            val fieldMetaType = "ru.tinkoff.kora.validation.Validator".asType(factory.type.generic)
             val createParameters = factory.parameters.values.joinToString(", ") {
                 if (it is String) {
                     CodeBlock.of("%S", it).toString()
@@ -179,9 +172,9 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
 
         val validateMethodSpecBuilder = FunSpec.builder("validate")
             .addModifiers(KModifier.OVERRIDE)
-            .returns(Type(null, "kotlin.collections", "MutableList", listOf(Violation::class.asType())).asPoetType())
+            .returns(Type(null, "kotlin.collections", "MutableList", listOf("ru.tinkoff.kora.validation.Violation".asType())).asPoetType())
             .addParameter(ParameterSpec.builder("value", meta.source.asPoetType(true)).build())
-            .addParameter(ParameterSpec.builder("context", ValidationContext::class.asType().asPoetType()).build())
+            .addParameter(ParameterSpec.builder("context", "ru.tinkoff.kora.validation.ValidationContext".asType().asPoetType()).build())
             .addCode(
                 CodeBlock.of(
                     """
@@ -189,9 +182,9 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
                         return mutableListOf(context.violates("Input value is null"));
                     }
                     
-                    val _violations = %T<%T>();
+                    val _violations = %T<Violation>();
                     
-                    """.trimIndent(), ArrayList::class, Violation::class
+                    """.trimIndent(), ArrayList::class
                 )
             )
 
@@ -237,7 +230,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
             source,
             declaration,
             ValidatorType(
-                Validator::class.asType(listOf(source)),
+                "ru.tinkoff.kora.validation.Validator".asType(listOf(source)),
                 Type(null, source.packageName, "\$Validator_" + source.simpleName, listOf(source)),
             ),
             fields
@@ -246,19 +239,28 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
 
     private fun getConstraints(field: KSPropertyDeclaration): List<Constraint> {
         return field.annotations.asSequence()
-            .filter { a -> a.annotationType.resolve().declaration.isAnnotationPresent(ValidatedBy::class) }
-            .map { origin ->
-                val validatedBy = origin.annotationType.resolve().declaration.getAnnotationsByType(ValidatedBy::class).first()
-                val factory = validatedBy.value
-                val parameters = origin.arguments.associate { a -> Pair(a.name!!.asString(), a.value!!) }
+            .mapNotNull { origin ->
+                origin.annotationType.resolve().declaration.annotations
+                    .filter { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.annotation.ValidatedBy" }
+                    .map { validatedBy ->
+                        val parameters = origin.arguments.associate { a -> Pair(a.name!!.asString(), a.value!!) }
+                        val factory = validatedBy.arguments
+                            .filter { arg -> arg.name!!.getShortName() == "value" }
+                            .map { arg -> arg.value as KSType }
+                            .first()
 
-                Constraint(origin.annotationType.asType(), Constraint.Factory(factory.asType(listOf(field.type.asType())), parameters))
+                        Constraint(
+                            origin.annotationType.asType(),
+                            Constraint.Factory(factory.declaration.qualifiedName!!.asString().asType(listOf(field.type.asType())), parameters)
+                        )
+                    }
+                    .firstOrNull()
             }
             .toList()
     }
 
     private fun getValidated(field: KSPropertyDeclaration): List<ValidatedTarget> {
-        return if (field.isAnnotationPresent(Validated::class))
+        return if (field.annotations.any { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.annotation.Validated" })
             listOf(ValidatedTarget(field.type.asType()))
         else
             emptyList()

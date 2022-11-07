@@ -4,6 +4,8 @@ import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.validation.Validator;
 import ru.tinkoff.kora.validation.constraint.factory.*;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +78,14 @@ public interface ValidationModule {
     }
 
     default RangeValidatorFactory<Double> rangeDoubleConstraintFactory() {
+        return RangeNumberValidator::new;
+    }
+
+    default RangeValidatorFactory<BigInteger> rangeBigIntegerConstraintFactory() {
+        return RangeNumberValidator::new;
+    }
+
+    default RangeValidatorFactory<BigDecimal> rangeBigDecimalConstraintFactory() {
         return RangeNumberValidator::new;
     }
 

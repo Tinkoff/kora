@@ -17,7 +17,7 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
     public ValidatorMeta(Type source, TypeElement sourceElement, List<Field> fields) {
         this(source,
             new Validator(
-                Type.ofClass(ru.tinkoff.kora.validation.Validator.class, List.of(source)),
+                Type.ofName("ru.tinkoff.kora.validation.Validator", List.of(source)),
                 new Type(source.packageName, "$Validator_" + source.simpleName(), List.of(source))
             ),
             sourceElement, fields);
@@ -26,13 +26,13 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
     public record Validated(Type target) {
 
         public Type validator() {
-            return Type.ofClass(ru.tinkoff.kora.validation.Validator.class, List.of(target));
+            return Type.ofName("ru.tinkoff.kora.validation.Validator", List.of(target));
         }
     }
 
     public record Validator(Type contract, Type implementation) {}
 
-    public record Field(Type type, String name, boolean isRecord, boolean isNullable, List<Constraint> constraint, List<Validated> validates) {
+    public record Field(Type type, String name, boolean isRecord, boolean isNullable, boolean isPrimitive, List<Constraint> constraint, List<Validated> validates) {
 
         public boolean isNotNull() {
             return !isNullable;
@@ -50,7 +50,7 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
         public record Factory(Type type, Map<String, Object> parameters) {
 
             public Type validator() {
-                return Type.ofClass(ru.tinkoff.kora.validation.Validator.class, type.generic());
+                return Type.ofName("ru.tinkoff.kora.validation.Validator", type.generic());
             }
         }
     }
