@@ -1,8 +1,8 @@
 package ru.tinkoff.kora.validation.symbol.processor.testdata
 
-import ru.tinkoff.kora.validation.annotation.NotEmpty
-import ru.tinkoff.kora.validation.annotation.Size
-import ru.tinkoff.kora.validation.annotation.Validated
+import ru.tinkoff.kora.validation.common.annotation.NotEmpty
+import ru.tinkoff.kora.validation.common.annotation.Size
+import ru.tinkoff.kora.validation.common.annotation.Validated
 
 @Validated
 class Bar {

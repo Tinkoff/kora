@@ -23,7 +23,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
     data class ValidatorSpec(val meta: ValidatorMeta, val spec: TypeSpec, val parameterSpecs: List<ParameterSpec>)
 
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation("ru.tinkoff.kora.validation.annotation.Validated")
+        val symbols = resolver.getSymbolsWithAnnotation("ru.tinkoff.kora.validation.common.annotation.Validated")
             .toList()
 
         try {
@@ -134,7 +134,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         for (entry in constraintToFieldName) {
             val factory = entry.key
             val fieldName = entry.value
-            val fieldMetaType = "ru.tinkoff.kora.validation.Validator".asType(factory.type.generic)
+            val fieldMetaType = "ru.tinkoff.kora.validation.common.Validator".asType(factory.type.generic)
             val createParameters = factory.parameters.values.joinToString(", ") {
                 if (it is String) {
                     CodeBlock.of("%S", it).toString()
@@ -172,9 +172,9 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
 
         val validateMethodSpecBuilder = FunSpec.builder("validate")
             .addModifiers(KModifier.OVERRIDE)
-            .returns(Type(null, "kotlin.collections", "MutableList", listOf("ru.tinkoff.kora.validation.Violation".asType())).asPoetType())
+            .returns(Type(null, "kotlin.collections", "MutableList", listOf("ru.tinkoff.kora.validation.common.Violation".asType())).asPoetType())
             .addParameter(ParameterSpec.builder("value", meta.source.asPoetType(true)).build())
-            .addParameter(ParameterSpec.builder("context", "ru.tinkoff.kora.validation.ValidationContext".asType().asPoetType()).build())
+            .addParameter(ParameterSpec.builder("context", "ru.tinkoff.kora.validation.common.ValidationContext".asType().asPoetType()).build())
             .addCode(
                 CodeBlock.of(
                     """
@@ -230,7 +230,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
             source,
             declaration,
             ValidatorType(
-                "ru.tinkoff.kora.validation.Validator".asType(listOf(source)),
+                "ru.tinkoff.kora.validation.common.Validator".asType(listOf(source)),
                 Type(null, source.packageName, "\$Validator_" + source.simpleName, listOf(source)),
             ),
             fields
@@ -241,7 +241,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         return field.annotations.asSequence()
             .mapNotNull { origin ->
                 origin.annotationType.resolve().declaration.annotations
-                    .filter { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.annotation.ValidatedBy" }
+                    .filter { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.common.annotation.ValidatedBy" }
                     .map { validatedBy ->
                         val parameters = origin.arguments.associate { a -> Pair(a.name!!.asString(), a.value!!) }
                         val factory = validatedBy.arguments
@@ -260,7 +260,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
     }
 
     private fun getValidated(field: KSPropertyDeclaration): List<ValidatedTarget> {
-        return if (field.annotations.any { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.annotation.Validated" })
+        return if (field.annotations.any { a -> a.annotationType.asType().canonicalName() == "ru.tinkoff.kora.validation.common.annotation.Validated" })
             listOf(ValidatedTarget(field.type.asType()))
         else
             emptyList()

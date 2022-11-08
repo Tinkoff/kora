@@ -3,11 +3,11 @@ package ru.tinkoff.kora.validation.annotation.processor;
 import org.junit.jupiter.api.Assertions;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.application.graph.TypeRef;
-import ru.tinkoff.kora.validation.Validator;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Bar;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Foo;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Taz;
-import ru.tinkoff.kora.validation.constraint.ValidationModule;
+import ru.tinkoff.kora.validation.common.Validator;
+import ru.tinkoff.kora.validation.common.constraint.ValidationModule;
 
 import java.util.List;
 
@@ -20,8 +20,8 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Foo");
             return (Validator<Foo>) clazz.getConstructors()[0].newInstance(notEmptyStringConstraintFactory(),
-                rangeLongConstraintFactory(),
                 patternStringConstraintFactory(),
+                rangeLongConstraintFactory(),
                 getBarValidator());
         } catch (RuntimeException e) {
             throw e;

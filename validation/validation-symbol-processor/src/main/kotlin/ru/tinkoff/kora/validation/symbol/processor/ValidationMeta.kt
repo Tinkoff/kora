@@ -18,7 +18,7 @@ data class ValidatorMeta(
 )
 
 data class ValidatedTarget(val target: Type) {
-    fun validator(): Type = "ru.tinkoff.kora.validation.Validator".asType(listOf(target))
+    fun validator(): Type = "ru.tinkoff.kora.validation.common.Validator".asType(listOf(target))
 }
 
 data class ValidatorType(val contract: Type, val implementation: Type)
