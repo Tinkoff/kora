@@ -10,6 +10,6 @@ import java.time.OffsetDateTime;
 
 @Validated
 public record Foo(@NotEmpty @Pattern("\\d+") String number,
-                  @Range(from = 1, to = 10) long code,
+                  @Range(from = 1, to = 10, boundary = Range.Boundary.INCLUSIVE_EXCLUSIVE) long code,
                   @Nullable OffsetDateTime timestamp,
                   @Validated @Nullable Bar bar) {}

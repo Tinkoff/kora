@@ -281,6 +281,10 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             return value.toString();
         }
 
+        if (value.getValue() instanceof VariableElement ve) {
+            return ve.asType().toString() + "." + value.getValue();
+        }
+
         if (value.getValue() instanceof List<?>) {
             return ((List<?>) value).stream()
                 .map(v -> v instanceof AnnotationValue

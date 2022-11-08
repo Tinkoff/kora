@@ -21,7 +21,7 @@ open class TestAppRunner : Assertions(), ValidationModule {
 
     protected open fun getFooValidator(): Validator<Foo> {
         val classLoader = getClassLoader()
-        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Foo")
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Foo_Validator")
         return clazz.constructors[0].newInstance(
             patternStringConstraintFactory(),
             notEmptyStringConstraintFactory(),
@@ -32,7 +32,7 @@ open class TestAppRunner : Assertions(), ValidationModule {
 
     protected open fun getBarValidator(): Validator<Bar> {
         val classLoader = getClassLoader()
-        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Bar")
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Bar_Validator")
         return clazz.constructors[0].newInstance(
             sizeListConstraintFactory(TypeRef.of(Int::class.java)),
             notEmptyStringConstraintFactory(),
@@ -42,7 +42,7 @@ open class TestAppRunner : Assertions(), ValidationModule {
 
     protected open fun getTazValidator(): Validator<Taz> {
         val classLoader = getClassLoader()
-        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Taz")
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Taz_Validator")
         return clazz.constructors[0].newInstance(patternStringConstraintFactory()) as Validator<Taz>
     }
 

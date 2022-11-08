@@ -231,7 +231,7 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
             declaration,
             ValidatorType(
                 "ru.tinkoff.kora.validation.common.Validator".asType(listOf(source)),
-                Type(null, source.packageName, "\$Validator_" + source.simpleName, listOf(source)),
+                Type(null, source.packageName, "\$" + source.simpleName + "_Validator", listOf(source)),
             ),
             fields
         )

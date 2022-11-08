@@ -18,7 +18,7 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
     protected Validator<Foo> getFooValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Foo");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Foo_Validator");
             return (Validator<Foo>) clazz.getConstructors()[0].newInstance(notEmptyStringConstraintFactory(),
                 patternStringConstraintFactory(),
                 rangeLongConstraintFactory(),
@@ -33,7 +33,7 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
     protected Validator<Bar> getBarValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Bar");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Bar_Validator");
             return (Validator<Bar>) clazz.getConstructors()[0].newInstance(
                 sizeListConstraintFactory(TypeRef.of(Integer.class)),
                 listValidator(getTazValidator(), TypeRef.of(Taz.class)));
@@ -47,7 +47,7 @@ public abstract class TestAppRunner extends Assertions implements ValidationModu
     protected Validator<Taz> getTazValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Validator_Taz");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Taz_Validator");
             return (Validator<Taz>) clazz.getConstructors()[0].newInstance(patternStringConstraintFactory());
         } catch (RuntimeException e) {
             throw e;
