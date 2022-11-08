@@ -5,8 +5,8 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Assertions
 import ru.tinkoff.kora.application.graph.TypeRef
 import ru.tinkoff.kora.ksp.common.symbolProcess
-import ru.tinkoff.kora.validation.Validator
-import ru.tinkoff.kora.validation.constraint.ValidationModule
+import ru.tinkoff.kora.validation.common.Validator
+import ru.tinkoff.kora.validation.common.constraint.ValidationModule
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Bar
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Taz
@@ -24,8 +24,8 @@ open class TestAppRunner : Assertions(), ValidationModule {
         val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$Validator_Foo")
         return clazz.constructors[0].newInstance(
             patternStringConstraintFactory(),
-            rangeLongConstraintFactory(),
             notEmptyStringConstraintFactory(),
+            rangeLongConstraintFactory(),
             getBarValidator()
         ) as Validator<Foo>
     }

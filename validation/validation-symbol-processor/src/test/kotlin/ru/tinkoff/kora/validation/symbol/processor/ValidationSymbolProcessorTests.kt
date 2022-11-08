@@ -4,7 +4,7 @@ import com.google.devtools.ksp.KspExperimental
 import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.validation.ValidationContext
+import ru.tinkoff.kora.validation.common.ValidationContext
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Bar
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Taz

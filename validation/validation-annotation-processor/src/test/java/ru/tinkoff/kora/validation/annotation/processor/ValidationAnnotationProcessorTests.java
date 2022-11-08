@@ -1,8 +1,8 @@
 package ru.tinkoff.kora.validation.annotation.processor;
 
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.validation.ValidationContext;
-import ru.tinkoff.kora.validation.Violation;
+import ru.tinkoff.kora.validation.common.ValidationContext;
+import ru.tinkoff.kora.validation.common.Violation;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Bar;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Foo;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Taz;
