@@ -19,7 +19,7 @@ public record ValidatorMeta(Type source, Validator validator, TypeElement source
         this(source,
             new Validator(
                 Type.ofName("ru.tinkoff.kora.validation.common.Validator", List.of(source)),
-                new Type(source.packageName, "$Validator_" + source.simpleName(), List.of(source))
+                new Type(source.packageName, "$" + source.simpleName()  + "_Validator", List.of(source))
             ),
             sourceElement, fields);
     }
