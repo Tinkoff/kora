@@ -6,7 +6,6 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.writeTo
 import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
@@ -17,7 +16,6 @@ import java.io.IOException
 import javax.annotation.processing.Generated
 
 @KspExperimental
-@KotlinPoetKspPreview
 class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironment) : BaseSymbolProcessor(environment) {
 
     data class ValidatorSpec(val meta: ValidatorMeta, val spec: TypeSpec, val parameterSpecs: List<ParameterSpec>)

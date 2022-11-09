@@ -1,9 +1,9 @@
 package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
-import org.jetbrains.annotations.Nullable;
 import ru.tinkoff.kora.validation.common.annotation.Size;
 import ru.tinkoff.kora.validation.common.annotation.Validated;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 @Validated

@@ -4,6 +4,9 @@ import ru.tinkoff.kora.validation.common.ValidatorFactory;
 
 import java.lang.annotation.*;
 
+/**
+ * Indicates that annotation is used for validation
+ */
 @Documented
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.ANNOTATION_TYPE})

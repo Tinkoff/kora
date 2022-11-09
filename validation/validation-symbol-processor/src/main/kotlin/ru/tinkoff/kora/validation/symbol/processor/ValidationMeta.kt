@@ -7,7 +7,6 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import kotlin.reflect.KClass
 
 data class ValidatorMeta(
@@ -49,8 +48,7 @@ data class Type(private val reference: KSTypeReference?, val packageName: String
     }
 
     @KspExperimental
-    @KotlinPoetKspPreview
-    fun asPoetType(nullable: Boolean = false): TypeName {
+        fun asPoetType(nullable: Boolean = false): TypeName {
         return if (generic.isEmpty()) {
             ClassName.bestGuess(canonicalName()).copy(nullable)
         } else {

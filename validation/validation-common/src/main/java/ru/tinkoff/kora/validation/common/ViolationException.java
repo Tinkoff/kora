@@ -1,20 +1,20 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.List;
 
-public class ViolationException extends RuntimeException {
+public final class ViolationException extends RuntimeException {
 
     private String _message;
     private final List<Violation> violations;
 
-    public ViolationException(@NotNull List<Violation> violations) {
+    public ViolationException(@Nonnull List<Violation> violations) {
         super();
         this.violations = violations;
     }
 
-    @NotNull
+    @Nonnull
     public List<Violation> getViolations() {
         return violations;
     }

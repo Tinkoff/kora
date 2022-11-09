@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Factory that is responsible for creating new {@link Validator<T>} implementations
@@ -8,6 +8,6 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 public interface ValidatorFactory<T> {
 
-    @NotNull
+    @Nonnull
     Validator<T> create();
 }

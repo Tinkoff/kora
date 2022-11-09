@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import ru.tinkoff.kora.validation.common.ValidationContext.Path;
 
 /**
@@ -11,12 +11,12 @@ public interface Violation {
     /**
      * @return failure message
      */
-    @NotNull
+    @Nonnull
     String message();
 
     /**
      * @return path for value where failure occurred
      */
-    @NotNull
+    @Nonnull
     Path path();
 }

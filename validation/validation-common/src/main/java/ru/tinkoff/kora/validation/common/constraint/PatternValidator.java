@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common.constraint;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import ru.tinkoff.kora.validation.common.ValidationContext;
 import ru.tinkoff.kora.validation.common.Validator;
 import ru.tinkoff.kora.validation.common.Violation;
@@ -17,9 +17,9 @@ final class PatternValidator<T extends CharSequence> implements Validator<T> {
         this.pattern = Pattern.compile(pattern, flags);
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public List<Violation> validate(T value, @NotNull ValidationContext context) {
+    public List<Violation> validate(T value, @Nonnull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Should match RegEx " + pattern + ", but was null"));
         } else if (!pattern.matcher(value).find()) {

@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common.constraint;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import ru.tinkoff.kora.validation.common.ValidationContext;
 import ru.tinkoff.kora.validation.common.Validator;
 import ru.tinkoff.kora.validation.common.Violation;
@@ -22,9 +22,9 @@ final class SizeMapValidator<K, V> implements Validator<Map<K, V>> {
         this.to = to;
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public List<Violation> validate(Map<K, V> value, @NotNull ValidationContext context) {
+    public List<Violation> validate(Map<K, V> value, @Nonnull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Size should be in range from '" + from + "' to '" + to + "', but value was null"));
         } else if (value.size() < from) {

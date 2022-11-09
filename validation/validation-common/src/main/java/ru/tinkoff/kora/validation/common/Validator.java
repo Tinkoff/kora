@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.List;
 
@@ -19,8 +19,8 @@ public interface Validator<T> {
      * @param context context of validation and its options {@link ValidationContext}
      * @return validation violations
      */
-    @NotNull
-    List<Violation> validate(@Nullable T value, @NotNull ValidationContext context);
+    @Nonnull
+    List<Violation> validate(@Nullable T value, @Nonnull ValidationContext context);
 
     /**
      * Validates value and return validation failures if occurred
@@ -28,7 +28,7 @@ public interface Validator<T> {
      * @param value to validate
      * @return validation violations
      */
-    @NotNull
+    @Nonnull
     default List<Violation> validate(@Nullable T value) {
         return validate(value, new SimpleValidationContext(SimpleValidationContext.SimpleFieldPath.ROOT, false));
     }
@@ -40,7 +40,7 @@ public interface Validator<T> {
      * @param context context of validation and its options {@link ValidationContext}
      * @throws ViolationException is thrown if any violations occur
      */
-    default void validateAndThrow(@Nullable T value, @NotNull ValidationContext context) throws ViolationException {
+    default void validateAndThrow(@Nullable T value, @Nonnull ValidationContext context) throws ViolationException {
         final List<Violation> violations = validate(value, context);
         if (!violations.isEmpty()) {
             throw new ViolationException(violations);

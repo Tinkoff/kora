@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common.constraint;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import ru.tinkoff.kora.validation.common.ValidationContext;
 import ru.tinkoff.kora.validation.common.Validator;
 import ru.tinkoff.kora.validation.common.Violation;
@@ -36,9 +36,9 @@ final class RangeBigDecimalValidator implements Validator<BigDecimal> {
         };
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public List<Violation> validate(BigDecimal value, @NotNull ValidationContext context) {
+    public List<Violation> validate(BigDecimal value, @Nonnull ValidationContext context) {
         if (value == null) {
             return List.of(context.violates("Should be in range from '" + from + "' to '" + to + "', but was null"));
         }
