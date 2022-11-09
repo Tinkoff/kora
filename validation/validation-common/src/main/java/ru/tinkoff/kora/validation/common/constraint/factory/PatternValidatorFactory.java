@@ -1,22 +1,22 @@
 package ru.tinkoff.kora.validation.common.constraint.factory;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import ru.tinkoff.kora.validation.common.Validator;
 import ru.tinkoff.kora.validation.common.ValidatorFactory;
 
 public interface PatternValidatorFactory<T> extends ValidatorFactory<T> {
 
-    @NotNull
+    @Nonnull
     @Override
     default Validator<T> create() {
         throw new UnsupportedOperationException("Doesn't support creation without Pattern!");
     }
 
-    @NotNull
+    @Nonnull
     default Validator<T> create(String pattern) {
         return create(pattern, 0);
     }
 
-    @NotNull
+    @Nonnull
     Validator<T> create(String pattern, int flags);
 }

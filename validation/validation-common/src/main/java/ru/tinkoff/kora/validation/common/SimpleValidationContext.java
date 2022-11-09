@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 record SimpleValidationContext(Path path, boolean isFailFast) implements ValidationContext {
 
@@ -40,13 +40,13 @@ record SimpleValidationContext(Path path, boolean isFailFast) implements Validat
 
     record SimpleBuilder(Path path, boolean failFast) implements ValidationContext.Builder {
 
-        @NotNull
+        @Nonnull
         @Override
         public Builder failFast(boolean isFailFast) {
             return new SimpleBuilder(path, isFailFast);
         }
 
-        @NotNull
+        @Nonnull
         @Override
         public ValidationContext build() {
             return new SimpleValidationContext(SimpleFieldPath.ROOT, failFast);

@@ -1,6 +1,6 @@
 package ru.tinkoff.kora.validation.common;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -11,9 +11,9 @@ import javax.annotation.concurrent.Immutable;
 public interface ValidationContext {
 
     /**
-     * @return path where violation occured
+     * @return path where violation occurred
      */
-    @NotNull
+    @Nonnull
     Path path();
 
     /**
@@ -21,12 +21,12 @@ public interface ValidationContext {
      */
     boolean isFailFast();
 
-    @NotNull
-    default ValidationContext addPath(@NotNull String path) {
+    @Nonnull
+    default ValidationContext addPath(@Nonnull String path) {
         return new SimpleValidationContext(path().add(path), isFailFast());
     }
 
-    @NotNull
+    @Nonnull
     default ValidationContext addPath(int pathIndex) {
         return new SimpleValidationContext(path().add(pathIndex), isFailFast());
     }
@@ -35,8 +35,8 @@ public interface ValidationContext {
      * @param message of violation
      * @return violation for current context
      */
-    @NotNull
-    default Violation violates(@NotNull String message) {
+    @Nonnull
+    default Violation violates(@Nonnull String message) {
         return new SimpleViolation(message, path());
     }
 
@@ -60,7 +60,7 @@ public interface ValidationContext {
          */
         Path root();
 
-        default Path add(@NotNull String field) {
+        default Path add(@Nonnull String field) {
             return new SimpleValidationContext.SimpleFieldPath(this, field);
         }
 
@@ -68,14 +68,14 @@ public interface ValidationContext {
             return new SimpleValidationContext.SimpleIndexPath(this, index);
         }
 
-        static Path of(@NotNull String path) {
+        static Path of(@Nonnull String path) {
             return new SimpleValidationContext.SimpleFieldPath(null, path);
         }
 
         /**
          * @return full path concatenated to string
          */
-        @NotNull
+        @Nonnull
         default String full() {
             return toString();
         }
@@ -90,10 +90,10 @@ public interface ValidationContext {
          * @param isFailFast {@link Boolean#TRUE} when should fail on first occurred violation
          * @return self
          */
-        @NotNull
+        @Nonnull
         Builder failFast(boolean isFailFast);
 
-        @NotNull
+        @Nonnull
         ValidationContext build();
     }
 }

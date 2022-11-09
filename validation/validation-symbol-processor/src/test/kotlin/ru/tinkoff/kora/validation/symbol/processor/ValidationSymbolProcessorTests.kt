@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.validation.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.validation.common.ValidationContext
@@ -12,7 +11,6 @@ import java.time.OffsetDateTime
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-@KotlinPoetKspPreview
 class ValidationSymbolProcessorTests : TestAppRunner() {
 
     @Test

@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.validation.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Assertions
 import ru.tinkoff.kora.application.graph.TypeRef
 import ru.tinkoff.kora.ksp.common.symbolProcess
@@ -12,7 +11,6 @@ import ru.tinkoff.kora.validation.symbol.processor.testdata.Foo
 import ru.tinkoff.kora.validation.symbol.processor.testdata.Taz
 
 @KspExperimental
-@KotlinPoetKspPreview
 open class TestAppRunner : Assertions(), ValidationModule {
 
     companion object {
