@@ -1,17 +1,15 @@
 package ru.tinkoff.kora.resilient.symbol.processor.aop
 
 import com.google.devtools.ksp.KspExperimental
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-@KotlinPoetKspPreview
 class CircuitBreakerFallbackTests : TestAppRunner() {
 
     @Test

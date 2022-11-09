@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.symbol.processor.aop
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import org.junit.jupiter.api.Assertions
 import ru.tinkoff.kora.aop.symbol.processor.AopSymbolProcessorProvider
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw
@@ -17,7 +16,6 @@ import java.util.function.Supplier
 import kotlin.reflect.KClass
 
 @KspExperimental
-@KotlinPoetKspPreview
 open class TestAppRunner : Assertions() {
 
     private data class ClassLoaderArguments(val processors: List<KClass<out SymbolProcessorProvider>>, val classes: List<KClass<*>>)

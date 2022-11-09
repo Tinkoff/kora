@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.resilient.symbol.processor.aop
 
 import com.google.devtools.ksp.KspExperimental
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -11,7 +10,6 @@ import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTar
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-@KotlinPoetKspPreview
 class CircuitBreakerTests : TestAppRunner() {
 
 
