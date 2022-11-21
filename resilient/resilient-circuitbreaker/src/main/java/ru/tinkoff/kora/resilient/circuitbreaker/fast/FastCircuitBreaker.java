@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.impl;
+package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +134,7 @@ record FastCircuitBreaker(
     public void acquire() throws CallNotPermittedException {
         if (!tryAcquire()) {
             throw new CallNotPermittedException("Call Is Not Permitted due to CircuitBreaker named '"
-                + name + "' been in " + getState(state.get()) + " state");
+                + name + "' been in " + getState(state.get()) + " state", name);
         }
     }
 

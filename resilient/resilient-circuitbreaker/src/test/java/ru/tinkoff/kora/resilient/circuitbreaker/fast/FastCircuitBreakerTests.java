@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.impl;
+package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
@@ -9,8 +9,6 @@ import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerFailurePredicate;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
-
-import static org.awaitility.Awaitility.await;
 
 class FastCircuitBreakerTests extends Assertions {
 

@@ -64,28 +64,26 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val annotation = method.annotations.asSequence().filter { a -> a.annotationType.resolve().toClassName().canonicalName == ANNOTATION_TYPE }.first()
         val circuitBreakerName = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "value" }.map { arg -> arg.value.toString() }.first()
-        val fallbackMethod = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "fallbackMethod" }.map { arg -> arg.value.toString() }.firstOrNull() ?: ""
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, fallbackMethod, superCall, circuitBreakerName, fieldManager)
+            buildBodyFlow(method, superCall, circuitBreakerName, fieldManager)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, fallbackMethod, superCall, circuitBreakerName, fieldManager)
+            buildBodySuspend(method, superCall, circuitBreakerName, fieldManager)
         } else {
-            buildBodySync(method, fallbackMethod, superCall, circuitBreakerName, fieldManager)
+            buildBodySync(method, superCall, circuitBreakerName, fieldManager)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, fallbackCall: String, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = if (fallbackCall.isEmpty()) CodeBlock.of("throw e")
-        else CodeBlock.of("return %L", buildMethodCall(method, fallbackCall))
+        val fallbackMethod = CodeBlock.of("throw e");
         return CodeBlock.builder().add(
             """
                       val circuitBreaker = %L["%L"]
@@ -106,11 +104,10 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, fallbackCall: String, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = if (fallbackCall.isEmpty()) CodeBlock.of("throw e")
-        else CodeBlock.of("return %L", buildMethodCall(method, fallbackCall))
+        val fallbackMethod = CodeBlock.of("throw e");
         return CodeBlock.builder().add(
             """
                       val circuitBreaker = %L["%L"]
@@ -131,13 +128,12 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, fallbackCall: String, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = if (fallbackCall.isEmpty()) CodeBlock.of("throw e;")
-        else CodeBlock.of("emitAll(%L)", buildMethodCall(method, fallbackCall))
+        val fallbackMethod = CodeBlock.of("throw e;");
         return CodeBlock.builder().add(
             """
                 val circuitBreaker = %L["%L"]

@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.impl;
+package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerFailurePredicate;
 

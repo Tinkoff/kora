@@ -1,17 +1,13 @@
-### Resilient
+## Resilient
 
-#### CircuitBreaker
+Предоставляет модули позволяющие использовать такие компоненты как: *CircuitBreaker, Fallback*.
+
+### CircuitBreaker
 
 CircuitBreaker – это прокси, который контролирует поток к запросам к конкретному методу, 
 может находиться в нескольких состояниях в зависимости от поведения (OPEN, CLOSED, HALF_OPEN).
 
-#### Dependency
-
-```groovy
-implementation 'ru.tinkoff.kora:resilient-circuitbreaker'
-```
-
-##### Конфигурация
+#### Конфигурация
 
 Существует *default* конфигурация, которая применяется к CircuitBreaker при создании 
 и затем применяются именованные настройки конкретного CircuitBreaker для переопределения дефолтов.
@@ -21,16 +17,14 @@ implementation 'ru.tinkoff.kora:resilient-circuitbreaker'
 Конфигурация *default* CircuitBreaker'а:
 ```hocon
 resilient {
-  circuitBreaker { 
-    fast {
-      default {
-        failureRateThreshold = 50
-        waitDurationInOpenState = 25s
-        permittedCallsInHalfOpenState = 10
-        slidingWindowSize = 100L
-        minimumRequiredCalls = 50L
-        failurePredicateName = "ru.tinkoff.kora.resilient.circuitbreaker.impl.FastCircuitBreakerFailurePredicate"
-      }
+  circuitbreaker { 
+    default {
+      failureRateThreshold = 50
+      waitDurationInOpenState = 25s
+      permittedCallsInHalfOpenState = 10
+      slidingWindowSize = 100L
+      minimumRequiredCalls = 50L
+      failurePredicateName = "ru.tinkoff.kora.resilient.circuitbreaker.fast.FastCircuitBreakerFailurePredicate"
     }
   }
 }
@@ -39,30 +33,11 @@ resilient {
 Пример переопределения именованных настроек для определенного CircuitBreaker'а:
 ```hocon
 resilient {
-  circuitBreaker { 
-    fast {
-      custom {
-        waitDurationInOpenState = 1s
-      }
+  circuitbreaker { 
+    custom {
+      waitDurationInOpenState = 1s
     }
   }
-}
-```
-
-###### Пример
-
-```java
-@Component
-public class Example {
-
-    @CircuitBreaker(value = "custom", fallbackMethod = "getFallback")
-    public String getValue() {
-        return "OK";
-    }
-
-    protected String getFallback() {
-        return "FALLBACK";
-    }
 }
 ```
 
@@ -72,15 +47,8 @@ public class Example {
 требуется имплементировать и зарегистрировать свой Bean в контексте и указать в конфигурации CircuitBreaker его имя.
 
 ```java
-package ru.tinkoff.kora;
-
 public final class SimpleCircuitBreakerFailurePredicate implements CircuitBreakerFailurePredicate {
 
-    @Override
-    public String name() {
-        return "MyName";
-    }
-    
     @Override
     public boolean test(Throwable throwable) {
         return true;
@@ -88,28 +56,41 @@ public final class SimpleCircuitBreakerFailurePredicate implements CircuitBreake
 }
 ```
 
-Конфигурация *default* CircuitBreaker'а:
+### Fallback
+
+#### Конфигурация
+
+Существует *default* конфигурация, которая применяется к Fallback при создании
+и затем применяются именованные настройки конкретного Fallback для переопределения дефолтов.
+
+Можно изменить дефолтные настройки для всех Fallback одновременно изменив *default* конфигурацию.
+
+Конфигурация *default* Fallback'а:
 ```hocon
 resilient {
-  circuitBreaker { 
-    fast {
-      default {
-        failurePredicateName = "MyName"
-      }
+  fallback { 
+    default {
+      failurePredicateName = "MyCustomPredicate"
     }
   }
 }
 ```
 
-#### AOP
+##### Exception Predicate
 
-Поддерживаемые типы возвращаемых методов.
+Пример имплементации:
+```java
+final class myFallbackFailurePredicate implements FallbackFailurePredicate {
 
-*Java*:
-- Sync
-- Project Reactor
+    @NotNull
+    @Override
+    public String name() {
+        return "MyCustomPredicate";
+    }
 
-*Kotlin*:
-- Sync
-- Suspend
-- Flow
+    @Override
+    public boolean test(@NotNull Throwable throwable) {
+        return true;
+    }
+}
+```

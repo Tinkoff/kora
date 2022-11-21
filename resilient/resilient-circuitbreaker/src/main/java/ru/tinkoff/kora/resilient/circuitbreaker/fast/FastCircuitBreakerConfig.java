@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.impl;
+package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerFailurePredicate;
 
@@ -8,16 +8,16 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.Map;
 
-public record FastCircuitBreakerConfig(@Nullable Map<String, NamedConfig> fast) {
+public record FastCircuitBreakerConfig(@Nullable Map<String, NamedConfig> circuitbreaker) {
 
     public static final String DEFAULT = "default";
 
     public NamedConfig getNamedConfig(@Nonnull String name) {
-        if (fast == null)
+        if (circuitbreaker == null)
             throw new IllegalStateException("CircuitBreaker no configuration is provided, but either '" + name + "' or '" + DEFAULT + "' config is required");
 
-        final NamedConfig defaultConfig = fast.get(DEFAULT);
-        final NamedConfig namedConfig = fast.getOrDefault(name, defaultConfig);
+        final NamedConfig defaultConfig = circuitbreaker.get(DEFAULT);
+        final NamedConfig namedConfig = circuitbreaker.getOrDefault(name, defaultConfig);
         if (namedConfig == null)
             throw new IllegalStateException("CircuitBreaker no configuration is provided, but either '" + name + "' or '" + DEFAULT + "' config is required");
 

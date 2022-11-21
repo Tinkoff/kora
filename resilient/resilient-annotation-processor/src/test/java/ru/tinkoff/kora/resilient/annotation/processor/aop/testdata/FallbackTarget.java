@@ -4,17 +4,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.common.Component;
-import ru.tinkoff.kora.resilient.circuitbreaker.annotation.CircuitBreaker;
+import ru.tinkoff.kora.resilient.fallback.annotation.Fallback;
 
 @Component
-public class CircuitBreakerFallbackTarget implements MockLifecycle {
+public class FallbackTarget implements MockLifecycle {
 
     public static final String VALUE = "OK";
     public static final String FALLBACK = "FALLBACK";
 
     public boolean alwaysFail = true;
 
-    @CircuitBreaker(value = "custom_fallback1", fallbackMethod = "getFallbackSync")
+    @Fallback(value = "custom_fallback1", method = "getFallbackSync()")
     public String getValueSync() {
         if (alwaysFail)
             throw new IllegalStateException("Failed");
@@ -26,7 +26,7 @@ public class CircuitBreakerFallbackTarget implements MockLifecycle {
         return FALLBACK;
     }
 
-    @CircuitBreaker(value = "custom_fallback2", fallbackMethod = "getFallbackMono")
+    @Fallback(value = "custom_fallback2", method = "getFallbackMono()")
     public Mono<String> getValueMono() {
         if (alwaysFail)
             return Mono.error(new IllegalStateException("Failed"));
@@ -38,7 +38,7 @@ public class CircuitBreakerFallbackTarget implements MockLifecycle {
         return Mono.just(FALLBACK);
     }
 
-    @CircuitBreaker(value = "custom_fallback3", fallbackMethod = "getFallbackFlux")
+    @Fallback(value = "custom_fallback3", method = "getFallbackFlux()")
     public Flux<String> getValueFlux() {
         if (alwaysFail)
             return Flux.error(new IllegalStateException("Failed"));

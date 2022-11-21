@@ -43,11 +43,6 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
         }
 
         final Optional<? extends AnnotationMirror> mirror = method.getAnnotationMirrors().stream().filter(a -> a.getAnnotationType().toString().equals(ANNOTATION_TYPE)).findFirst();
-        final String fallbackMethod = mirror.flatMap(a -> a.getElementValues().entrySet().stream()
-                .filter(e -> e.getKey().getSimpleName().contentEquals("fallbackMethod"))
-                .map(e -> String.valueOf(e.getValue().getValue())).findFirst()
-                .filter(v -> !v.isBlank()))
-            .orElse("");
         final String circuitBreakerName = mirror.flatMap(a -> a.getElementValues().entrySet().stream()
                 .filter(e -> e.getKey().getSimpleName().contentEquals("value"))
                 .map(e -> String.valueOf(e.getValue().getValue())).findFirst())
@@ -58,21 +53,19 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
 
         final CodeBlock body;
         if (MethodUtils.isMono(method, env)) {
-            body = buildBodyMono(method, fallbackMethod, superCall, circuitBreakerName, fieldManager);
+            body = buildBodyMono(method, superCall, circuitBreakerName, fieldManager);
         } else if (MethodUtils.isFlux(method, env)) {
-            body = buildBodyFlux(method, fallbackMethod, superCall, circuitBreakerName, fieldManager);
+            body = buildBodyFlux(method, superCall, circuitBreakerName, fieldManager);
         } else {
-            body = buildBodySync(method, fallbackMethod, superCall, circuitBreakerName, fieldManager);
+            body = buildBodySync(method, superCall, circuitBreakerName, fieldManager);
         }
 
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildBodySync(ExecutableElement method, String fallbackCall, String superCall, String circuitBreakerName, String fieldManager) {
+    private CodeBlock buildBodySync(ExecutableElement method, String superCall, String circuitBreakerName, String fieldManager) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final CodeBlock fallbackMethod = (fallbackCall.isEmpty())
-            ? CodeBlock.of("throw e;")
-            : CodeBlock.of("return $L;", buildMethodCall(method, fallbackCall));
+        final CodeBlock fallbackMethod = CodeBlock.of("throw e;");
         final String returnType = method.getReturnType().toString();
 
         return CodeBlock.builder().add("""
@@ -91,11 +84,9 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
             """, fieldManager, circuitBreakerName, returnType, superMethod.toString(), fallbackMethod.toString()).build();
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, String fallbackCall, String superCall, String circuitBreakerName, String fieldManager) {
+    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String circuitBreakerName, String fieldManager) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final CodeBlock fallbackMethod = (fallbackCall.isEmpty())
-            ? CodeBlock.of("return Mono.error(e);")
-            : CodeBlock.of("return $L;", buildMethodCall(method, fallbackCall).toString());
+        final CodeBlock fallbackMethod = CodeBlock.of("return Mono.error(e);");
         final TypeMirror erasure = MethodUtils.getGenericType(method.getReturnType()).orElseThrow();
 
         return CodeBlock.builder().add("""
@@ -115,11 +106,9 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
                  """, superMethod.toString(), fieldManager, circuitBreakerName, erasure.toString(), fallbackMethod.toString()).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, String fallbackCall, String superCall, String circuitBreakerName, String fieldManager) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String circuitBreakerName, String fieldManager) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final CodeBlock fallbackMethod = (fallbackCall.isEmpty())
-            ? CodeBlock.of("return Flux.error(e);")
-            : CodeBlock.of("return $L;", buildMethodCall(method, fallbackCall).toString());
+        final CodeBlock fallbackMethod = CodeBlock.of("return Flux.error(e);");
         final TypeMirror erasure = MethodUtils.getGenericType(method.getReturnType()).orElseThrow();
 
         return CodeBlock.builder().add("""

@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.impl;
+package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import com.typesafe.config.Config;
 import ru.tinkoff.kora.application.graph.All;
@@ -11,25 +11,24 @@ import ru.tinkoff.kora.resilient.circuitbreaker.telemetry.CircuitBreakerMetrics;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-public interface FastCircuitBreakerModule {
+public interface CircuitBreakerModule {
     default ConfigValueExtractor<FastCircuitBreakerConfig> fastCircuitBreakerConfigValueExtractor(ConfigValueExtractor<Map<String, FastCircuitBreakerConfig.NamedConfig>> extractor) {
         return new ObjectConfigValueExtractor<>() {
             @Override
             protected FastCircuitBreakerConfig extract(Config config) {
                 var fast = Map.<String, FastCircuitBreakerConfig.NamedConfig>of();
-                if (config.hasPath("fast")) {
-                    fast = extractor.extract(config.getValue("fast"));
+                if (config.hasPath("circuitbreaker")) {
+                    fast = extractor.extract(config.getValue("circuitbreaker"));
                 }
                 return new FastCircuitBreakerConfig(fast);
             }
         };
     }
 
-
     default FastCircuitBreakerConfig fastCircuitBreakerConfig(Config config, ConfigValueExtractor<FastCircuitBreakerConfig> extractor) {
-        return !config.hasPath("resilient.circuitBreaker")
+        return !config.hasPath("resilient")
             ? new FastCircuitBreakerConfig(Map.of())
-            : extractor.extract(config.getValue("resilient.circuitBreaker"));
+            : extractor.extract(config.getValue("resilient"));
     }
 
     default CircuitBreakerManager fastCircuitBreakerManager(FastCircuitBreakerConfig config,

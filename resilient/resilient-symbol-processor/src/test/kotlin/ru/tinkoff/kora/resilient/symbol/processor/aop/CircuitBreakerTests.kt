@@ -5,19 +5,29 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class CircuitBreakerTests : TestAppRunner() {
+class CircuitBreakerTests : CircuitBreakerRunner() {
 
+    private fun getService(graph: InitializedGraph): CircuitBreakerTarget {
+        val values = graph.graphDraw.nodes
+            .stream()
+            .map { node -> graph.refreshableGraph.get(node) }
+            .toList()
+
+        return values.asSequence()
+            .filter { a -> a is CircuitBreakerTarget }
+            .map { a -> a as CircuitBreakerTarget }
+            .first()
+    }
 
     @Test
     fun syncCircuitBreaker() {
         // given
-        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
-        val service = services.first
+        val graphDraw = createGraphDraw()
+        val service = getService(graphDraw)
 
         // when
         try {
@@ -39,8 +49,8 @@ class CircuitBreakerTests : TestAppRunner() {
     @Test
     fun suspendCircuitBreaker() {
         // given
-        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
-        val service = services.first
+        val graphDraw = createGraphDraw()
+        val service = getService(graphDraw)
 
         // when
         try {
@@ -62,8 +72,8 @@ class CircuitBreakerTests : TestAppRunner() {
     @Test
     fun flowCircuitBreaker() {
         // given
-        val services: Pair<CircuitBreakerTarget, CircuitBreakerFallbackTarget> = getServicesFromGraph()
-        val service = services.first
+        val graphDraw = createGraphDraw()
+        val service = getService(graphDraw)
 
         // when
         try {
