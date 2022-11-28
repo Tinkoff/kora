@@ -79,6 +79,7 @@ include(
     'scheduling:scheduling-annotation-processor',
     'scheduling:scheduling-ksp',
     'resilient:resilient-circuitbreaker',
+    'resilient:resilient-timeout',
     'resilient:resilient-fallback',
     'resilient:resilient-annotation-processor',
     'resilient:resilient-symbol-processor',
