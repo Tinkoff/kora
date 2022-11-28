@@ -1,2 +1,3 @@
 ru.tinkoff.kora.resilient.symbol.processor.aop.CircuitBreakerKoraAspectFactory
+ru.tinkoff.kora.resilient.symbol.processor.aop.TimeoutKoraAspectFactory
 ru.tinkoff.kora.resilient.symbol.processor.aop.FallbackKoraAspectFactory
