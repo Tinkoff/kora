@@ -9,7 +9,6 @@ import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotatio
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.AppWithConfig;
-import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerFallbackTarget;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerTarget;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.RetryableTarget;
 
@@ -26,7 +25,7 @@ public abstract class TestRunner extends Assertions {
 
     protected static InitializedGraph createGraphDraw() {
         if (GRAPH == null) {
-            GRAPH = createGraphDraw(AppWithConfig.class, CircuitBreakerTarget.class, CircuitBreakerFallbackTarget.class, RetryableTarget.class);
+            GRAPH = createGraphDraw(AppWithConfig.class, CircuitBreakerTarget.class, RetryableTarget.class);
         }
         return GRAPH;
     }

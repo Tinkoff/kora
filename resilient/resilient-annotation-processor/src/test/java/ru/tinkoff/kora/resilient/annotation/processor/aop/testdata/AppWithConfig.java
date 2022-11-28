@@ -4,6 +4,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import ru.tinkoff.kora.common.KoraApp;
 import ru.tinkoff.kora.config.common.ConfigModule;
+import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule;
 import ru.tinkoff.kora.resilient.retry.simple.RetryableModule;
 import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule;
 import ru.tinkoff.kora.resilient.fallback.simple.FallbackModule;

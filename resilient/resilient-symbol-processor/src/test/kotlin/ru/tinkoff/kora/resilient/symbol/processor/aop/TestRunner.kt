@@ -10,7 +10,6 @@ import ru.tinkoff.kora.config.ksp.processor.ConfigSourceSymbolProcessorProvider
 import ru.tinkoff.kora.kora.app.ksp.KoraAppProcessorProvider
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.AppWithConfig
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.RetryableTarget
 import java.util.function.Supplier
@@ -30,7 +29,6 @@ open class TestRunner : Assertions() {
             GRAPH = createGraphDraw(
                 AppWithConfig::class,
                 CircuitBreakerTarget::class,
-                CircuitBreakerFallbackTarget::class,
                 RetryableTarget::class
             )
         }
