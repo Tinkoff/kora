@@ -59,48 +59,52 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.TimeouterManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
+        val timeoutField = aspectContext.fieldFactory.constructorInitialized(
+            resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.Timeouter")!!.asType(listOf()),
+            CodeBlock.of("%L[%S]", fieldManager, timeoutName)
+        )
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, superCall, timeoutName, fieldManager)
+            buildBodyFlow(method, superCall, timeoutField)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, superCall, timeoutName, fieldManager)
+            buildBodySuspend(method, superCall, timeoutField)
         } else {
-            buildBodySync(method, superCall, timeoutName, fieldManager)
+            buildBodySync(method, superCall, timeoutField)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, superCall: String, timeoutName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, timeoutName: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
         val supplierMember = MemberName("java.util.function", "Supplier")
         return CodeBlock.builder().add(
             """
-            val _timeouter = %L["%L"]
+            val _timeouter = %L
             return _timeouter.execute(%M { %L })
-            """.trimIndent(), fieldManager, timeoutName, supplierMember, superMethod.toString()
+            """.trimIndent(), timeoutName, supplierMember, superMethod.toString()
         ).build()
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, timeoutName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, timeoutName: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
         val timeoutMember = MemberName("kotlinx.coroutines", "withTimeout")
         return CodeBlock.builder().add(
             """
-            val _timeouter = %L["%L"]
+            val _timeouter = %L
             return %M(_timeouter.timeout().toMillis()) {
                 %L
             }
-            """.trimIndent(), fieldManager, timeoutName, timeoutMember, superMethod.toString()
+            """.trimIndent(), timeoutName, timeoutMember, superMethod.toString()
         ).build()
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, timeoutName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, timeoutName: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
@@ -111,21 +115,21 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val superMethod = buildMethodCall(method, superCall)
         return CodeBlock.builder().add(
             """
-            val _timeouter = %L["%L"]
+            val _timeouter = %L
             val duration = _timeouter.timeout().nano
             val started = %M()
             return %M {
                 takeUnless {
                     val current = %M.nanoTime()
                     if (current - started.get() > duration) {
-                        throw %M("Timeout exceeded" + _timeouter.timeout())
+                        throw %M("Timeout exceeded " + _timeouter.timeout())
                     } else {
                         false
                     }
                 }
                 %M(%L)
             }.%M{ started.set(%M.nanoTime()) }
-            """.trimIndent(), fieldManager, timeoutName, atomicMember, flowMember, systemMember,
+            """.trimIndent(), timeoutName, atomicMember, flowMember, systemMember,
             timeoutMember, emitMember, superMethod.toString(), startMember, systemMember
         ).build()
     }

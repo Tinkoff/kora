@@ -22,7 +22,7 @@ public class TimeoutTarget implements MockLifecycle {
         }
     }
 
-    @Timeout("custom2")
+    @Timeout("custom1")
     public Mono<String> getValueMono() {
         return Mono.fromCallable(() -> "OK")
             .delayElement(Duration.ofSeconds(2));
