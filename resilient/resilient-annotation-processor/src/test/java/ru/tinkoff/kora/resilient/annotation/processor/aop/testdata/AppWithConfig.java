@@ -6,9 +6,10 @@ import ru.tinkoff.kora.common.KoraApp;
 import ru.tinkoff.kora.config.common.ConfigModule;
 import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule;
 import ru.tinkoff.kora.resilient.fallback.simple.FallbackModule;
+import ru.tinkoff.kora.resilient.timeout.simple.TimeoutModule;
 
 @KoraApp
-public interface AppWithConfig extends CircuitBreakerModule, FallbackModule, ConfigModule {
+public interface AppWithConfig extends CircuitBreakerModule, FallbackModule, TimeoutModule, ConfigModule {
 
     @Override
     default Config config() {
@@ -22,6 +23,11 @@ public interface AppWithConfig extends CircuitBreakerModule, FallbackModule, Con
                       failureRateThreshold = 100
                       permittedCallsInHalfOpenState = 1
                       waitDurationInOpenState = 1s
+                    }
+                  }
+                  timeout {
+                    default {
+                      duration = 1s
                     }
                   }
                 }
