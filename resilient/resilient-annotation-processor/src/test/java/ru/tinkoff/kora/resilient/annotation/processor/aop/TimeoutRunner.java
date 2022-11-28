@@ -9,7 +9,6 @@ import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotatio
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.AppWithConfig;
-import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerTarget;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.TimeoutTarget;
 
 import java.lang.reflect.Constructor;

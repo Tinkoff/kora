@@ -1,9 +1,11 @@
 package ru.tinkoff.kora.resilient.retry.simple;
 
-import ru.tinkoff.kora.resilient.retry.*;
+import ru.tinkoff.kora.resilient.retry.Retrier;
+import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
+import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
+import ru.tinkoff.kora.resilient.retry.RetryException;
 
 import javax.annotation.Nonnull;
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 

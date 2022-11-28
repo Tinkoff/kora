@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.fast;
+package ru.tinkoff.kora.resilient.circuitbreaker.simple;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

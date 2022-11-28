@@ -9,7 +9,7 @@ import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import java.time.Duration;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RetryableTests extends TestRunner {
+class RetryableTests extends RetryableRunner {
 
     private RetryableTarget getService(InitializedGraph graph) {
         var values = graph.graphDraw().getNodes()

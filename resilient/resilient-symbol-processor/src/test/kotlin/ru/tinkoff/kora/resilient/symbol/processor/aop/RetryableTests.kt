@@ -11,7 +11,7 @@ import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.RetryableTarget
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class RetryableTests : TestRunner() {
+class RetryableTests : RetryableRunner() {
 
     private fun getService(graph: InitializedGraph): RetryableTarget {
         val values = graph.graphDraw.nodes

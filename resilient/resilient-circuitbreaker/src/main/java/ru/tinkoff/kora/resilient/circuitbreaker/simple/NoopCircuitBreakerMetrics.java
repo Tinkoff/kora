@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.fast;
+package ru.tinkoff.kora.resilient.circuitbreaker.simple;
 
 import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker;
 import ru.tinkoff.kora.resilient.circuitbreaker.telemetry.CircuitBreakerMetrics;

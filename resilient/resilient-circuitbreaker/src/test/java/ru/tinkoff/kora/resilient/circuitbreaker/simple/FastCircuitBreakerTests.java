@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.fast;
+package ru.tinkoff.kora.resilient.circuitbreaker.simple;
 
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;

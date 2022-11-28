@@ -30,7 +30,7 @@ resilient {
       permittedCallsInHalfOpenState = 10
       slidingWindowSize = 100L
       minimumRequiredCalls = 50L
-      failurePredicateName = "ru.tinkoff.kora.resilient.circuitbreaker.fast.FastCircuitBreakerFailurePredicate"
+      failurePredicateName = "ru.tinkoff.kora.resilient.circuitbreaker.simple.FastCircuitBreakerFailurePredicate"
     }
   }
 }

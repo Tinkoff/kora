@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.circuitbreaker.fast;
+package ru.tinkoff.kora.resilient.circuitbreaker.simple;
 
 import com.typesafe.config.Config;
 import ru.tinkoff.kora.application.graph.All;

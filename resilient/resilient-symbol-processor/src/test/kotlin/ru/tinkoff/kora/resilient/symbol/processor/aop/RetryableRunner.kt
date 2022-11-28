@@ -16,7 +16,7 @@ import java.util.function.Supplier
 import kotlin.reflect.KClass
 
 @KspExperimental
-open class TestRunner : Assertions() {
+open class RetryableRunner : Assertions() {
 
     companion object {
         var GRAPH: InitializedGraph? = null
