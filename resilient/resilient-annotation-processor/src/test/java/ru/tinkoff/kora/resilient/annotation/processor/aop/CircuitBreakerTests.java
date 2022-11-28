@@ -2,31 +2,28 @@ package ru.tinkoff.kora.resilient.annotation.processor.aop;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerTarget;
+import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.*;
 import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException;
 
 import java.time.Duration;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CircuitBreakerTests extends CircuitBreakerRunner {
+class CircuitBreakerTests extends AppRunner {
 
-    private CircuitBreakerTarget getService(InitializedGraph graph) {
-        var values = graph.graphDraw().getNodes()
-            .stream()
-            .map(graph.refreshableGraph()::get)
-            .toList();
+    private CircuitBreakerTarget getService() {
+        final InitializedGraph graph = getGraph(AppWithConfig.class,
+            CircuitBreakerTarget.class,
+            RetryableTarget.class,
+            TimeoutTarget.class,
+            FallbackTarget.class);
 
-        return values.stream()
-            .filter(a -> a instanceof CircuitBreakerTarget)
-            .map(a -> ((CircuitBreakerTarget) a))
-            .findFirst().orElseThrow();
+        return getServiceFromGraph(graph, CircuitBreakerTarget.class);
     }
 
     @Test
     void syncCircuitBreaker() {
         // given
-        var graphDraw = createGraphDraw();
-        final CircuitBreakerTarget service = getService(graphDraw);
+        final CircuitBreakerTarget service = getService();
 
         // when
         try {
@@ -48,8 +45,7 @@ class CircuitBreakerTests extends CircuitBreakerRunner {
     @Test
     void monoCircuitBreaker() {
         // given
-        var graphDraw = createGraphDraw();
-        final CircuitBreakerTarget service = getService(graphDraw);
+        final CircuitBreakerTarget service = getService();
 
         // when
         try {
@@ -71,8 +67,7 @@ class CircuitBreakerTests extends CircuitBreakerRunner {
     @Test
     void fluxCircuitBreaker() {
         // given
-        var graphDraw = createGraphDraw();
-        final CircuitBreakerTarget service = getService(graphDraw);
+        final CircuitBreakerTarget service = getService();
 
         // when
         try {

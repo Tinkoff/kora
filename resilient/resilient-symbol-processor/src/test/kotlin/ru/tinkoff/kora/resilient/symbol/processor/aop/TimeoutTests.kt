@@ -6,38 +6,38 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.TimeoutTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 import ru.tinkoff.kora.resilient.timeout.TimeoutException
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class TimeoutTests : TimeoutRunner() {
+class TimeoutTests : AppRunner() {
 
-    private fun getService(graph: InitializedGraph): TimeoutTarget {
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
+    private inline fun <reified T> getService(): T {
+        val graph = getGraphForApp(
+            AppWithConfig::class,
+            listOf(
+                CircuitBreakerTarget::class,
+                FallbackTarget::class,
+                RetryableTarget::class,
+                TimeoutTarget::class,
+            )
+        )
 
-        return values.asSequence()
-            .filter { a -> a is TimeoutTarget }
-            .map { a -> a as TimeoutTarget }
-            .first()
+        return getServiceFromGraph(graph)
     }
 
     @Test
     fun syncTimeout() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<TimeoutTarget>()
         assertThrows(TimeoutException::class.java) { service.getValueSync() }
     }
 
     @Test
     fun suspendTimeout() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<TimeoutTarget>()
 
         // then
         assertThrows(TimeoutCancellationException::class.java) { runBlocking { service.getValueSuspend() } }
@@ -46,8 +46,7 @@ class TimeoutTests : TimeoutRunner() {
     @Test
     fun flowTimeout() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<TimeoutTarget>()
 
         // when
         assertThrows(TimeoutException::class.java) { runBlocking { service.getValueFLow().first() } }

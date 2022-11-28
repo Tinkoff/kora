@@ -76,7 +76,7 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
     private fun buildBodySync(
         method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fallbackName: String, fieldManager: String
     ): CodeBlock {
-        if(method.isVoid()) {
+        if (method.isVoid()) {
             val runnableMember = MemberName("java.lang", "Runnable")
             val superMethod = buildMethodCall(method, superCall)
             return CodeBlock.builder().add(
@@ -91,7 +91,7 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
         val superMethod = buildMethodSupplier(method, superCall)
         val fallbackSupplier = CodeBlock.of("%M { %L }", supplierMember, fallbackCall.call())
         return CodeBlock.builder().add(
-                  """
+            """
                   val _fallbacker = %L.get("%L")
                   return _fallbacker.fallback(%L, %L)
                   """.trimIndent(), fieldManager, fallbackName, superMethod.toString(), fallbackSupplier
@@ -102,9 +102,9 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
         method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fallbackName: String, fieldManager: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
-        val prefix = if(method.isVoid()) "" else "return "
+        val prefix = if (method.isVoid()) "" else "return "
         return CodeBlock.builder().add(
-                """
+            """
                 val _fallbacker = %L.get("%L")
                 ${prefix}try {
                     %L
@@ -127,7 +127,7 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
         val superMethod = buildMethodCall(method, superCall)
         return CodeBlock.builder().add(
-                """
+            """
                 val _fallbacker = %L["%L"]
 
                 return %M {

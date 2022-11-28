@@ -5,29 +5,30 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class CircuitBreakerTests : CircuitBreakerRunner() {
+class CircuitBreakerTests : AppRunner() {
 
-    private fun getService(graph: InitializedGraph): CircuitBreakerTarget {
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
+    private inline fun <reified T> getService(): T {
+        val graph = getGraphForApp(
+            AppWithConfig::class,
+            listOf(
+                CircuitBreakerTarget::class,
+                FallbackTarget::class,
+                RetryableTarget::class,
+                TimeoutTarget::class,
+            )
+        )
 
-        return values.asSequence()
-            .filter { a -> a is CircuitBreakerTarget }
-            .map { a -> a as CircuitBreakerTarget }
-            .first()
+        return getServiceFromGraph(graph)
     }
 
     @Test
     fun syncCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<CircuitBreakerTarget>()
 
         // when
         try {
@@ -49,8 +50,7 @@ class CircuitBreakerTests : CircuitBreakerRunner() {
     @Test
     fun suspendCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<CircuitBreakerTarget>()
 
         // when
         try {
@@ -72,8 +72,7 @@ class CircuitBreakerTests : CircuitBreakerRunner() {
     @Test
     fun flowCircuitBreaker() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<CircuitBreakerTarget>()
 
         // when
         try {

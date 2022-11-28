@@ -8,24 +8,24 @@ import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.aop.symbol.processor.AopSymbolProcessorProvider
 import ru.tinkoff.kora.ksp.common.CompilationErrorException
 import ru.tinkoff.kora.ksp.common.symbolProcess
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.FallbackIllegalArgumentTarget
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.FallbackIllegalSignatureTarget
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.FallbackTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class FallbackTests : FallbackRunner() {
+class FallbackTests : AppRunner() {
 
-    private fun getService(graph: InitializedGraph): FallbackTarget {
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
+    private inline fun <reified T> getService(): T {
+        val graph = getGraphForApp(
+            AppWithConfig::class,
+            listOf(
+                CircuitBreakerTarget::class,
+                FallbackTarget::class,
+                RetryableTarget::class,
+                TimeoutTarget::class,
+            )
+        )
 
-        return values.asSequence()
-            .filter { a -> a is FallbackTarget }
-            .map { a -> (a as FallbackTarget) }
-            .first()
+        return getServiceFromGraph(graph)
     }
 
     @Test
@@ -45,8 +45,7 @@ class FallbackTests : FallbackRunner() {
     @Test
     fun voidFallback() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<FallbackTarget>()
         assertEquals(FallbackTarget.VoidState.NONE, service.voidState)
         service.alwaysFail = false
 
@@ -63,8 +62,7 @@ class FallbackTests : FallbackRunner() {
     @Test
     fun syncFallback() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<FallbackTarget>()
         service.alwaysFail = false
 
         // when
@@ -78,8 +76,7 @@ class FallbackTests : FallbackRunner() {
     @Test
     fun monoFallback() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<FallbackTarget>()
         service.alwaysFail = false
 
         // when
@@ -93,8 +90,7 @@ class FallbackTests : FallbackRunner() {
     @Test
     fun fluxFallback() {
         // given
-        val graphDraw = createGraphDraw()
-        val service = getService(graphDraw)
+        val service = getService<FallbackTarget>()
         service.alwaysFail = false
 
         // when

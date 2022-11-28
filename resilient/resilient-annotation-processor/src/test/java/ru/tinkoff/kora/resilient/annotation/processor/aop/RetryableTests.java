@@ -3,30 +3,28 @@ package ru.tinkoff.kora.resilient.annotation.processor.aop;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.RetryableTarget;
+import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.*;
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 
 import java.time.Duration;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RetryableTests extends RetryableRunner {
+class RetryableTests extends AppRunner {
 
-    private RetryableTarget getService(InitializedGraph graph) {
-        var values = graph.graphDraw().getNodes()
-            .stream()
-            .map(graph.refreshableGraph()::get)
-            .toList();
+    private RetryableTarget getService() {
+        final InitializedGraph graph = getGraph(AppWithConfig.class,
+            CircuitBreakerTarget.class,
+            RetryableTarget.class,
+            TimeoutTarget.class,
+            FallbackTarget.class);
 
-        return values.stream()
-            .filter(a -> a instanceof RetryableTarget)
-            .map(a -> ((RetryableTarget) a))
-            .findFirst().orElseThrow();
+        return getServiceFromGraph(graph, RetryableTarget.class);
     }
 
     private static final int RETRY_SUCCESS = 1;
     private static final int RETRY_FAIL = 5;
 
-    private final RetryableTarget retryableTarget = getService(createGraphDraw());
+    private final RetryableTarget retryableTarget = getService();
 
     @BeforeEach
     void setup() {

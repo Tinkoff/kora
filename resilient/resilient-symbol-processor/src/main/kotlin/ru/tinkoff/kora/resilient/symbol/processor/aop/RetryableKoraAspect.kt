@@ -61,8 +61,10 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.RetrierManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
         val retrierType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.Retrier")!!.asType(listOf())
-        val fieldRetrier = aspectContext.fieldFactory.constructorInitialized(retrierType,
-        CodeBlock.of("%L[%S]", fieldManager, retryableName))
+        val fieldRetrier = aspectContext.fieldFactory.constructorInitialized(
+            retrierType,
+            CodeBlock.of("%L[%S]", fieldManager, retryableName)
+        )
 
         val body = if (method.isFlow()) {
             buildBodyFlow(method, superCall, fieldRetrier)

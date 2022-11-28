@@ -7,28 +7,30 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.RetryableTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class RetryableTests : RetryableRunner() {
+class RetryableTests : AppRunner() {
 
-    private fun getService(graph: InitializedGraph): RetryableTarget {
-        val values = graph.graphDraw.nodes
-            .stream()
-            .map { node -> graph.refreshableGraph.get(node) }
-            .toList()
+    private inline fun <reified T> getService(): T {
+        val graph = getGraphForApp(
+            AppWithConfig::class,
+            listOf(
+                CircuitBreakerTarget::class,
+                FallbackTarget::class,
+                RetryableTarget::class,
+                TimeoutTarget::class,
+            )
+        )
 
-        return values.stream()
-            .filter { a -> a is RetryableTarget }
-            .map { a -> a as RetryableTarget }
-            .findFirst().orElseThrow()
+        return getServiceFromGraph(graph)
     }
 
     private val RETRY_SUCCESS = 1
     private val RETRY_FAIL = 5
 
-    private val retryableTarget = getService(createGraphDraw())
+    private val retryableTarget = getService<RetryableTarget>()
 
     @BeforeEach
     fun setup() {

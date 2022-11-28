@@ -47,7 +47,7 @@ public class RetryableKoraAspect implements KoraAspect {
         var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.RetrierManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
         var retrierType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.Retrier"));
-        var fieldRetrier= aspectContext.fieldFactory().constructorInitialized(retrierType,
+        var fieldRetrier = aspectContext.fieldFactory().constructorInitialized(retrierType,
             CodeBlock.of("$L.get($S);", fieldManager, retryableName));
 
         final CodeBlock body;
