@@ -5,8 +5,14 @@ import reactor.util.retry.Retry;
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
+/**
+ * Retry executor implementation
+ */
 public interface Retrier {
 
+    /**
+     * Retry State implementation for manual retry execution handling
+     */
     interface RetryState {
 
         boolean canRetry(@Nonnull Throwable throwable);
@@ -18,9 +24,15 @@ public interface Retrier {
         void doDelay();
     }
 
+    /**
+     * @return new {@link RetryState}
+     */
     @Nonnull
     RetryState asState();
 
+    /**
+     * @return new {@link Retry} implementation for Project Reactor retry handling
+     */
     @Nonnull
     Retry asReactor();
 

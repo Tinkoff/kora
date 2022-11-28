@@ -46,43 +46,46 @@ public class RetryableKoraAspect implements KoraAspect {
 
         var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.RetrierManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
+        var retrierType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.Retrier"));
+        var fieldRetrier= aspectContext.fieldFactory().constructorInitialized(retrierType,
+            CodeBlock.of("$L.get($S);", fieldManager, retryableName));
 
         final CodeBlock body;
         if (MethodUtils.isMono(method, env)) {
-            body = buildBodyMono(method, superCall, retryableName, fieldManager);
+            body = buildBodyMono(method, superCall, fieldRetrier);
         } else if (MethodUtils.isFlux(method, env)) {
-            body = buildBodyFlux(method, superCall, retryableName, fieldManager);
+            body = buildBodyFlux(method, superCall, fieldRetrier);
         } else {
-            body = buildBodySync(method, superCall, retryableName, fieldManager);
+            body = buildBodySync(method, superCall, fieldRetrier);
         }
 
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildBodySync(ExecutableElement method, String superCall, String retryableName, String fieldManager) {
+    private CodeBlock buildBodySync(ExecutableElement method, String superCall, String retryableName) {
         final CodeBlock retrierExecution = CodeBlock.of("retry($L)", buildMethodCallable(method, superCall));
         final String returnPrefix = MethodUtils.isVoid(method)
             ? ""
             : "return ";
 
         return CodeBlock.builder().add("""
-            var _retrier = $L.get("$L");
+            var _retrier = $L;
             $L_retrier.$L;
-            """, fieldManager, retryableName, returnPrefix, retrierExecution).build();
+            """, retryableName, returnPrefix, retrierExecution).build();
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String retryableName, String fieldManager) {
+    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String retryableName) {
         return CodeBlock.builder().add("""
-            var _retrier = $L.get("$L");
+            var _retrier = $L;
             return $L.retryWhen(_retrier.asReactor());
-            """, fieldManager, retryableName, buildMethodCall(method, superCall)).build();
+            """, retryableName, buildMethodCall(method, superCall)).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String retryableName, String fieldManager) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String retryableName) {
         return CodeBlock.builder().add("""
-            var _retrier = $L.get("$L");
+            var _retrier = $L;
             return $L.retryWhen(_retrier.asReactor());
-            """, fieldManager, retryableName, buildMethodCall(method, superCall)).build();
+            """, retryableName, buildMethodCall(method, superCall)).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {

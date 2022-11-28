@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 record SimpleRetrierRetryState(
     long started,
     long delayNanos,
-    long delayMaxNanos,
     long delayStepNanos,
     long attemptsMax,
     RetrierFailurePredicate failurePredicate,
@@ -19,22 +18,7 @@ record SimpleRetrierRetryState(
 
     @Override
     public long getDelayNanos() {
-        if (delayMaxNanos == 0) {
-            return delayNanos + delayStepNanos * attempts.get();
-        } else {
-            final long spent = System.nanoTime() - started;
-            if (spent >= delayMaxNanos) {
-                return 0;
-            }
-
-            long nextDelayNanos = delayNanos + delayStepNanos * (attempts.get() - 1);
-            final long diff = delayMaxNanos - spent;
-            if (nextDelayNanos > diff) {
-                nextDelayNanos = diff;
-            }
-
-            return nextDelayNanos;
-        }
+        return delayNanos + delayStepNanos * attempts.get();
     }
 
     @Override
@@ -43,16 +27,7 @@ record SimpleRetrierRetryState(
             return false;
         }
 
-        if (attempts.incrementAndGet() > attemptsMax) {
-            return false;
-        }
-
-        if (delayMaxNanos == 0) {
-            return true;
-        } else {
-            final long spent = System.nanoTime() - started;
-            return spent < delayMaxNanos;
-        }
+        return attempts.incrementAndGet() <= attemptsMax;
     }
 
     @Override
@@ -65,13 +40,6 @@ record SimpleRetrierRetryState(
 
         if (attempts.incrementAndGet() > attemptsMax) {
             throw new RetryAttemptException("All '" + attemptsMax + "' attempts elapsed during retry");
-        }
-
-        if (delayMaxNanos != 0) {
-            final long spent = System.nanoTime() - started;
-            if (spent >= delayMaxNanos) {
-                throw new RetryTimeoutException("Max Delay '" + Duration.ofNanos(delayMaxNanos) + "' elapsed on '" + attempts.get() + "' attempt during retry");
-            }
         }
     }
 

@@ -16,26 +16,25 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 record SimpleRetrier(long delayNanos,
-                     long delayMaxNanos,
                      long delayStepNanos,
                      long attempts,
                      RetrierFailurePredicate failurePredicate,
                      ExecutorService executor) implements Retrier {
 
     public SimpleRetrier(SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, ExecutorService executors) {
-        this(config.delay().toNanos(), config.delayMax().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, executors);
+        this(config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, executors);
     }
 
     @Nonnull
     @Override
     public RetryState asState() {
-        return new SimpleRetrierRetryState(System.nanoTime(), delayNanos, delayMaxNanos, delayStepNanos, attempts, failurePredicate, new AtomicInteger(0));
+        return new SimpleRetrierRetryState(System.nanoTime(), delayNanos, delayStepNanos, attempts, failurePredicate, new AtomicInteger(0));
     }
 
     @Nonnull
     @Override
     public Retry asReactor() {
-        return new SimpleReactorRetry(delayNanos, delayMaxNanos, delayStepNanos, attempts, failurePredicate);
+        return new SimpleReactorRetry(delayNanos, delayStepNanos, attempts, failurePredicate);
     }
 
     @Override
@@ -57,9 +56,7 @@ record SimpleRetrier(long delayNanos,
         var counter = asState();
         for (long i = 0; i < attempts; i++) {
             try {
-                return (delayMaxNanos == 0)
-                    ? consumer.apply(executor).get()
-                    : consumer.apply(executor).get(delayMaxNanos, TimeUnit.NANOSECONDS);
+                return consumer.apply(executor).get(1, TimeUnit.HOURS);
             } catch (Throwable e) {
                 counter.checkRetry(e);
                 counter.doDelay();

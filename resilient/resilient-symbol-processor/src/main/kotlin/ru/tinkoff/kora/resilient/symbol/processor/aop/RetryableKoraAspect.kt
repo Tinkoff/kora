@@ -60,40 +60,43 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.RetrierManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
+        val retrierType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.Retrier")!!.asType(listOf())
+        val fieldRetrier = aspectContext.fieldFactory.constructorInitialized(retrierType,
+        CodeBlock.of("%L[%S]", fieldManager, retryableName))
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, superCall, retryableName, fieldManager)
+            buildBodyFlow(method, superCall, fieldRetrier)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, superCall, retryableName, fieldManager)
+            buildBodySuspend(method, superCall, fieldRetrier)
         } else {
-            buildBodySync(method, superCall, retryableName, fieldManager)
+            buildBodySync(method, superCall, fieldRetrier)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, retrierName: String
     ): CodeBlock {
         return if (method.isVoid()) {
             CodeBlock.of(
                 """
-                        val _retrier = %L[%S]
+                        val _retrier = %L
                         _retrier.retry { %L }
-                        """.trimIndent(), fieldManager, retrierName, buildMethodCall(method, superCall)
+                        """.trimIndent(), retrierName, buildMethodCall(method, superCall)
             )
         } else {
             CodeBlock.of(
                 """
-                    val _retrier = %L[%S]
+                    val _retrier = %L
                     return _retrier.retry(%L)
-                    """.trimIndent(), fieldManager, retrierName, buildMethodSupplier(method, superCall)
+                    """.trimIndent(), retrierName, buildMethodSupplier(method, superCall)
             )
         }
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, retrierName: String
     ): CodeBlock {
         val delayMember = MemberName("kotlinx.coroutines", "delay")
         val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
@@ -101,7 +104,7 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         return if (method.isVoid()) {
             CodeBlock.of(
                 """
-                val _retrier = %L[%S]
+                val _retrier = %L
                 val _state = _retrier.asState()
                 
                 while (true) {
@@ -112,12 +115,12 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                         %M(_state.delayNanos.%M)
                     }
                 }
-                """.trimIndent(), fieldManager, retrierName, buildMethodCall(method, superCall), delayMember, timeMember
+                """.trimIndent(), retrierName, buildMethodCall(method, superCall), delayMember, timeMember
             )
         } else {
             CodeBlock.of(
                 """
-                val _retrier = %L[%S]
+                val _retrier = %L
                 val _state = _retrier.asState()
                 
                 while (true) {
@@ -128,13 +131,13 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                         %M(_state.delayNanos.%M)
                     }
                 }
-                """.trimIndent(), fieldManager, retrierName, buildMethodCall(method, superCall), delayMember, timeMember
+                """.trimIndent(), retrierName, buildMethodCall(method, superCall), delayMember, timeMember
             )
         }
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, retrierName: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
@@ -144,7 +147,7 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
         return CodeBlock.builder().add(
             """
-            val _retrier = %L[%S]
+            val _retrier = %L
             
             return %M {
                 val _state = _retrier.asState()
@@ -156,8 +159,7 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                     }
                 )
             }
-            """.trimIndent(), fieldManager, retrierName,
-            flowMember, emitMember, buildMethodCall(method, superCall), retryMember, delayMember, timeMember
+            """.trimIndent(), retrierName, flowMember, emitMember, buildMethodCall(method, superCall), retryMember, delayMember, timeMember
         ).build()
     }
 

@@ -108,6 +108,7 @@ public class AopAnnotationProcessor extends AbstractKoraProcessor {
                 typeSpec = this.aopProcessor.applyAspects(te);
             } catch (ProcessingErrorException e) {
                 e.printError(this.processingEnv);
+                processedClasses.add(ctp);
                 continue;
             }
 

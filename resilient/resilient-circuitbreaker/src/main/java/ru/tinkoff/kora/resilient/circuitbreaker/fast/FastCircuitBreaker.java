@@ -2,15 +2,13 @@ package ru.tinkoff.kora.resilient.circuitbreaker.fast;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException;
-import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker;
-import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerFailurePredicate;
+import ru.tinkoff.kora.resilient.circuitbreaker.*;
 import ru.tinkoff.kora.resilient.circuitbreaker.telemetry.CircuitBreakerMetrics;
 
 import javax.annotation.Nonnull;
 import java.time.Clock;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  * --------------------------------------------------------------------------------------------------
@@ -66,19 +64,19 @@ record FastCircuitBreaker(
     }
 
     @Override
-    public <T> T accept(@Nonnull Supplier<T> supplier) {
-        return internalAccept(supplier, null);
+    public <T> T accept(@Nonnull Callable<T> callable) {
+        return internalAccept(callable, null);
     }
 
     @Override
-    public <T> T accept(@Nonnull Supplier<T> supplier, @Nonnull Supplier<T> fallback) {
-        return internalAccept(supplier, fallback);
+    public <T> T accept(@Nonnull Callable<T> callable, @Nonnull Callable<T> fallback) {
+        return internalAccept(callable, fallback);
     }
 
-    private <T> T internalAccept(@Nonnull Supplier<T> supplier, Supplier<T> fallback) {
+    private <T> T internalAccept(@Nonnull Callable<T> supplier, Callable<T> fallback) {
         try {
             acquire();
-            var t = supplier.get();
+            var t = supplier.call();
             releaseOnSuccess();
             return t;
         } catch (CallNotPermittedException e) {
@@ -86,10 +84,14 @@ record FastCircuitBreaker(
                 throw e;
             }
 
-            return fallback.get();
+            try {
+                return fallback.call();
+            } catch (Exception ex) {
+                throw new CallFallbackException(ex, name);
+            }
         } catch (Exception e) {
             releaseOnError(e);
-            throw e;
+            throw new CallException(e, name);
         }
     }
 

@@ -7,6 +7,7 @@ import ru.tinkoff.kora.config.common.ConfigModule
 import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule
 import ru.tinkoff.kora.resilient.fallback.simple.FallbackModule
 import ru.tinkoff.kora.resilient.timeout.simple.TimeoutModule
+import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule
 import ru.tinkoff.kora.resilient.circuitbreaker.impl.FastCircuitBreakerModule
 import ru.tinkoff.kora.resilient.retry.simple.RetryableModule
 
@@ -34,7 +35,6 @@ interface AppWithConfig : CircuitBreakerModule, FallbackModule, TimeoutModule, R
                   retry {
                     default {
                       delay = "100ms"
-                      delayMax = "350ms"
                       attempts = 2
                     }
                   }

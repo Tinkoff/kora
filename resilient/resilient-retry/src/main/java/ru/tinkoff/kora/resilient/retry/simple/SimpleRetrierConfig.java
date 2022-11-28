@@ -39,7 +39,6 @@ public record SimpleRetrierConfig(@Nullable Map<String, NamedConfig> retryable) 
 
         return new NamedConfig(
             namedConfig.delay == null ? defaultConfig.delay : namedConfig.delay,
-            namedConfig.delayMax == null ? defaultConfig.delayMax : namedConfig.delayMax,
             namedConfig.delayStep == null ? defaultConfig.delayStep : namedConfig.delayStep,
             namedConfig.attempts == null ? defaultConfig.attempts : namedConfig.attempts,
             namedConfig.failurePredicateName == null ? defaultConfig.failurePredicateName : namedConfig.failurePredicateName);
@@ -47,21 +46,18 @@ public record SimpleRetrierConfig(@Nullable Map<String, NamedConfig> retryable) 
 
     /**
      * {@link #delay} Attempt initial delay
-     * {@link #delayMax} Maximum delay overall
      * {@link #delayStep} Delay step used to calculate next delay (previous delay + delay step)
      * {@link #attempts} Maximum number of retry attempts
      * {@link #failurePredicateName} {@link RetrierFailurePredicate#name()} default is {@link RetrierFailurePredicate}
      */
-    public record NamedConfig(@Nullable Duration delay,
-                              @Nullable Duration delayMax,
+    public record NamedConfig(Duration delay,
                               @Nullable Duration delayStep,
-                              @Nullable Long attempts,
+                              Long attempts,
                               @Nullable String failurePredicateName) {
 
-        public NamedConfig(@Nullable Duration delay, @Nullable Duration delayMax, @Nullable Duration delayStep, @Nullable Long attempts, @Nullable String failurePredicateName) {
+        public NamedConfig(Duration delay, @Nullable Duration delayStep, Long attempts, @Nullable String failurePredicateName) {
             this.attempts = attempts;
             this.delay = delay;
-            this.delayMax = (delayMax == null) ? Duration.ZERO : delayMax;
             this.delayStep = (delayStep == null) ? Duration.ZERO : delayStep;
             this.failurePredicateName = (failurePredicateName == null) ? SimpleRetrierFailurePredicate.class.getCanonicalName() : failurePredicateName;
         }
