@@ -9,15 +9,16 @@ import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotatio
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.AppWithConfig;
+import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerFallbackTarget;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.CircuitBreakerTarget;
-import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.TimeoutTarget;
+import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.RetryableTarget;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class TimeoutRunner extends Assertions {
+public abstract class TestRunner extends Assertions {
 
     private static InitializedGraph GRAPH = null;
 
@@ -25,7 +26,7 @@ public abstract class TimeoutRunner extends Assertions {
 
     protected static InitializedGraph createGraphDraw() {
         if (GRAPH == null) {
-            GRAPH = createGraphDraw(AppWithConfig.class, TimeoutTarget.class);
+            GRAPH = createGraphDraw(AppWithConfig.class, CircuitBreakerTarget.class, CircuitBreakerFallbackTarget.class, RetryableTarget.class);
         }
         return GRAPH;
     }
@@ -34,7 +35,8 @@ public abstract class TimeoutRunner extends Assertions {
         try {
             final List<Class<?>> classes = new ArrayList<>(List.of(targetClasses));
             classes.add(app);
-            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new AopAnnotationProcessor(), new ConfigRootAnnotationProcessor(), new ConfigSourceAnnotationProcessor());
+            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new ConfigRootAnnotationProcessor(),
+                new ConfigSourceAnnotationProcessor(), new AopAnnotationProcessor());
             var clazz = classLoader.loadClass(app.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphDraw = constructors[0].newInstance().get();

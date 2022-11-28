@@ -4,13 +4,14 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import ru.tinkoff.kora.common.KoraApp
 import ru.tinkoff.kora.config.common.ConfigModule
-import ru.tinkoff.kora.resilient.circuitbreaker.impl.FastCircuitBreakerModule
-import ru.tinkoff.kora.resilient.timeout.simple.TimeoutModule
 import ru.tinkoff.kora.resilient.circuitbreaker.fast.CircuitBreakerModule
 import ru.tinkoff.kora.resilient.fallback.simple.FallbackModule
+import ru.tinkoff.kora.resilient.timeout.simple.TimeoutModule
+import ru.tinkoff.kora.resilient.circuitbreaker.impl.FastCircuitBreakerModule
+import ru.tinkoff.kora.resilient.retry.simple.RetryableModule
 
 @KoraApp
-interface AppWithConfig : CircuitBreakerModule, FallbackModule, TimeoutModule, ConfigModule {
+interface AppWithConfig : CircuitBreakerModule, FallbackModule, TimeoutModule, RetryableModule, ConfigModule {
 
     override fun config(): Config {
         return ConfigFactory.parseString(
@@ -28,6 +29,13 @@ interface AppWithConfig : CircuitBreakerModule, FallbackModule, TimeoutModule, C
                   timeout {
                     default {
                       duration = 1s
+                    }
+                  }
+                  retry {
+                    default {
+                      delay = "100ms"
+                      delayMax = "350ms"
+                      attempts = 2
                     }
                   }
                 }

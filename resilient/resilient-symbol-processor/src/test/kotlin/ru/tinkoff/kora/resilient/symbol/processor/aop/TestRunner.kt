@@ -10,13 +10,14 @@ import ru.tinkoff.kora.config.ksp.processor.ConfigSourceSymbolProcessorProvider
 import ru.tinkoff.kora.kora.app.ksp.KoraAppProcessorProvider
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.AppWithConfig
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerFallbackTarget
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.CircuitBreakerTarget
-import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.TimeoutTarget
+import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.RetryableTarget
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 
 @KspExperimental
-open class TimeoutRunner : Assertions() {
+open class TestRunner : Assertions() {
 
     companion object {
         var GRAPH: InitializedGraph? = null
@@ -28,7 +29,9 @@ open class TimeoutRunner : Assertions() {
         if (GRAPH == null) {
             GRAPH = createGraphDraw(
                 AppWithConfig::class,
-                TimeoutTarget::class
+                CircuitBreakerTarget::class,
+                CircuitBreakerFallbackTarget::class,
+                RetryableTarget::class
             )
         }
 
