@@ -121,22 +121,21 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val superMethod = buildMethodCall(method, superCall)
         return CodeBlock.builder().add(
             """
-            val _timeouter = %L
             val limit = %M()
             return %M { %M(%L) }
-                .%M { limit.set(%M.nanoTime() + _timeouter.timeout().nano) }
+                .%M { limit.set(%M.nanoTime() + %L.timeout().nano) }
                 .%M {
                     val current = %M.nanoTime()
                     if (current > limit.get()) {
                         %L?.recordTimeout(%S)
-                        throw %M("Timeout exceeded " + _timeouter.timeout())
+                        throw %M("Timeout exceeded " + %L.timeout())
                     } else {
                         false
                     }
                 }
             """.trimIndent(),
-            fieldTimeout, atomicMember, flowMember, emitMember, superMethod.toString(), startMember,
-            systemMember, whileMember, systemMember, fieldMetric, timeoutName, timeoutMember,
+            atomicMember, flowMember, emitMember, superMethod.toString(), startMember, systemMember,
+            fieldTimeout, whileMember, systemMember, fieldMetric, timeoutName, timeoutMember, fieldTimeout,
         ).build()
     }
 

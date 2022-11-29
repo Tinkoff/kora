@@ -67,91 +67,80 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
+        val circuitType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker")!!.asType(listOf())
+        val fieldCircuit = aspectContext.fieldFactory.constructorInitialized(
+            circuitType,
+            CodeBlock.of("%L[%S]", fieldManager, circuitBreakerName)
+        )
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, superCall, circuitBreakerName, fieldManager)
+            buildBodyFlow(method, superCall, fieldCircuit)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, superCall, circuitBreakerName, fieldManager)
+            buildBodySuspend(method, superCall, fieldCircuit)
         } else {
-            buildBodySync(method, superCall, circuitBreakerName, fieldManager)
+            buildBodySync(method, superCall, fieldCircuit)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, fieldCircuitBreaker: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = CodeBlock.of("throw e");
         return CodeBlock.builder().add(
             """
-                      val circuitBreaker = %L["%L"]
-
-                      return try {
-                          circuitBreaker.acquire()
-                          val t = %L;
-                          circuitBreaker.releaseOnSuccess()
-                          t
-                      } catch (e: ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException) {
-                          %L
-                      } catch (e: java.lang.Exception) {
-                          circuitBreaker.releaseOnError(e)
-                          throw e
-                      }
-                """.trimIndent(), fieldManager, circuitBreakerName, superMethod.toString(), fallbackMethod.toString()
+            return try {
+                %L.acquire()
+                val t = %L;
+                %L.releaseOnSuccess()
+                t
+            } catch (e: java.lang.Exception) {
+                %L.releaseOnError(e)
+                throw e
+            }
+            """.trimIndent(), fieldCircuitBreaker, superMethod.toString(), fieldCircuitBreaker, fieldCircuitBreaker
         ).build()
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, fieldCircuitBreaker: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = CodeBlock.of("throw e");
         return CodeBlock.builder().add(
             """
-                      val circuitBreaker = %L["%L"]
-
-                      return try {
-                          circuitBreaker.acquire()
-                          val t = %L;
-                          circuitBreaker.releaseOnSuccess()
-                          t
-                      } catch (e: ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException) {
-                          %L
-                      } catch (e: java.lang.Exception) {
-                          circuitBreaker.releaseOnError(e)
-                          throw e
-                      }
-                """.trimIndent(), fieldManager, circuitBreakerName, superMethod.toString(), fallbackMethod.toString()
+            return try {
+                %L.acquire()
+                val t = %L;
+                %L.releaseOnSuccess()
+                t
+            } catch (e: java.lang.Exception) {
+                %L.releaseOnError(e)
+                throw e
+            }
+            """.trimIndent(), fieldCircuitBreaker, superMethod.toString(), fieldCircuitBreaker, fieldCircuitBreaker
         ).build()
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, circuitBreakerName: String, fieldManager: String
+        method: KSFunctionDeclaration, superCall: String, fieldCircuitBreaker: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
         val superMethod = buildMethodCall(method, superCall)
-        val fallbackMethod = CodeBlock.of("throw e;");
         return CodeBlock.builder().add(
             """
-                val circuitBreaker = %L["%L"]
-
-                return %M {
-                    try {
-                        circuitBreaker.acquire()
-                        val t = %L;
-                        %M(t)
-                        circuitBreaker.releaseOnSuccess()
-                    } catch (e: ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException) {
-                        %L
-                    } catch (e: java.lang.Exception) {
-                        circuitBreaker.releaseOnError(e)
-                        throw e
-                    }
+            return %M {
+                try {
+                    %L.acquire()
+                    %M(%L)
+                    %L.releaseOnSuccess()
+                } catch (e: java.lang.Exception) {
+                    %L.releaseOnError(e)
+                    throw e
                 }
-                    """.trimIndent(), fieldManager, circuitBreakerName, flowMember, superMethod.toString(), emitMember, fallbackMethod.toString()
+            }
+            """.trimIndent(), flowMember, fieldCircuitBreaker, emitMember, superMethod.toString(), fieldCircuitBreaker, fieldCircuitBreaker
         ).build()
     }
 

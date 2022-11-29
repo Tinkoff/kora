@@ -78,27 +78,25 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String
+        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
     ): CodeBlock {
         return if (method.isVoid()) {
             CodeBlock.of(
                 """
-                        val _retrier = %L
-                        _retrier.retry { %L }
-                        """.trimIndent(), retrierName, buildMethodCall(method, superCall)
+                %L.retry { %L }
+                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall)
             )
         } else {
             CodeBlock.of(
                 """
-                    val _retrier = %L
-                    return _retrier.retry(%L)
-                    """.trimIndent(), retrierName, buildMethodSupplier(method, superCall)
+                return %L.retry(%L)
+                """.trimIndent(), fieldRetrier, buildMethodSupplier(method, superCall)
             )
         }
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String
+        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
     ): CodeBlock {
         val delayMember = MemberName("kotlinx.coroutines", "delay")
         val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
@@ -106,9 +104,7 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         return if (method.isVoid()) {
             CodeBlock.of(
                 """
-                val _retrier = %L
-                val _state = _retrier.asState()
-                
+                val _state = %L.asState()
                 while (true) {
                     try {
                         %L
@@ -117,14 +113,12 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                         %M(_state.delayNanos.%M)
                     }
                 }
-                """.trimIndent(), retrierName, buildMethodCall(method, superCall), delayMember, timeMember
+                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), delayMember, timeMember
             )
         } else {
             CodeBlock.of(
                 """
-                val _retrier = %L
-                val _state = _retrier.asState()
-                
+                val _state = %L.asState()
                 while (true) {
                     try {
                         return %L
@@ -133,13 +127,13 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                         %M(_state.delayNanos.%M)
                     }
                 }
-                """.trimIndent(), retrierName, buildMethodCall(method, superCall), delayMember, timeMember
+                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), delayMember, timeMember
             )
         }
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, retrierName: String
+        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
@@ -149,10 +143,8 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
         return CodeBlock.builder().add(
             """
-            val _retrier = %L
-            
             return %M {
-                val _state = _retrier.asState()
+                val _state = %L.asState()
                 %M(
                     %L.%M{ cause, attempt ->
                         _state.checkRetry(cause)
@@ -161,7 +153,7 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                     }
                 )
             }
-            """.trimIndent(), retrierName, flowMember, emitMember, buildMethodCall(method, superCall), retryMember, delayMember, timeMember
+            """.trimIndent(), flowMember, fieldRetrier, emitMember, buildMethodCall(method, superCall), retryMember, delayMember, timeMember
         ).build()
     }
 

@@ -61,66 +61,68 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.fallback.FallbackerManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
+        val fallbackType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.fallback.Fallbacker")!!.asType(listOf())
+        val fieldFallback = aspectContext.fieldFactory.constructorInitialized(
+            fallbackType,
+            CodeBlock.of("%L[%S]", fieldManager, fallbackName)
+        )
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, fallback, superCall, fallbackName, fieldManager)
+            buildBodyFlow(method, fallback, superCall, fieldFallback)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, fallback, superCall, fallbackName, fieldManager)
+            buildBodySuspend(method, fallback, superCall, fieldFallback)
         } else {
-            buildBodySync(method, fallback, superCall, fallbackName, fieldManager)
+            buildBodySync(method, fallback, superCall, fieldFallback)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
     private fun buildBodySync(
-        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fallbackName: String, fieldManager: String
+        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fieldFallback: String
     ): CodeBlock {
         if (method.isVoid()) {
             val runnableMember = MemberName("java.lang", "Runnable")
             val superMethod = buildMethodCall(method, superCall)
             return CodeBlock.builder().add(
                 """
-                  val _fallbacker = %L.get("%L")
-                  return _fallbacker.fallback(%M { %L }, %M { %L })
-                  """.trimIndent(), fieldManager, fallbackName, runnableMember, superMethod.toString(), runnableMember, fallbackCall.call()
+                return %L.fallback(%M { %L }, %M { %L })
+                """.trimIndent(), fieldFallback, runnableMember, superMethod.toString(), runnableMember, fallbackCall.call()
             ).build()
         }
 
         val callableMember = MemberName("java.util.concurrent", "Callable")
         val superMethod = buildMethodCallable(method, superCall)
-        val fallbackSupplier = CodeBlock.of("%M { %L }", callableMember, fallbackCall.call())
+        val fallbackCallable = CodeBlock.of("%M { %L }", callableMember, fallbackCall.call())
         return CodeBlock.builder().add(
             """
-                  val _fallbacker = %L.get("%L")
-                  return _fallbacker.fallback(%L, %L)
-                  """.trimIndent(), fieldManager, fallbackName, superMethod.toString(), fallbackSupplier
+            return %L.fallback(%L, %L)
+            """.trimIndent(), fieldFallback, superMethod.toString(), fallbackCallable
         ).build()
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fallbackName: String, fieldManager: String
+        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fieldFallback: String
     ): CodeBlock {
         val superMethod = buildMethodCall(method, superCall)
         val prefix = if (method.isVoid()) "" else "return "
         return CodeBlock.builder().add(
             """
-                val _fallbacker = %L.get("%L")
-                ${prefix}try {
+            ${prefix}try {
+                %L
+            } catch (e: Throwable) {
+                if(%L.canFallback(e)) {
                     %L
-                } catch (e: Throwable) {
-                    if(_fallbacker.canFallback(e)) {
-                        %L
-                    } else {
-                        throw e
-                    }
+                } else {
+                    throw e
                 }
-                """.trimIndent(), fieldManager, fallbackName, superMethod.toString(), fallbackCall.call()
+            }
+            """.trimIndent(), superMethod.toString(), fieldFallback, fallbackCall.call()
         ).build()
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fallbackName: String, fieldManager: String
+        method: KSFunctionDeclaration, fallbackCall: FallbackMeta, superCall: String, fieldFallback: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val catchMember = MemberName("kotlinx.coroutines.flow", "catch")
@@ -128,18 +130,16 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
         val superMethod = buildMethodCall(method, superCall)
         return CodeBlock.builder().add(
             """
-                val _fallbacker = %L["%L"]
-
-                return %M {
+            return %M {
+                %M(%L)
+            }.%M { e ->
+                if (%L.canFallback(e)) {
                     %M(%L)
-                }.%M { e ->
-                    if (_fallbacker.canFallback(e)) {
-                        %M(%L)
-                    } else {
-                        throw e
-                    }
+                } else {
+                    throw e
                 }
-                """.trimIndent(), fieldManager, fallbackName, flowMember, emitMember, superMethod.toString(), catchMember, emitMember, fallbackCall.call()
+            }
+            """.trimIndent(), flowMember, emitMember, superMethod.toString(), catchMember, fieldFallback, emitMember, fallbackCall.call()
         ).build()
     }
 

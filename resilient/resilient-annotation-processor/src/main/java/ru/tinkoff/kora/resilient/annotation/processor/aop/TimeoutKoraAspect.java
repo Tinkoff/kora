@@ -70,13 +70,11 @@ public class TimeoutKoraAspect implements KoraAspect {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         if (MethodUtils.isVoid(method)) {
             return CodeBlock.builder().add("""
-                var _timeouter = $L;
-                _timeouter.execute(() -> $L);
+                $L.execute(() -> $L);
                 """, timeoutName, superMethod.toString()).build();
         } else {
             return CodeBlock.builder().add("""
-                var _timeouter = $L;
-                return _timeouter.execute(() -> $L);
+                return $L.execute(() -> $L);
                 """, timeoutName, superMethod.toString()).build();
         }
     }

@@ -62,30 +62,30 @@ public class RetryableKoraAspect implements KoraAspect {
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildBodySync(ExecutableElement method, String superCall, String retryableName) {
+    private CodeBlock buildBodySync(ExecutableElement method, String superCall, String fieldRetry) {
         final CodeBlock retrierExecution = CodeBlock.of("retry($L)", buildMethodCallable(method, superCall));
-        final String returnPrefix = MethodUtils.isVoid(method)
-            ? ""
-            : "return ";
 
-        return CodeBlock.builder().add("""
-            var _retrier = $L;
-            $L_retrier.$L;
-            """, retryableName, returnPrefix, retrierExecution).build();
+        if (MethodUtils.isVoid(method)) {
+            return CodeBlock.builder().add("""
+                $L.$L;
+                """, fieldRetry, retrierExecution).build();
+        } else {
+            return CodeBlock.builder().add("""
+                return $L.$L;
+                """, fieldRetry, retrierExecution).build();
+        }
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String retryableName) {
+    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String fieldRetry) {
         return CodeBlock.builder().add("""
-            var _retrier = $L;
-            return $L.retryWhen(_retrier.asReactor());
-            """, retryableName, buildMethodCall(method, superCall)).build();
+            return $L.retryWhen($L.asReactor());
+            """, buildMethodCall(method, superCall), fieldRetry).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String retryableName) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String fieldRetry) {
         return CodeBlock.builder().add("""
-            var _retrier = $L;
-            return $L.retryWhen(_retrier.asReactor());
-            """, retryableName, buildMethodCall(method, superCall)).build();
+            return $L.retryWhen($L.asReactor());
+            """, buildMethodCall(method, superCall), fieldRetry).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {

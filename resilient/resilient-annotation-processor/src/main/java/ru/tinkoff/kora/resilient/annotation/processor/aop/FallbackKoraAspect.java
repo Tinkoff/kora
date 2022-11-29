@@ -68,42 +68,37 @@ public class FallbackKoraAspect implements KoraAspect {
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildBodySync(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
+    private CodeBlock buildBodySync(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fieldFallback) {
+        final String fallbackMethod = fallbackCall.call();
         if (MethodUtils.isVoid(method)) {
             final CodeBlock superMethod = buildMethodCall(method, superCall);
-            final String fallbackMethod = fallbackCall.call();
             return CodeBlock.builder().add("""
-                var _fallbacker = $L;
-                _fallbacker.fallback(() -> $L, () -> $L);
-                """, fallbackName, superMethod.toString(), fallbackMethod).build();
+                $L.fallback(() -> $L, () -> $L);
+                """, fieldFallback, superMethod.toString(), fallbackMethod).build();
+        } else {
+            final CodeBlock superMethod = buildMethodSupplier(method, superCall);
+            return CodeBlock.builder().add("""
+                return $L.fallback($L, () -> $L);
+                """, fieldFallback, superMethod.toString(), fallbackMethod).build();
         }
-
-        final CodeBlock superMethod = buildMethodSupplier(method, superCall);
-        final String fallbackMethod = fallbackCall.call();
-        return CodeBlock.builder().add("""
-            var _fallbacker = $L;
-            return _fallbacker.fallback($L, () -> $L);
-            """, fallbackName, superMethod.toString(), fallbackMethod).build();
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
+    private CodeBlock buildBodyMono(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fieldFallback) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         final String fallbackMethod = fallbackCall.call();
         return CodeBlock.builder().add("""
-            var _fallbacker = $L;
             return $L
-                .onErrorResume(e -> _fallbacker.canFallback(e), e -> $L);
-                 """, fallbackName, superMethod.toString(), fallbackMethod).build();
+                .onErrorResume(e -> $L.canFallback(e), e -> $L);
+                 """, superMethod.toString(), fieldFallback, fallbackMethod).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fieldFallback) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         final String fallbackMethod = fallbackCall.call();
         return CodeBlock.builder().add("""
-            var _fallbacker = $L;
             return $L
-                .onErrorResume(e -> _fallbacker.canFallback(e), e -> $L);
-                 """, fallbackName, superMethod.toString(), fallbackMethod).build();
+                .onErrorResume(e -> $L.canFallback(e), e -> $L);
+                 """, superMethod.toString(), fieldFallback, fallbackMethod).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {
