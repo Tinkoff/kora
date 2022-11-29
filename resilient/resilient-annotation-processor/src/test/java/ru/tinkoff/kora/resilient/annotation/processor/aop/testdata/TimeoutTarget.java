@@ -15,7 +15,7 @@ public class TimeoutTarget implements MockLifecycle {
     @Timeout("custom1")
     public String getValueSync() {
         try {
-            Thread.sleep(2000);
+            Thread.sleep(300);
             return "OK";
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
@@ -25,13 +25,12 @@ public class TimeoutTarget implements MockLifecycle {
     @Timeout("custom1")
     public Mono<String> getValueMono() {
         return Mono.fromCallable(() -> "OK")
-            .delayElement(Duration.ofSeconds(2));
+            .delayElement(Duration.ofMillis(300));
     }
 
     @Timeout("custom3")
     public Flux<String> getValueFlux() {
         return Flux.from(Mono.fromCallable(() -> "OK"))
-            .delayElements(Duration.ofSeconds(2))
-            .onErrorMap(e -> e.getCause() instanceof TimeoutException, e -> new ru.tinkoff.kora.resilient.timeout.TimeoutException(e.getCause().getMessage()));
+            .delayElements(Duration.ofMillis(300));
     }
 }

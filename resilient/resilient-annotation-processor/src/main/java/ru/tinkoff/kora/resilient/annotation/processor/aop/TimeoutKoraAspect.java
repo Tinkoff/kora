@@ -1,11 +1,13 @@
 package ru.tinkoff.kora.resilient.annotation.processor.aop;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingError;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.aop.annotation.processor.KoraAspect;
 
+import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -46,15 +48,17 @@ public class TimeoutKoraAspect implements KoraAspect {
 
         var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeouterManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
+        var metricsType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics"));
+        var fieldMetrics = aspectContext.fieldFactory().constructorParam(metricsType, List.of(AnnotationSpec.builder(Nullable.class).build()));
         var timeouterType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.Timeouter"));
         var fieldTimeouter = aspectContext.fieldFactory().constructorInitialized(timeouterType,
             CodeBlock.of("$L.get($S)", fieldManager, timeoutName));
 
         final CodeBlock body;
         if (MethodUtils.isMono(method, env)) {
-            body = buildBodyMono(method, superCall, fieldTimeouter);
+            body = buildBodyMono(method, superCall, timeoutName, fieldTimeouter, fieldMetrics);
         } else if (MethodUtils.isFlux(method, env)) {
-            body = buildBodyFlux(method, superCall, fieldTimeouter);
+            body = buildBodyFlux(method, superCall, timeoutName, fieldTimeouter, fieldMetrics);
         } else {
             body = buildBodySync(method, superCall, fieldTimeouter);
         }
@@ -77,22 +81,31 @@ public class TimeoutKoraAspect implements KoraAspect {
         }
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String timeoutName) {
+    private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         return CodeBlock.builder().add("""
-            var _timeouter = $L;
             return $L
-                .timeout(_timeouter.timeout());
-                 """, timeoutName, superMethod.toString()).build();
+                .timeout($L.timeout())
+                .doOnError(e -> {
+                    if(e instanceof java.util.concurrent.TimeoutException && $L != null) {
+                        $L.recordTimeout($S");
+                    }
+                });
+                """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String timeoutName) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         return CodeBlock.builder().add("""
             var _timeouter = $L;
             return $L
-                .timeout(_timeouter.timeout());
-            """, timeoutName, superMethod.toString()).build();
+                .timeout(_timeouter.timeout())
+                .doOnError(e -> {
+                    if(e instanceof java.util.concurrent.TimeoutException && $L != null) {
+                        $L.recordTimeout($S");
+                    }
+                });
+            """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {

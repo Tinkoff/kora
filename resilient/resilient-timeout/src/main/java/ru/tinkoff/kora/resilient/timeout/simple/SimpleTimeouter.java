@@ -2,6 +2,7 @@ package ru.tinkoff.kora.resilient.timeout.simple;
 
 import ru.tinkoff.kora.resilient.timeout.TimeoutException;
 import ru.tinkoff.kora.resilient.timeout.Timeouter;
+import ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-record SimpleTimeouter(long delayMaxNanos, ExecutorService executor) implements Timeouter {
+record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, ExecutorService executor) implements Timeouter {
 
     @Nonnull
     @Override
@@ -34,6 +35,7 @@ record SimpleTimeouter(long delayMaxNanos, ExecutorService executor) implements 
         try {
             return consumer.apply(executor).get(delayMaxNanos, TimeUnit.NANOSECONDS);
         } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+            metrics.recordTimeout(name);
             throw new TimeoutException(e.getMessage());
         }
     }

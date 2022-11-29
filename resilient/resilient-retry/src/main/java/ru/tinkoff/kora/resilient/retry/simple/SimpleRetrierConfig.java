@@ -50,9 +50,9 @@ public record SimpleRetrierConfig(@Nullable Map<String, NamedConfig> retryable) 
      * {@link #attempts} Maximum number of retry attempts
      * {@link #failurePredicateName} {@link RetrierFailurePredicate#name()} default is {@link RetrierFailurePredicate}
      */
-    public record NamedConfig(Duration delay,
+    public record NamedConfig(@Nullable Duration delay,
                               @Nullable Duration delayStep,
-                              Long attempts,
+                              @Nullable Long attempts,
                               @Nullable String failurePredicateName) {
 
         public NamedConfig(Duration delay, @Nullable Duration delayStep, Long attempts, @Nullable String failurePredicateName) {

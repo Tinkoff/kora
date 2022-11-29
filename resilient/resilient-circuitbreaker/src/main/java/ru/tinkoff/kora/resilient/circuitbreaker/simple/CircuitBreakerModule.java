@@ -36,7 +36,7 @@ public interface CircuitBreakerModule {
                                                             @Nullable CircuitBreakerMetrics metrics) {
         return new FastCircuitBreakerManager(config, failurePredicates,
             (metrics == null)
-                ? NoopCircuitBreakerMetrics.INSTANCE
+                ? new NoopCircuitBreakerMetrics()
                 : metrics);
     }
 

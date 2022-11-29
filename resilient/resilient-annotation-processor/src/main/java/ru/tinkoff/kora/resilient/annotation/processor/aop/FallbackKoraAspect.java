@@ -52,55 +52,58 @@ public class FallbackKoraAspect implements KoraAspect {
 
         var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.fallback.FallbackerManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
+        var fallbackerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.fallback.Fallbacker"));
+        var fieldFallbacker = aspectContext.fieldFactory().constructorInitialized(
+            fallbackerType, CodeBlock.of("$L.get($S);", fieldManager, name));
 
         final CodeBlock body;
         if (MethodUtils.isMono(method, env)) {
-            body = buildBodyMono(method, fallback, superCall, name, fieldManager);
+            body = buildBodyMono(method, fallback, superCall, fieldFallbacker);
         } else if (MethodUtils.isFlux(method, env)) {
-            body = buildBodyFlux(method, fallback, superCall, name, fieldManager);
+            body = buildBodyFlux(method, fallback, superCall, fieldFallbacker);
         } else {
-            body = buildBodySync(method, fallback, superCall, name, fieldManager);
+            body = buildBodySync(method, fallback, superCall, fieldFallbacker);
         }
 
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildBodySync(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName, String fieldManager) {
+    private CodeBlock buildBodySync(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
         if (MethodUtils.isVoid(method)) {
             final CodeBlock superMethod = buildMethodCall(method, superCall);
             final String fallbackMethod = fallbackCall.call();
             return CodeBlock.builder().add("""
-                var _fallbacker = $L.get("$L");
+                var _fallbacker = $L;
                 _fallbacker.fallback(() -> $L, () -> $L);
-                """, fieldManager, fallbackName, superMethod.toString(), fallbackMethod).build();
+                """, fallbackName, superMethod.toString(), fallbackMethod).build();
         }
 
         final CodeBlock superMethod = buildMethodSupplier(method, superCall);
         final String fallbackMethod = fallbackCall.call();
         return CodeBlock.builder().add("""
-            var _fallbacker = $L.get("$L");
+            var _fallbacker = $L;
             return _fallbacker.fallback($L, () -> $L);
-            """, fieldManager, fallbackName, superMethod.toString(), fallbackMethod).build();
+            """, fallbackName, superMethod.toString(), fallbackMethod).build();
     }
 
-    private CodeBlock buildBodyMono(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName, String fieldManager) {
+    private CodeBlock buildBodyMono(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         final String fallbackMethod = fallbackCall.call();
         return CodeBlock.builder().add("""
-            var _fallbacker = $L.get("$L");
+            var _fallbacker = $L;
             return $L
                 .onErrorResume(e -> _fallbacker.canFallback(e), e -> $L);
-                 """, fieldManager, fallbackName, superMethod.toString(), fallbackMethod).build();
+                 """, fallbackName, superMethod.toString(), fallbackMethod).build();
     }
 
-    private CodeBlock buildBodyFlux(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName, String fieldManager) {
+    private CodeBlock buildBodyFlux(ExecutableElement method, FallbackMeta fallbackCall, String superCall, String fallbackName) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
         final String fallbackMethod = fallbackCall.call();
         return CodeBlock.builder().add("""
-            var _fallbacker = $L.get("$L");
+            var _fallbacker = $L;
             return $L
                 .onErrorResume(e -> _fallbacker.canFallback(e), e -> $L);
-                 """, fieldManager, fallbackName, superMethod.toString(), fallbackMethod).build();
+                 """, fallbackName, superMethod.toString(), fallbackMethod).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {

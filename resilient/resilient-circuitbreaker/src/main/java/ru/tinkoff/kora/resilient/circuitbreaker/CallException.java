@@ -8,7 +8,7 @@ public class CallException extends RuntimeException {
     private final String name;
 
     public CallException(Throwable throwable, String name) {
-        super(throwable);
+        super(throwable.getMessage(), throwable);
         this.name = name;
     }
 

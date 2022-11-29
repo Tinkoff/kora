@@ -30,7 +30,7 @@ public interface RetryableModule {
     }
 
     default SimpleRetrierConfig simpleRetryableConfig(Config config, ConfigValueExtractor<SimpleRetrierConfig> extractor) {
-        return !config.hasPath("resilient.retry")
+        return !config.hasPath("resilient")
             ? new SimpleRetrierConfig(Map.of())
             : extractor.extract(config.getValue("resilient"));
     }
