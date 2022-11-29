@@ -102,7 +102,7 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
                   }
             } catch (e: Exception) {
                 if(%L != null) {
-                    %L.recordTimeout(%S")
+                    %L.recordTimeout(%S)
                 }
                 throw e
             }
