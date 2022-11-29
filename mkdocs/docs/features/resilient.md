@@ -2,6 +2,13 @@
 
 Предоставляет модули позволяющие использовать такие компоненты как: *CircuitBreaker, Fallback, Timeout, Retryable*.
 
+Оглавление:
+- [CircuitBreaker](#circuitbreaker)
+- [Retryable](#retryable)
+- [Timeout](#timeout)
+- [Fallback](#fallback)
+- [Поддерживаемые AOP типы](#supported-types)
+
 ## CircuitBreaker
 
 CircuitBreaker – это прокси, который контролирует поток к запросам к конкретному методу, 
@@ -248,3 +255,14 @@ resilient {
   }
 }
 ```
+
+## Supported Types
+
+Поддерживаемые типы возвращаемых методов для AOP:
+- *Java*:
+  - Sync
+  - Project Reactor
+- *Kotlin*:
+  - Sync
+  - Suspend
+  - Flow
