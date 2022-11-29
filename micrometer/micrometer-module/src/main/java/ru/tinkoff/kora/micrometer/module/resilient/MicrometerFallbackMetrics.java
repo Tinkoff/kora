@@ -1,12 +1,10 @@
-package ru.tinkoff.kora.resilient.fallback.simple;
+package ru.tinkoff.kora.micrometer.module.resilient;
 
 import ru.tinkoff.kora.resilient.fallback.telemetry.FallbackMetrics;
 
 import javax.annotation.Nonnull;
 
-final class NoopFallbackMetrics implements FallbackMetrics {
-
-    static final NoopFallbackMetrics INSTANCE = new NoopFallbackMetrics();
+final class MicrometerFallbackMetrics implements FallbackMetrics {
 
     @Override
     public void recordExecute(@Nonnull String name, @Nonnull Throwable throwable) {

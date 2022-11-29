@@ -7,7 +7,9 @@ import ru.tinkoff.kora.config.common.extractor.ConfigValueExtractor;
 import ru.tinkoff.kora.config.common.extractor.ObjectConfigValueExtractor;
 import ru.tinkoff.kora.resilient.timeout.TimeouterManager;
 import ru.tinkoff.kora.resilient.timeout.annotation.Timeout;
+import ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,14 +30,18 @@ public interface TimeoutModule {
     }
 
     default SimpleTimeoutConfig simpleTimeoutConfig(Config config, ConfigValueExtractor<SimpleTimeoutConfig> extractor) {
-        return !config.hasPath("resilient.timeout")
+        return !config.hasPath("resilient")
             ? new SimpleTimeoutConfig(Map.of())
             : extractor.extract(config.getValue("resilient"));
     }
 
     default TimeouterManager simpleTimeoutManager(@Tag(Timeout.class) ExecutorService executorService,
-                                                  SimpleTimeoutConfig config) {
-        return new SimpleTimeouterManager(executorService, config);
+                                                  SimpleTimeoutConfig config,
+                                                  @Nullable TimeoutMetrics metrics) {
+        return new SimpleTimeouterManager(metrics == null
+            ? NoopTimeoutMetrics.INSTANCE
+            : metrics,
+            executorService, config);
     }
 
     @DefaultComponent

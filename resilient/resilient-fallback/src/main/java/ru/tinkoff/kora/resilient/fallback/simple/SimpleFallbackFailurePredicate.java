@@ -4,12 +4,12 @@ import ru.tinkoff.kora.resilient.fallback.FallbackFailurePredicate;
 
 import javax.annotation.Nonnull;
 
-final class DefaultFallbackFailurePredicate implements FallbackFailurePredicate {
+final class SimpleFallbackFailurePredicate implements FallbackFailurePredicate {
 
     @Nonnull
     @Override
     public String name() {
-        return DefaultFallbackFailurePredicate.class.getCanonicalName();
+        return SimpleFallbackFailurePredicate.class.getCanonicalName();
     }
 
     @Override

@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 
 public interface FallbackMetrics {
 
-    void recordFallback(@Nonnull String name, @Nonnull Throwable throwable);
+    void recordExecute(@Nonnull String name, @Nonnull Throwable throwable);
 
     void recordSkip(@Nonnull String name, @Nonnull Throwable throwable);
 }

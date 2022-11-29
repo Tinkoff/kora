@@ -2,10 +2,10 @@ package ru.tinkoff.kora.micrometer.module.resilient;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import org.jetbrains.annotations.NotNull;
 import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker.State;
 import ru.tinkoff.kora.resilient.circuitbreaker.telemetry.CircuitBreakerMetrics;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +20,7 @@ public final class MicrometerCircuitBreakerMetrics implements CircuitBreakerMetr
     }
 
     @Override
-    public void recordState(@NotNull String name, @NotNull State newState) {
+    public void recordState(@Nonnull String name, @Nonnull State newState) {
         final AtomicInteger state = metrics.computeIfAbsent(name, k -> {
             final AtomicInteger gaugeState = new AtomicInteger(asIntState(newState));
             Gauge.builder("resilient.circuitbreaker.state", gaugeState::get)

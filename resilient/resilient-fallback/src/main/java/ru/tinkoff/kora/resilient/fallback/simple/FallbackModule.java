@@ -27,7 +27,7 @@ public interface FallbackModule {
     }
 
     default SimpleFallbackConfig simpleFallbackConfig(Config config, ConfigValueExtractor<SimpleFallbackConfig> extractor) {
-        return !config.hasPath("resilient.fallback")
+        return !config.hasPath("resilient")
             ? new SimpleFallbackConfig(Map.of())
             : extractor.extract(config.getValue("resilient"));
     }
@@ -42,6 +42,6 @@ public interface FallbackModule {
     }
 
     default FallbackFailurePredicate defaultFallbackFailurePredicate() {
-        return new DefaultFallbackFailurePredicate();
+        return new SimpleFallbackFailurePredicate();
     }
 }
