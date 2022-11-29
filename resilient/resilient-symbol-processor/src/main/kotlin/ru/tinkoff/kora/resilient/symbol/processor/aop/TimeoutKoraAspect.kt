@@ -101,12 +101,10 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
                       %L
                   }
             } catch (e: Exception) {
-                if(%L != null) {
-                    %L.recordTimeout(%S)
-                }
+                %L?.recordTimeout(%S)
                 throw e
             }
-          """.trimIndent(), timeoutMember, fieldTimeout, superMethod.toString(), fieldMetric, fieldMetric, timeoutName
+          """.trimIndent(), timeoutMember, fieldTimeout, superMethod.toString(), fieldMetric, timeoutName
         ).build()
     }
 
@@ -116,6 +114,7 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
         val startMember = MemberName("kotlinx.coroutines.flow", "onStart")
+        val whileMember = MemberName("kotlinx.coroutines.flow", "takeWhile")
         val systemMember = MemberName("java.lang", "System")
         val atomicMember = MemberName("java.util.concurrent.atomic", "AtomicLong")
         val timeoutMember = MemberName("ru.tinkoff.kora.resilient.timeout", "TimeoutException")
@@ -123,25 +122,21 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         return CodeBlock.builder().add(
             """
             val _timeouter = %L
-            val duration = _timeouter.timeout().nano
-            val started = %M()
-            return %M {
-                takeUnless {
+            val limit = %M()
+            return %M { %M(%L) }
+                .%M { limit.set(%M.nanoTime() + _timeouter.timeout().nano) }
+                .%M {
                     val current = %M.nanoTime()
-                    if (current - started.get() > duration) {
-                        if(%L != null) {
-                            %L.recordTimeout(%S)
-                        }
-                        
+                    if (current > limit.get()) {
+                        %L?.recordTimeout(%S)
                         throw %M("Timeout exceeded " + _timeouter.timeout())
                     } else {
                         false
                     }
                 }
-                %M(%L)
-            }.%M{ started.set(%M.nanoTime()) }
-            """.trimIndent(), fieldTimeout, atomicMember, flowMember, systemMember, fieldMetric, fieldMetric,
-            timeoutName, timeoutMember, emitMember, superMethod.toString(), startMember, systemMember
+            """.trimIndent(),
+            fieldTimeout, atomicMember, flowMember, emitMember, superMethod.toString(), startMember,
+            systemMember, whileMember, systemMember, fieldMetric, timeoutName, timeoutMember,
         ).build()
     }
 

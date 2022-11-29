@@ -87,9 +87,9 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
             ).build()
         }
 
-        val supplierMember = MemberName("java.util.function", "Supplier")
-        val superMethod = buildMethodSupplier(method, superCall)
-        val fallbackSupplier = CodeBlock.of("%M { %L }", supplierMember, fallbackCall.call())
+        val callableMember = MemberName("java.util.concurrent", "Callable")
+        val superMethod = buildMethodCallable(method, superCall)
+        val fallbackSupplier = CodeBlock.of("%M { %L }", callableMember, fallbackCall.call())
         return CodeBlock.builder().add(
             """
                   val _fallbacker = %L.get("%L")
@@ -147,8 +147,8 @@ class FallbackKoraAspect(val resolver: Resolver) : KoraAspect {
         return CodeBlock.of(method.parameters.asSequence().map { p -> CodeBlock.of("%L", p) }.joinToString(", ", "$call(", ")"))
     }
 
-    private fun buildMethodSupplier(method: KSFunctionDeclaration, call: String): CodeBlock {
-        val supplierMember = MemberName("java.util.function", "Supplier")
-        return CodeBlock.builder().add("%M { %L }", supplierMember, buildMethodCall(method, call)).build()
+    private fun buildMethodCallable(method: KSFunctionDeclaration, call: String): CodeBlock {
+        val callableMember = MemberName("java.util.concurrent", "Callable")
+        return CodeBlock.builder().add("%M { %L }", callableMember, buildMethodCall(method, call)).build()
     }
 }

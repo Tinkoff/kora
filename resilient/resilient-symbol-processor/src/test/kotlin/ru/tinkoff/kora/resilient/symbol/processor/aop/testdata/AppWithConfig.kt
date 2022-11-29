@@ -27,7 +27,7 @@ interface AppWithConfig : CircuitBreakerModule, FallbackModule, TimeoutModule, R
                   }
                   timeout {
                     default {
-                      duration = 200ms
+                      duration = 300ms
                     }
                   }
                   retry {

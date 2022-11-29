@@ -37,7 +37,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             30, WAIT_IN_OPEN, 3, 10L, 8L, FastCircuitBreakerFailurePredicate.class.getCanonicalName());
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());
@@ -73,7 +73,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             100, WAIT_IN_OPEN, 1, 2L, 2L, FastCircuitBreakerFailurePredicate.class.getCanonicalName());
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());
@@ -94,7 +94,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             100, WAIT_IN_OPEN, 1, 1L, 1L, FastCircuitBreakerFailurePredicate.class.getCanonicalName());
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());
@@ -116,7 +116,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             100, WAIT_IN_OPEN, 1, 1L, 1L, FastCircuitBreakerFailurePredicate.class.getCanonicalName());
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());
@@ -138,7 +138,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             100, WAIT_IN_OPEN, 1, 1L, 1L, FastCircuitBreakerFailurePredicate.class.getCanonicalName());
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new FastCircuitBreakerFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());
@@ -162,7 +162,7 @@ class FastCircuitBreakerTests extends Assertions {
         // given
         final FastCircuitBreakerConfig.NamedConfig config = new FastCircuitBreakerConfig.NamedConfig(
             100, WAIT_IN_OPEN, 1, 1L, 1L, "custom");
-        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new CustomFailurePredicate(), NoopCircuitBreakerMetrics.INSTANCE);
+        final FastCircuitBreaker circuitBreaker = new FastCircuitBreaker("default", config, new CustomFailurePredicate(), new NoopCircuitBreakerMetrics());
 
         // when
         assertEquals(State.CLOSED, circuitBreaker.getState());

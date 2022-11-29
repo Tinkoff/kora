@@ -3,6 +3,7 @@ package ru.tinkoff.kora.resilient.symbol.processor.aop
 import com.google.devtools.ksp.KspExperimental
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -49,6 +50,6 @@ class TimeoutTests : AppRunner() {
         val service = getService<TimeoutTarget>()
 
         // when
-        assertThrows(TimeoutException::class.java) { runBlocking { service.getValueFLow().first() } }
+        assertThrows(TimeoutException::class.java) { runBlocking { service.getValueFLow().firstOrNull() } }
     }
 }
