@@ -5,6 +5,4 @@ import javax.annotation.Nonnull;
 public interface FallbackMetrics {
 
     void recordExecute(@Nonnull String name, @Nonnull Throwable throwable);
-
-    void recordSkip(@Nonnull String name, @Nonnull Throwable throwable);
 }

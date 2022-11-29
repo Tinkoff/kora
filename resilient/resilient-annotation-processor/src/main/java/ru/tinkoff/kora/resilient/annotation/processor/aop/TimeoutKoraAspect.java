@@ -86,10 +86,10 @@ public class TimeoutKoraAspect implements KoraAspect {
                 .timeout($L.timeout())
                 .doOnError(e -> {
                     if(e instanceof java.util.concurrent.TimeoutException && $L != null) {
-                        $L.recordTimeout($S);
+                        $L.recordTimeout($S, $L.timeout().toNanos());
                     }
                 });
-                """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName).build();
+                """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName, fieldTimeout).build();
     }
 
     private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
@@ -99,10 +99,10 @@ public class TimeoutKoraAspect implements KoraAspect {
                 .timeout($L.timeout())
                 .doOnError(e -> {
                     if(e instanceof java.util.concurrent.TimeoutException && $L != null) {
-                        $L.recordTimeout($S);
+                        $L.recordTimeout($S, $L.timeout().toNanos());
                     }
                 });
-            """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName).build();
+            """, superMethod.toString(), fieldTimeout, fieldMetrics, fieldMetrics, timeoutName, fieldTimeout).build();
     }
 
     private CodeBlock buildMethodCall(ExecutableElement method, String call) {

@@ -12,7 +12,7 @@ final class NoopRetryMetrics implements RetryMetrics {
     }
 
     @Override
-    public void recordExhaustedAttempts(@Nonnull String name, int attempts) {
+    public void recordExhaustedAttempts(@Nonnull String name, int totalAttempts) {
         // do nothing
     }
 }

@@ -12,9 +12,4 @@ final class NoopFallbackMetrics implements FallbackMetrics {
     public void recordExecute(@Nonnull String name, @Nonnull Throwable throwable) {
         // do nothing
     }
-
-    @Override
-    public void recordSkip(@Nonnull String name, @Nonnull Throwable throwable) {
-        // do nothing
-    }
 }

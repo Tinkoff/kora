@@ -3,35 +3,34 @@ package ru.tinkoff.kora.micrometer.module.resilient;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import ru.tinkoff.kora.resilient.fallback.telemetry.FallbackMetrics;
+import ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class MicrometerFallbackMetrics implements FallbackMetrics {
+public final class MicrometerTimeoutMetrics implements TimeoutMetrics {
 
-    private record Metrics(Counter attempts) {}
+    private record Metrics(Counter exhausted) {}
 
     private final ConcurrentHashMap<String, Metrics> metrics = new ConcurrentHashMap<>();
     private final MeterRegistry registry;
 
-    public MicrometerFallbackMetrics(MeterRegistry registry) {
+    public MicrometerTimeoutMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 
     @Override
-    public void recordExecute(@Nonnull String name, @Nonnull Throwable throwable) {
+    public void recordTimeout(@Nonnull String name, long timeoutInNanos) {
         var metrics = this.metrics.computeIfAbsent(name, k -> build(name));
-        metrics.attempts.increment();
+        metrics.exhausted.increment();
     }
 
     private Metrics build(String name) {
-        var attempts = io.micrometer.core.instrument.Counter.builder("resilient.fallback.attempts")
+        var exhausted = Counter.builder("resilient.timeout.exhausted")
             .baseUnit(BaseUnits.OPERATIONS)
-            .tag("type", "executed")
             .tag("name", name)
             .register(registry);
 
-        return new Metrics(attempts);
+        return new Metrics(exhausted);
     }
 }

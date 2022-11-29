@@ -6,5 +6,5 @@ public interface RetryMetrics {
 
     void recordAttempt(@Nonnull String name, long delayInNanos);
 
-    void recordExhaustedAttempts(@Nonnull String name, int attempts);
+    void recordExhaustedAttempts(@Nonnull String name, int totalAttempts);
 }

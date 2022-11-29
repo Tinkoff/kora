@@ -32,7 +32,6 @@ final class SimpleFallbacker implements Fallbacker {
             return true;
         } else {
             logger.trace("Recorded possible Fallback named '{}' failure predicate didn't pass exception for: {}", name, throwable);
-            metrics.recordSkip(name, throwable);
             return false;
         }
     }
