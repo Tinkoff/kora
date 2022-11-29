@@ -3,7 +3,6 @@ package ru.tinkoff.kora.resilient.fallback;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 public interface Fallbacker {
 

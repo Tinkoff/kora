@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.symbol.processor.aop
 
 import com.google.devtools.ksp.KspExperimental
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test

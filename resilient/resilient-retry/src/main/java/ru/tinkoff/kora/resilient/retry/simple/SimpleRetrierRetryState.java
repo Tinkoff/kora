@@ -4,17 +4,20 @@ import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import ru.tinkoff.kora.resilient.retry.RetryException;
+import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 record SimpleRetrierRetryState(
+    String name,
     long started,
     long delayNanos,
     long delayStepNanos,
-    long attemptsMax,
+    int attemptsMax,
     RetrierFailurePredicate failurePredicate,
+    RetryMetrics metrics,
     AtomicInteger attempts
 ) implements Retrier.RetryState {
 
@@ -41,6 +44,7 @@ record SimpleRetrierRetryState(
         }
 
         if (attempts.incrementAndGet() > attemptsMax) {
+            metrics.recordExhaustedAttempts(name, attemptsMax);
             throw new RetryAttemptException("All '" + attemptsMax + "' attempts elapsed during retry");
         }
     }
@@ -48,6 +52,7 @@ record SimpleRetrierRetryState(
     @Override
     public void doDelay() {
         long nextDelayNanos = getDelayNanos();
+        metrics.recordAttempt(name, nextDelayNanos);
         sleepUninterruptibly(nextDelayNanos);
     }
 

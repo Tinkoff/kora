@@ -67,9 +67,13 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         )
 
         val body = if (method.isFlow()) {
-            buildBodyFlow(method, superCall, fieldRetrier)
+            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics")!!.asType(listOf()).makeNullable()
+            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
+            buildBodyFlow(method, superCall, retryableName, fieldRetrier, fieldMetric)
         } else if (method.isSuspend()) {
-            buildBodySuspend(method, superCall, fieldRetrier)
+            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics")!!.asType(listOf()).makeNullable()
+            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
+            buildBodySuspend(method, superCall, retryableName, fieldRetrier, fieldMetric)
         } else {
             buildBodySync(method, superCall, fieldRetrier)
         }
@@ -96,44 +100,31 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
     }
 
     private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
+        method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String
     ): CodeBlock {
         val delayMember = MemberName("kotlinx.coroutines", "delay")
         val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
+        val prefix = if (method.isVoid()) "" else "return "
 
-        return if (method.isVoid()) {
-            CodeBlock.of(
-                """
-                val _state = %L.asState()
-                while (true) {
-                    try {
-                        %L
-                    } catch (e: %M) {
-                        _state.checkRetry(e)
-                        %M(_state.delayNanos.%M)
-                    }
+        return CodeBlock.of(
+            """
+            val _state = %L.asState()
+            while (true) {
+                try {
+                    $prefix%L
+                } catch (e: Exception) {
+                    _state.checkRetry(e)
+                    val _delay = _state.delayNanos
+                    %L?.recordAttempt(%S, _delay)
+                    %M(_delay.%M)
                 }
-                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), delayMember, timeMember
-            )
-        } else {
-            CodeBlock.of(
-                """
-                val _state = %L.asState()
-                while (true) {
-                    try {
-                        return %L
-                    } catch (e: Exception) {
-                        _state.checkRetry(e)
-                        %M(_state.delayNanos.%M)
-                    }
-                }
-                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), delayMember, timeMember
-            )
-        }
+            }
+            """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), fieldMetric, retryName, delayMember, timeMember
+        )
     }
 
     private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
+        method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String
     ): CodeBlock {
         val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
         val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
@@ -148,12 +139,15 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
                 %M(
                     %L.%M{ cause, attempt ->
                         _state.checkRetry(cause)
-                        %M(_state.delayNanos.%M)
+                        val _delay = _state.delayNanos
+                        %L?.recordAttempt(%S, _delay)
+                        %M(_delay.%M)
                         true
                     }
                 )
             }
-            """.trimIndent(), flowMember, fieldRetrier, emitMember, buildMethodCall(method, superCall), retryMember, delayMember, timeMember
+            """.trimIndent(), flowMember, fieldRetrier, emitMember, buildMethodCall(method, superCall),
+            retryMember, fieldMetric, retryName, delayMember, timeMember
         ).build()
     }
 

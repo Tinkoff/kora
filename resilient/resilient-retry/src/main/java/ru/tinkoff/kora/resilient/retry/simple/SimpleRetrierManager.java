@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetrierManager;
+import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -19,13 +20,15 @@ final class SimpleRetrierManager implements RetrierManager {
     private final ExecutorService executors;
 
     private final Map<String, Retrier> retryableByName = new ConcurrentHashMap<>();
-    private final SimpleRetrierConfig config;
     private final List<RetrierFailurePredicate> failurePredicates;
+    private final SimpleRetrierConfig config;
+    private final RetryMetrics metrics;
 
-    SimpleRetrierManager(ExecutorService executors, SimpleRetrierConfig config, List<RetrierFailurePredicate> failurePredicates) {
+    SimpleRetrierManager(ExecutorService executors, SimpleRetrierConfig config, List<RetrierFailurePredicate> failurePredicates, RetryMetrics metrics) {
         this.executors = executors;
         this.config = config;
         this.failurePredicates = failurePredicates;
+        this.metrics = metrics;
     }
 
     @Nonnull
@@ -35,7 +38,7 @@ final class SimpleRetrierManager implements RetrierManager {
             final SimpleRetrierConfig.NamedConfig config = this.config.getNamedConfig(name);
             final RetrierFailurePredicate failurePredicate = getFailurePredicate(config);
             logger.debug("Creating Repeater named '{}' with config {}", name, config);
-            return new SimpleRetrier(config, failurePredicate, executors);
+            return new SimpleRetrier(name, config, failurePredicate, metrics, executors);
         });
     }
 

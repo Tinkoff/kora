@@ -59,16 +59,18 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
 
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.TimeouterManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
-        val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics")!!.asType(listOf()).makeNullable()
-        val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
         val fieldTimeout = aspectContext.fieldFactory.constructorInitialized(
             resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.Timeouter")!!.asType(listOf()),
             CodeBlock.of("%L[%S]", fieldManager, timeoutName)
         )
 
         val body = if (method.isFlow()) {
+            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics")!!.asType(listOf()).makeNullable()
+            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
             buildBodyFlow(method, superCall, timeoutName, fieldTimeout, fieldMetric)
         } else if (method.isSuspend()) {
+            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics")!!.asType(listOf()).makeNullable()
+            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
             buildBodySuspend(method, superCall, timeoutName, fieldTimeout, fieldMetric)
         } else {
             buildBodySync(method, superCall, fieldTimeout)
@@ -101,10 +103,10 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
                       %L
                   }
             } catch (e: Exception) {
-                %L?.recordTimeout(%S)
+                %L?.recordTimeout(%S, %L.timeout().toNanos())
                 throw e
             }
-          """.trimIndent(), timeoutMember, fieldTimeout, superMethod.toString(), fieldMetric, timeoutName
+          """.trimIndent(), timeoutMember, fieldTimeout, superMethod.toString(), fieldMetric, timeoutName, fieldTimeout
         ).build()
     }
 
@@ -123,11 +125,11 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
             """
             val limit = %M()
             return %M { %M(%L) }
-                .%M { limit.set(%M.nanoTime() + %L.timeout().nano) }
+                .%M { limit.set(%M.nanoTime() + %L.timeout().toNanos()) }
                 .%M {
                     val current = %M.nanoTime()
                     if (current > limit.get()) {
-                        %L?.recordTimeout(%S)
+                        %L?.recordTimeout(%S, %L.timeout().toNanos())
                         throw %M("Timeout exceeded " + %L.timeout())
                     } else {
                         false
@@ -135,7 +137,7 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
                 }
             """.trimIndent(),
             atomicMember, flowMember, emitMember, superMethod.toString(), startMember, systemMember,
-            fieldTimeout, whileMember, systemMember, fieldMetric, timeoutName, timeoutMember, fieldTimeout,
+            fieldTimeout, whileMember, systemMember, fieldMetric, timeoutName, fieldTimeout, timeoutMember, fieldTimeout,
         ).build()
     }
 

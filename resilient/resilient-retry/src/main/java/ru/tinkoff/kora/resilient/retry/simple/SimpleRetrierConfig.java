@@ -52,10 +52,10 @@ public record SimpleRetrierConfig(@Nullable Map<String, NamedConfig> retryable) 
      */
     public record NamedConfig(@Nullable Duration delay,
                               @Nullable Duration delayStep,
-                              @Nullable Long attempts,
+                              @Nullable Integer attempts,
                               @Nullable String failurePredicateName) {
 
-        public NamedConfig(Duration delay, @Nullable Duration delayStep, Long attempts, @Nullable String failurePredicateName) {
+        public NamedConfig(@Nullable Duration delay, @Nullable Duration delayStep, @Nullable Integer attempts, @Nullable String failurePredicateName) {
             this.attempts = attempts;
             this.delay = delay;
             this.delayStep = (delayStep == null) ? Duration.ZERO : delayStep;

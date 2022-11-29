@@ -5,6 +5,7 @@ import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import ru.tinkoff.kora.resilient.retry.RetryException;
+import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,26 +16,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-record SimpleRetrier(long delayNanos,
+record SimpleRetrier(String name,
+                     long delayNanos,
                      long delayStepNanos,
-                     long attempts,
+                     int attempts,
                      RetrierFailurePredicate failurePredicate,
+                     RetryMetrics metrics,
                      ExecutorService executor) implements Retrier {
 
-    public SimpleRetrier(SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, ExecutorService executors) {
-        this(config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, executors);
+    public SimpleRetrier(String name, SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, RetryMetrics metrics, ExecutorService executors) {
+        this(name, config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, metrics, executors);
     }
 
     @Nonnull
     @Override
     public RetryState asState() {
-        return new SimpleRetrierRetryState(System.nanoTime(), delayNanos, delayStepNanos, attempts, failurePredicate, new AtomicInteger(0));
+        return new SimpleRetrierRetryState(name, System.nanoTime(), delayNanos, delayStepNanos, attempts, failurePredicate, metrics, new AtomicInteger(0));
     }
 
     @Nonnull
     @Override
     public Retry asReactor() {
-        return new SimpleReactorRetry(delayNanos, delayStepNanos, attempts, failurePredicate);
+        return new SimpleReactorRetry(name, delayNanos, delayStepNanos, attempts, failurePredicate, metrics);
     }
 
     @Override
@@ -54,9 +57,9 @@ record SimpleRetrier(long delayNanos,
 
     private <T> T internalRetry(Function<ExecutorService, Future<T>> consumer, @Nullable Supplier<T> fallback) throws RetryException {
         var counter = asState();
-        for (long i = 0; i < attempts; i++) {
+        for (int i = 0; i < attempts; i++) {
             try {
-                return consumer.apply(executor).get(1, TimeUnit.HOURS);
+                return consumer.apply(executor).get(24, TimeUnit.HOURS);
             } catch (Throwable e) {
                 counter.checkRetry(e);
                 counter.doDelay();

@@ -39,7 +39,7 @@ public interface TimeoutModule {
                                                   SimpleTimeoutConfig config,
                                                   @Nullable TimeoutMetrics metrics) {
         return new SimpleTimeouterManager(metrics == null
-            ? NoopTimeoutMetrics.INSTANCE
+            ? new NoopTimeoutMetrics()
             : metrics,
             executorService, config);
     }

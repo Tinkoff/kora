@@ -7,7 +7,6 @@ import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.resilient.timeout.annotation.Timeout;
 
 import java.time.Duration;
-import java.util.concurrent.TimeoutException;
 
 @Component
 public class TimeoutTarget implements MockLifecycle {

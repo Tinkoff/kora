@@ -35,7 +35,7 @@ record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, 
         try {
             return consumer.apply(executor).get(delayMaxNanos, TimeUnit.NANOSECONDS);
         } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
-            metrics.recordTimeout(name);
+            metrics.recordTimeout(name, delayMaxNanos);
             throw new TimeoutException(e.getMessage());
         }
     }

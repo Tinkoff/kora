@@ -9,7 +9,9 @@ import ru.tinkoff.kora.config.common.extractor.ObjectConfigValueExtractor;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetrierManager;
 import ru.tinkoff.kora.resilient.retry.annotation.Retryable;
+import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,10 +37,14 @@ public interface RetryableModule {
             : extractor.extract(config.getValue("resilient"));
     }
 
-    default RetrierManager simpleRetryableManager(SimpleRetrierConfig config,
+    default RetrierManager simpleRetryableManager(@Tag(Retryable.class) ExecutorService executorService,
                                                   All<RetrierFailurePredicate> failurePredicates,
-                                                  @Tag(Retryable.class) ExecutorService executorService) {
-        return new SimpleRetrierManager(executorService, config, failurePredicates);
+                                                  SimpleRetrierConfig config,
+                                                  @Nullable RetryMetrics metrics) {
+        return new SimpleRetrierManager(executorService, config, failurePredicates,
+            metrics == null
+                ? new NoopRetryMetrics()
+                : metrics);
     }
 
     @DefaultComponent
