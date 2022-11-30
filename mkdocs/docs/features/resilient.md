@@ -29,6 +29,19 @@ public interface AppWithConfig extends CircuitBreakerModule {
 }
 ```
 
+#### Example
+
+```java
+@Component
+public class Target {
+
+    @CircuitBreaker("custom")
+    public String getValue() {
+        throw new IllegalStateException("Ops");
+    }
+}
+```
+
 #### Конфигурация
 
 Существует *default* конфигурация, которая применяется к CircuitBreaker при создании 
@@ -113,6 +126,19 @@ public interface AppWithConfig extends RetryableModule {
 }
 ```
 
+#### Example
+
+```java
+@Component
+public class RetryableTarget {
+
+    @Retryable("custom1")
+    public void execute(String arg) {
+        throw new IllegalStateException("Ops");
+    }
+}
+```
+
 #### Конфигурация
 
 Существует *default* конфигурация, которая применяется к Retryable при создании
@@ -183,6 +209,24 @@ public interface AppWithConfig extends TimeoutModule {
 }
 ```
 
+#### Example
+
+```java
+@Component
+public class Target {
+
+    @Timeout("custom")
+    public String getValue() {
+        try {
+            Thread.sleep(3000);
+            return "OK";
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}
+```
+
 #### Конфигурация
 
 Существует *default* конфигурация, которая применяется к Timeout при создании
@@ -218,6 +262,40 @@ implementation 'ru.tinkoff.kora:resilient-fallback'
 @KoraApp
 public interface AppWithConfig extends FallbackModule {
     
+}
+```
+
+#### Example
+
+Пример для *Fallback* без аргументов:
+```java
+@Component
+public class Target {
+
+    @Fallback(value = "custom", method = "getFallback()")
+    public String getValue() {
+        return "value";
+    }
+
+    protected String getFallback() {
+        return "fallback";
+    }
+}
+```
+
+Пример для *Fallback* с аргументами:
+```java
+@Component
+public class Target {
+
+    @Fallback(value = "custom", method = "getFallback(arg3, arg1)")     // Передает аргументы проаннотированного метода в указанном порядке в Fallback метод
+    public String getValue(String arg1, Integer arg2, Long arg3) {
+        return "value";
+    }
+
+    protected String getFallback(Long argLong, String argString) {
+        return "fallback";
+    }
 }
 ```
 
