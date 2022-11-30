@@ -107,6 +107,8 @@ object GraphBuilder {
                         newProcessing.resolutionStack.addAll(this.findInterceptors(ctx, processing, template))
                         try {
                             results.add(this.processProcessing(ctx, newProcessing))
+                        } catch (e: NewRoundException) {
+                            results.add(e.resolving)
                         } catch (e: UnresolvedDependencyException) {
                             if (exception != null) {
                                 exception.addSuppressed(e)

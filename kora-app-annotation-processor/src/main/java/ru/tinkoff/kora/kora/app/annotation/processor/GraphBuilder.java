@@ -124,6 +124,8 @@ public class GraphBuilder {
 
                         try {
                             results.add(processProcessing(ctx, roundEnv, newProcessing));
+                        } catch (NewRoundException e) {
+                            results.add(e.getResolving());
                         } catch (UnresolvedDependencyException e) {
                             if (exception != null) {
                                 exception.addSuppressed(e);
