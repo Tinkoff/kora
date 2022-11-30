@@ -83,8 +83,10 @@ public class JsonAnnotationProcessor extends AbstractKoraProcessor {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
         if (parsedAnnotations.contains(Json.class)) for (var e : roundEnv.getElementsAnnotatedWith(Json.class)) {
-            this.processor.generateReader((TypeElement) e);
-            this.processor.generateWriter((TypeElement) e);
+            if (e.getKind() == ElementKind.CLASS || e.getKind() == ElementKind.INTERFACE || e.getKind() == ElementKind.RECORD) {
+                this.processor.generateReader((TypeElement) e);
+                this.processor.generateWriter((TypeElement) e);
+            }
         }
         if (parsedAnnotations.contains(JsonWriter.class)) for (var e : roundEnv.getElementsAnnotatedWith(JsonWriter.class)) {
             if (e.getKind() == ElementKind.CLASS || e.getKind() == ElementKind.RECORD) {
