@@ -15,6 +15,7 @@ import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.findMethods
 import ru.tinkoff.kora.ksp.common.makeTagAnnotationSpec
 import ru.tinkoff.kora.ksp.common.parseTags
+import javax.annotation.processing.Generated
 
 @KspExperimental
 class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: Resolver) {
@@ -72,7 +73,7 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
             if (qualifiedType.indexOf('<') > 0) {
                 qualifiedType = qualifiedType.substring(0, qualifiedType.indexOf('<'))
             }
-            
+
             val dotIndex = qualifiedType.lastIndexOf('.')
             val shortName = if (dotIndex < 0) qualifiedType.replaceFirstChar { it.lowercaseChar() } else qualifiedType.substring(dotIndex + 1).replaceFirstChar { it.lowercaseChar() }
             for (i in 1 until Int.MAX_VALUE) {
@@ -106,6 +107,11 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
         val typeBuilder: TypeSpec.Builder = TypeSpec.classBuilder(aopProxyName(classDeclaration))
             .superclass(classDeclaration.toClassName())
             .addModifiers(KModifier.PUBLIC, KModifier.FINAL)
+            .addAnnotation(
+                AnnotationSpec.builder(Generated::class)
+                    .addMember("\"%L\"", AopSymbolProcessor::class.java.canonicalName)
+                    .build()
+            )
 
         if (classDeclaration.isAnnotationPresent(Component::class)) {
             typeBuilder.addAnnotation(Component::class)
