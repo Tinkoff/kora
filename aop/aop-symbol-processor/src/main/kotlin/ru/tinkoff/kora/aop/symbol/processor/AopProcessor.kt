@@ -30,13 +30,13 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
 
         override fun constructorParam(type: KSType, annotations: List<AnnotationSpec>): String {
             return constructorParams.computeIfAbsent(ConstructorParamKey(type, annotations, resolver)) { key ->
-                this.computeFieldName(key.type.makeNotNullable().toString())!!
+                this.computeFieldName(key.type)!!
             }
         }
 
         override fun constructorInitialized(type: KSType, initializer: CodeBlock): String {
             return constructorInitializedParams.computeIfAbsent(ConstructorInitializedParamKey(type, initializer, resolver)) { key ->
-                this.computeFieldName(key.type.makeNotNullable().toString())!!
+                this.computeFieldName(key.type)!!
             }
         }
 
@@ -68,14 +68,11 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
             }
         }
 
-        private fun computeFieldName(type: String): String? {
-            var qualifiedType = type
-            if (qualifiedType.indexOf('<') > 0) {
-                qualifiedType = qualifiedType.substring(0, qualifiedType.indexOf('<'))
-            }
-
+        private fun computeFieldName(type: KSType): String? {
+            var qualifiedType = type.makeNotNullable().toClassName().simpleName
             val dotIndex = qualifiedType.lastIndexOf('.')
-            val shortName = if (dotIndex < 0) qualifiedType.replaceFirstChar { it.lowercaseChar() } else qualifiedType.substring(dotIndex + 1).replaceFirstChar { it.lowercaseChar() }
+            val shortName = if (dotIndex < 0) qualifiedType.replaceFirstChar { it.lowercaseChar() }
+            else qualifiedType.substring(dotIndex + 1).replaceFirstChar { it.lowercaseChar() }
             for (i in 1 until Int.MAX_VALUE) {
                 val name = shortName + i
                 if (fieldNames.add(name)) {
