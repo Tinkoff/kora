@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
+import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.json.annotation.processor.JsonUtils;
 import ru.tinkoff.kora.json.annotation.processor.KnownType;
 import ru.tinkoff.kora.json.annotation.processor.reader.JsonClassReaderMeta.FieldMeta;
@@ -74,6 +75,7 @@ public class JsonReaderGenerator {
             .addAnnotation(AnnotationSpec.builder(Generated.class)
                 .addMember("value", CodeBlock.of("$S", JsonReaderGenerator.class.getCanonicalName()))
                 .build())
+            .addAnnotation(Component.class)
             .addSuperinterface(readerInterface)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addOriginatingElement(meta.typeElement());

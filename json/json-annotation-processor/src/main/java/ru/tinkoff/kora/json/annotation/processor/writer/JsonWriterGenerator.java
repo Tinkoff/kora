@@ -3,6 +3,7 @@ package ru.tinkoff.kora.json.annotation.processor.writer;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.squareup.javapoet.*;
+import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.json.annotation.processor.JsonUtils;
 import ru.tinkoff.kora.json.annotation.processor.KnownType;
 import ru.tinkoff.kora.json.annotation.processor.writer.JsonClassWriterMeta.FieldMeta;
@@ -51,6 +52,7 @@ public class JsonWriterGenerator {
             .addAnnotation(AnnotationSpec.builder(Generated.class)
                 .addMember("value", CodeBlock.of("$S", JsonWriterGenerator.class.getCanonicalName()))
                 .build())
+            .addAnnotation(Component.class)
             .addSuperinterface(writerInterface)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addOriginatingElement(meta.typeElement());

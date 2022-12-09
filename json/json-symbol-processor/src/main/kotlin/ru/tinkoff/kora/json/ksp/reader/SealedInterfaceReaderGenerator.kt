@@ -14,6 +14,7 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.*
+import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.json.common.BufferedParserWithDiscriminator
 import ru.tinkoff.kora.json.common.JsonReader
 import ru.tinkoff.kora.json.common.annotation.JsonDiscriminatorValue
@@ -52,6 +53,7 @@ class SealedInterfaceReaderGenerator(private val resolver: Resolver, logger: KSP
                     .addMember(CodeBlock.of("%S", SealedInterfaceReaderGenerator::class.java.canonicalName))
                     .build()
             )
+            .addAnnotation(Component::class.asClassName())
             .addSuperinterface(readerInterface)
             .addModifiers(KModifier.PUBLIC)
             .addOriginatingKSFile(meta.type.declaration.containingFile!!)
