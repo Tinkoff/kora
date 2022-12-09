@@ -10,6 +10,7 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.*
+import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.json.common.JsonWriter
 import ru.tinkoff.kora.json.ksp.jsonWriterName
 import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.controlFlow
@@ -51,6 +52,7 @@ class SealedInterfaceWriterGenerator(
                     .addMember(CodeBlock.of("%S", SealedInterfaceWriterGenerator::class.java.canonicalName))
                     .build()
             )
+            .addAnnotation(Component::class)
             .addSuperinterface(writerInterface)
             .addModifiers(KModifier.PUBLIC)
             .addOriginatingKSFile(jsonClassDeclaration.containingFile!!)
