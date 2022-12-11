@@ -3,6 +3,7 @@ package ru.tinkoff.kora.json.annotation.processor.reader;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.squareup.javapoet.*;
+import ru.tinkoff.kora.common.annotation.Generated;
 import ru.tinkoff.kora.json.annotation.processor.JsonUtils;
 import ru.tinkoff.kora.json.annotation.processor.KnownType;
 import ru.tinkoff.kora.json.common.BufferedParserWithDiscriminator;
@@ -11,7 +12,6 @@ import ru.tinkoff.kora.json.common.annotation.JsonDiscriminatorValue;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.processing.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
