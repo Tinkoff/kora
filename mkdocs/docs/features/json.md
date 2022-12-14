@@ -73,10 +73,6 @@ public record DtoWithNullableFields(
 * DayOfWeek
 * ZoneId
 * Duration
-* java.util.Date
-* java.util.Timestamp
-* java.sql.Date
-* java.sql.Time
 
 ## Поддержка sealed классов и интерфейсов
 

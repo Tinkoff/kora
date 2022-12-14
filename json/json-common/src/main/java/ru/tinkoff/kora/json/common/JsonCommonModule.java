@@ -3,12 +3,8 @@ package ru.tinkoff.kora.json.common;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonToken;
 import ru.tinkoff.kora.common.DefaultComponent;
 
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.ParseException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -370,94 +366,6 @@ public interface JsonCommonModule {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
             case VALUE_STRING -> Duration.parse(parser.getValueAsString());
-            default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
-        };
-    }
-
-    @DefaultComponent
-    default JsonWriter<Date> dateOldJsonWriter() {
-        return (gen, object) -> {
-            if (object == null) {
-                gen.writeNull();
-            } else {
-                gen.writeString(DateTimeFormatters.ISO_INSTANT.format(object.toInstant()));
-            }
-        };
-    }
-
-    @DefaultComponent
-    default JsonReader<Date> dateOldJsonReader() {
-        return parser -> switch (parser.currentToken()) {
-            case VALUE_NULL -> null;
-            case VALUE_NUMBER_INT -> Date.from(Instant.ofEpochMilli(parser.getValueAsInt()));
-            case VALUE_STRING -> Date.from(DateTimeFormatters.ISO_INSTANT.parse(parser.getValueAsString()).query(Instant::from));
-            default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
-        };
-    }
-
-    @DefaultComponent
-    default JsonWriter<java.sql.Date> dateSqlJsonWriter() {
-        return (gen, object) -> {
-            if (object == null) {
-                gen.writeNull();
-            } else {
-                final Instant instant = Instant.ofEpochMilli(object.getTime());
-                final LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.of("UTC").normalized());
-                gen.writeString(DateTimeFormatters.ISO_LOCAL_DATE_TIME.format(localDateTime));
-            }
-        };
-    }
-
-    @DefaultComponent
-    default JsonReader<java.sql.Date> dateSqlJsonReader() {
-        return parser -> switch (parser.currentToken()) {
-            case VALUE_NULL -> null;
-            case VALUE_STRING -> {
-                final LocalDateTime parsed = LocalDateTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_LOCAL_DATE_TIME);
-                final ZonedDateTime zonedParsed = ZonedDateTime.of(parsed, ZoneId.of("UTC").normalized());
-                yield new java.sql.Date(zonedParsed.toInstant().toEpochMilli());
-            }
-            default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
-        };
-    }
-
-    @DefaultComponent
-    default JsonWriter<Time> timeSqlJsonWriter() {
-        return (gen, object) -> {
-            if (object == null) {
-                gen.writeNull();
-            } else {
-                gen.writeString(DateTimeFormatters.ISO_LOCAL_TIME.format(object.toLocalTime()));
-            }
-        };
-    }
-
-    @DefaultComponent
-    default JsonReader<Time> timeSqlJsonReader() {
-        return parser -> switch (parser.currentToken()) {
-            case VALUE_NULL -> null;
-            case VALUE_STRING -> Time.valueOf(LocalTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_LOCAL_TIME));
-            default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
-        };
-    }
-
-    @DefaultComponent
-    default JsonWriter<Timestamp> timestampSqlJsonWriter() {
-        return (gen, object) -> {
-            if (object == null) {
-                gen.writeNull();
-            } else {
-                gen.writeString(DateTimeFormatters.ISO_INSTANT.format(object.toInstant()));
-            }
-        };
-    }
-
-    @DefaultComponent
-    default JsonReader<Timestamp> timestampSqlJsonReader() {
-        return parser -> switch (parser.currentToken()) {
-            case VALUE_NULL -> null;
-            case VALUE_NUMBER_INT -> Timestamp.from(Instant.ofEpochMilli(parser.getValueAsInt()));
-            case VALUE_STRING -> Timestamp.from(DateTimeFormatters.ISO_INSTANT.parse(parser.getValueAsString()).query(Instant::from));
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }

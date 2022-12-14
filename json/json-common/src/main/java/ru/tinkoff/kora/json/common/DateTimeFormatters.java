@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.json.common;
 
-import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.Month;
 import java.time.chrono.IsoChronology;
@@ -8,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.ResolverStyle;
 import java.time.format.SignStyle;
-import java.time.temporal.ChronoField;
 
 import static java.time.temporal.ChronoField.*;
 
@@ -126,18 +124,4 @@ final class DateTimeFormatters {
         .toFormatter()
         .withResolverStyle(ResolverStyle.STRICT)
         .withChronology(IsoChronology.INSTANCE);
-
-    /**
-     * ISO8601 for {@link java.util.Date} and {@link java.sql.Timestamp} and {@link java.sql.Date}
-     */
-    private static final String ISO_DATE_FORMATTER = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-
-    /**
-     * ISO8601 for {@link java.sql.Time}
-     */
-    private static final String ISO_TIME_FORMATTER = "HH:mm:ss.SSSXXX";
-
-    static final SimpleDateFormat ISO_DATE_OLD = new SimpleDateFormat(ISO_DATE_FORMATTER);
-
-    static final SimpleDateFormat ISO_TIME_OLD = new SimpleDateFormat(ISO_TIME_FORMATTER);
 }
