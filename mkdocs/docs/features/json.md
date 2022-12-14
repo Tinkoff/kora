@@ -1,8 +1,26 @@
 # Json
 
-## Генерация Reader/Writer
+Kora предоставляет набор аннотаций для генерации JsonReader/JsonWriter в Compile Time.
 
-Kora предоставляет набор аннотаций для генерации JsonReader/JsonWriter
+### Dependency
+
+```groovy
+implementation "ru.tinkoff.kora:json-common"
+```
+
+Для HTTP Server:
+```groovy
+implementation "ru.tinkoff.kora:json-module"
+```
+
+### Module
+
+```java
+@KoraApp
+public interface ApplicationModules extends JsonModule { }
+```
+
+## Getting Started
 
 ```java
 @Json
@@ -40,9 +58,25 @@ public record DtoWithNullableFields(
 * Short
 * short
 * byte[]
-* LocalDate
 * List<Integer>
 * Set<Integer>
+* LocalDate
+* LocalTime
+* LocalDateTime
+* OffsetTime
+* OffsetDateTime
+* ZonedDateTime
+* Year
+* YearMonth
+* MonthDay
+* Month
+* DayOfWeek
+* ZoneId
+* Duration
+* java.util.Date
+* java.util.Timestamp
+* java.sql.Date
+* java.sql.Time
 
 ## Поддержка sealed классов и интерфейсов
 
