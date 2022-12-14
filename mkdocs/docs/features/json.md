@@ -2,22 +2,32 @@
 
 Kora предоставляет набор аннотаций для генерации JsonReader/JsonWriter в Compile Time.
 
-### Dependency
+## Kora
 
+Dependency:
 ```groovy
-implementation "ru.tinkoff.kora:json-common"
-```
-
-Для HTTP Server:
-```groovy
+annotationProcessor "ru.tinkoff.kora:json-annotation-processor"
 implementation "ru.tinkoff.kora:json-module"
 ```
 
-### Module
-
+Module:
 ```java
 @KoraApp
 public interface ApplicationModules extends JsonModule { }
+```
+
+## Jackson
+
+Dependency:
+```groovy
+annotationProcessor "ru.tinkoff.kora:json-annotation-processor"
+implementation "ru.tinkoff.kora:jackson-module"
+```
+
+Module:
+```java
+@KoraApp
+public interface ApplicationModules extends JacksonModule { }
 ```
 
 ## Getting Started
@@ -40,8 +50,9 @@ public record DtoWithNullableFields(
 Кроме аннотации `@Json` можно воспользоваться `@JsonReader` или `JsonWriter`, это 
 актуально для тех случаев, когда нужно создать только Reader или Writer соответственно
 
-##Поддерживаемые типы
+## Поддерживаемые типы
 
+* UUID
 * String
 * Boolean
 * boolean
@@ -95,7 +106,6 @@ public sealed interface Event {
 ```
 
 Для классов-наследников reader и writer генерируются по тем же правилам, как если бы на них была аннотация json, + генерируется reader/writer для самого sealed класса/интерфейса. 
-
 
 ## Использование в других модулях
 При использовании некоторых модулей необязательно добавлять аннотацию `@Json` к dto. Например, в примере с http-client был использован модуль `HttpClientJsonModule`.
