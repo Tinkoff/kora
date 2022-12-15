@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -14,9 +15,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ParametersAreNonnullByDefault
-public class RequestHandlerUtils {
-    private RequestHandlerUtils() {
-    }
+public final class RequestHandlerUtils {
+
+    private RequestHandlerUtils() {}
 
     /*
      * Path: String, UUID, Integer, Long, Double, Enum<?>
@@ -115,10 +116,21 @@ public class RequestHandlerUtils {
     }
 
     public static List<String> parseStringListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
-        var result = request.headers().get(name);
+        var result = parseOptionalStringListHeaderParameter(request, name);
         if (result == null) {
             throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
         }
+
+        return result;
+    }
+
+    @Nullable
+    public static List<String> parseOptionalStringListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
+        var result = request.headers().get(name);
+        if (result == null) {
+            return null;
+        }
+
         return result.stream()
             .flatMap(h -> Stream.of(h.split(",")))
             .map(String::trim)
@@ -154,20 +166,32 @@ public class RequestHandlerUtils {
     }
 
     public static List<Integer> parseIntegerListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
-        var headers = request.headers().get(name);
-        if (headers == null || headers.isEmpty()) {
+        var result = parseOptionalIntegerListHeaderParameter(request, name);
+        if (result == null) {
             throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
         }
+
+        return result;
+    }
+
+    @Nullable
+    public static List<Integer> parseOptionalIntegerListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
+        var headers = request.headers().get(name);
+        if (headers == null || headers.isEmpty()) {
+            return null;
+        }
+
         List<Integer> result = new ArrayList<>();
-        for (String header: headers) {
+        for (String header : headers) {
             header = header.trim();
             if (!header.isEmpty()) {
                 String[] split = header.split(",");
-                for (String s: split) {
+                for (String s : split) {
                     s = s.trim();
                     if (s.isEmpty()) {
                         throw HttpServerResponseException.of(400, "Header %s(%s) has invalid value".formatted(name, header));
                     }
+
                     try {
                         result.add(Integer.parseInt(s));
                     } catch (NumberFormatException e) {

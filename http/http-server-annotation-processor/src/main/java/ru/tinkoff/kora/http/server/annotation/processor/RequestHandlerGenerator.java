@@ -247,7 +247,13 @@ public class RequestHandlerGenerator {
             }
             case "java.util.Optional<java.lang.String>" ->
                 code.add("var $L = $T.ofNullable($T.parseOptionalStringHeaderParameter(_request, $S));", parameter.variableElement, Optional.class, RequestHandlerUtils.class, parameter.name);
-            case "java.util.List<java.lang.String>" -> code.add("var $L = $T.parseStringListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+            case "java.util.List<java.lang.String>" -> {
+                if (isNullable(parameter)) {
+                    code.add("var $L = $T.parseOptionalStringListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+                } else {
+                    code.add("var $L = $T.parseStringListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+                }
+            }
 
             case "java.util.Optional<java.lang.Integer>" ->
                 code.add("var $L = $T.ofNullable($T.parseOptionalIntegerHeaderParameter(_request, $S));", parameter.variableElement, Optional.class, RequestHandlerUtils.class, parameter.name);
@@ -258,7 +264,13 @@ public class RequestHandlerGenerator {
                     code.add("var $L = $T.parseIntegerHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
                 }
             }
-            case "java.util.List<java.lang.Integer>" -> code.add("var $L = $T.parseIntegerListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+            case "java.util.List<java.lang.Integer>" -> {
+                if (isNullable(parameter)) {
+                    code.add("var $L = $T.parseOptionalIntegerListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+                } else {
+                    code.add("var $L = $T.parseIntegerListHeaderParameter(_request, $S);", parameter.variableElement, RequestHandlerUtils.class, parameter.name);
+                }
+            }
 
             default -> {
                 var listElement = elements.getTypeElement(List.class.getCanonicalName());
@@ -284,8 +296,18 @@ public class RequestHandlerGenerator {
                         this.stringParameterReaderElement,
                         listParameter
                     );
+
                     methodBuilder.addParameter(TypeName.get(parameterReaderType), "_" + parameter.name + "Reader");
-                    code.add("var $L = $T.parseStringListHeaderParameter(_request, $S).stream().map($L::read).toList();", parameter.variableElement, RequestHandlerUtils.class, parameter.name, "_" + parameter.name + "Reader");
+                    if (isNullable(parameter)) {
+                        code.add("""
+                                var _optional_$L = $T.parseOptionalStringListHeaderParameter(_request, $S);
+                                var $L = (_optional_$L == null) ? null : _optional_$L.stream().map($L::read).toList();
+                                """, parameter.variableElement, RequestHandlerUtils.class, parameter.name,
+                            parameter.variableElement, parameter.variableElement, parameter.variableElement, "_" + parameter.name + "Reader");
+                    } else {
+                        code.add("var $L = $T.parseStringListHeaderParameter(_request, $S).stream().map($L::read).toList();", parameter.variableElement, RequestHandlerUtils.class, parameter.name, "_" + parameter.name + "Reader");
+                    }
+
                     return code.build();
 
                 }
