@@ -13,7 +13,7 @@ implementation "ch.qos.logback:logback-classic:1.4.5"
 
 ```java
 @KoraApp
-public interface ApplicationModules extends LoggingModule { }
+public interface ApplicationModules extends LogbackModule { }
 ```
 
 ### Description
