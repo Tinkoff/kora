@@ -3,7 +3,6 @@ package ru.tinkoff.kora.http.server.common.handler
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
 import ru.tinkoff.kora.http.server.common.HttpServerResponseException
 import java.util.*
-import java.util.stream.Collectors
 
 
 @Throws(HttpServerResponseException::class)
