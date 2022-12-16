@@ -295,21 +295,41 @@ class RouteProcessor(private val resolver: Resolver) {
                 else -> {
                     val parameterName = valueParameter.name!!.asString()
                     if (paramType == "Query") {
+                        val extractor = if (parameterType.isMarkedNullable) {
+                            ExtractorFunction.STRING_LIST_NULLABLE_QUERY
+                        } else {
+                            ExtractorFunction.STRING_LIST_QUERY
+                        }
+                        val nullChecker = if (parameterType.isMarkedNullable) {
+                            "?"
+                        } else {
+                            ""
+                        }
                         funBuilder.addParameter("_${parameterName}StringParameterReader", stringParameterReader.parameterizedBy(arg.toTypeName()))
                         funBuilder.addStatement(
-                            "val %L = %M(_request, %S).map { _${parameterName}StringParameterReader.read(it) }",
+                            "val %L = %M(_request, %S)$nullChecker.map { _${parameterName}StringParameterReader.read(it) }",
                             parameterName,
-                            ExtractorFunction.STRING_LIST_QUERY.memberName,
+                            extractor.memberName,
                             name
                         )
                         return
                     }
                     if (paramType == "Header") {
+                        val extractor = if (parameterType.isMarkedNullable) {
+                            ExtractorFunction.LIST_STRING_NULLABLE_HEADER
+                        } else {
+                            ExtractorFunction.LIST_STRING_HEADER
+                        }
+                        val nullChecker = if (parameterType.isMarkedNullable) {
+                            "?"
+                        } else {
+                            ""
+                        }
                         funBuilder.addParameter("_${parameterName}StringParameterReader", stringParameterReader.parameterizedBy(arg.toTypeName()))
                         funBuilder.addStatement(
-                            "val %L = %M(_request, %S).map { _${parameterName}StringParameterReader.read(it) }",
+                            "val %L = %M(_request, %S)$nullChecker.map { _${parameterName}StringParameterReader.read(it) }",
                             parameterName,
-                            ExtractorFunction.LIST_STRING_HEADER.memberName,
+                            extractor,
                             name
                         )
                         return

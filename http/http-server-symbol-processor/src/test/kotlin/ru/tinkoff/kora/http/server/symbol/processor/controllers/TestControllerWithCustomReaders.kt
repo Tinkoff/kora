@@ -11,7 +11,7 @@ import ru.tinkoff.kora.http.server.common.annotation.HttpController
 @HttpController
 open class TestControllerWithCustomReaders {
     @HttpRoute(method = HttpMethod.GET, path = "/test/{pathListEntity}")
-    fun test(@Query("queryEntity") queryList: List<ReadableEntity>, @Path("pathListEntity") pathEntity: ReadableEntity, @Header("header-Entity") headerEntity: ReadableEntity? ): HttpServerResponseEntity<String> {
+    fun test(@Query("queryEntity") queryList: List<ReadableEntity>?, @Path("pathListEntity") pathEntity: ReadableEntity, @Header("header-Entity") headerEntity: ReadableEntity? ): HttpServerResponseEntity<String> {
         val resultList = queryList + pathEntity
 
         return HttpServerResponseEntity(200, resultList.joinToString(", ") { it.string })
