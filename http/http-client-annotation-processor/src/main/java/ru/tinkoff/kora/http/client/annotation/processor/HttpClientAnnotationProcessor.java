@@ -73,11 +73,9 @@ public class HttpClientAnnotationProcessor extends AbstractKoraProcessor {
         var configModule = this.configModuleGenerator.generate(element);
         CommonUtils.safeWriteTo(this.processingEnv, configModule);
         CommonUtils.safeWriteTo(this.processingEnv, JavaFile.builder(packageName, client).build());
-        if(!CommonUtils.isClassExists(this.processingEnv, packageName + "." + config.name())) {
-            var configFile = this.processingEnv.getFiler().createSourceFile(packageName + "." + config.name(), element);
-            try (var w = configFile.openWriter()) {
-                w.write(config.content());
-            }
+        var configFile = this.processingEnv.getFiler().createSourceFile(packageName + "." + config.name(), element);
+        try (var w = configFile.openWriter()) {
+            w.write(config.content());
         }
     }
 }
