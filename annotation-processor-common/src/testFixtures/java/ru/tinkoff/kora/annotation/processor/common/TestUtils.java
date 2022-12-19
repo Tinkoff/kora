@@ -116,11 +116,27 @@ public class TestUtils {
         return annotationProcessFiles(files, processors);
     }
 
+    public static ClassLoader annotationProcess(List<Class<?>> targetClasses, List<Processor> processors) throws Exception {
+        var files = targetClasses.stream()
+            .map(targetClass -> {
+                var targetFile = targetClass.getName().replace('.', '/') + ".java";
+                var root = "src/test/java/";
+                return root + targetFile;
+            })
+            .toList();
+
+        return annotationProcessFiles(files, true, processors);
+    }
+
     public static ClassLoader annotationProcessFiles(List<String> targetFiles, Processor... processors) throws Exception {
         return annotationProcessFiles(targetFiles, true, processors);
     }
 
-    public static ClassLoader annotationProcessFiles(List<String> targetFiles, boolean clearClasses, Processor... processors) throws Exception {
+    public static ClassLoader annotationProcessFiles(List<String> targetFiles, boolean clearClasses, Processor ... processors) throws Exception {
+        return annotationProcessFiles(targetFiles, clearClasses, List.of(processors));
+    }
+
+    public static ClassLoader annotationProcessFiles(List<String> targetFiles, boolean clearClasses, List<Processor> processors) throws Exception {
         var compiler = ToolProvider.getSystemJavaCompiler();
         var out = new StringWriter();
         var diagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
@@ -167,7 +183,7 @@ public class TestUtils {
             standardFileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, cp);
 
             var task = compiler.getTask(out, standardFileManager, l, List.of("-parameters", "-g", "--enable-preview", "--source", "17", "-XprintRounds"), List.of(), inputSourceFiles);
-            task.setProcessors(List.of(processors));
+            task.setProcessors(processors);
             try {
                 task.call();
                 if (diagnostics.stream().noneMatch(d -> d.getKind() == Diagnostic.Kind.ERROR)) {

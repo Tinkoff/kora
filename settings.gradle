@@ -73,6 +73,7 @@ include(
     'test:test-kafka',
     'test:test-cassandra',
     'test:test-redis',
+    'test:test-junit5',
     'scheduling:scheduling-common',
     'scheduling:scheduling-jdk',
     'scheduling:scheduling-quartz',
