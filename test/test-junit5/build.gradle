@@ -1,0 +1,14 @@
+dependencies {
+    api libs.junit.jupiter
+    implementation "org.javassist:javassist:3.29.2-GA"
+
+    implementation project(":common")
+    implementation project(":annotation-processor-common")
+    implementation testFixtures(project(":annotation-processor-common"))
+
+    implementation project(":config:config-annotation-processor")
+    implementation project(":kora-app-annotation-processor")
+    implementation libs.jetbrains.annotations
+}
+
+apply from: '../../in-test-generated.gradle'
