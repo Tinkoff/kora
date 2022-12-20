@@ -137,6 +137,10 @@ public class TestUtils {
     }
 
     public static ClassLoader annotationProcessFiles(List<String> targetFiles, boolean clearClasses, List<Processor> processors) throws Exception {
+        return annotationProcessFiles(targetFiles, List.of(), clearClasses, processors);
+    }
+
+    public static ClassLoader annotationProcessFiles(List<String> targetFiles, List<String> targetClasses, boolean clearClasses, List<Processor> processors) throws Exception {
         var compiler = ToolProvider.getSystemJavaCompiler();
         var out = new StringWriter();
         var diagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
@@ -182,7 +186,7 @@ public class TestUtils {
             cp.add(outClasses);
             standardFileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, cp);
 
-            var task = compiler.getTask(out, standardFileManager, l, List.of("-parameters", "-g", "--enable-preview", "--source", "17", "-XprintRounds"), List.of(), inputSourceFiles);
+            var task = compiler.getTask(out, standardFileManager, l, List.of("-parameters", "-g", "--enable-preview", "--source", "17", "-XprintRounds"), targetClasses, inputSourceFiles);
             task.setProcessors(processors);
             try {
                 task.call();
