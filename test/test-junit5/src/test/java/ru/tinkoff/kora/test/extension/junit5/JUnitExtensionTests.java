@@ -8,17 +8,9 @@ import org.junit.jupiter.api.Test;
     application = TestApplication.class,
     classes = {TestFirstComponent.class, TestSecondComponent.class},
     config = """
-        resilient {
-          circuitBreaker {
-            fast {
-              default {
-                slidingWindowSize = 1
-                minimumRequiredCalls = 1
-                failureRateThreshold = 100
-                permittedCallsInHalfOpenState = 1
-                waitDurationInOpenState = 1s
-              }
-            }
+        myconfig {
+          myinnerconfig {
+            myproperty = 1
           }
         }
         """)
@@ -31,8 +23,7 @@ public class JUnitExtensionTests extends Assertions {
 
     @Test
     void configGeneratedForApplication(Config config) {
-        assertEquals("Config(SimpleConfigObject({\"resilient\":{\"circuitBreaker\":{\"fast\":{\"default\":{\"failureRateThreshold\":100,\"minimumRequiredCalls\":1,\"permittedCallsInHalfOpenState\":1,\"slidingWindowSize\":1,\"waitDurationInOpenState\":\"1s\"}}}}}))",
-            config.toString());
+        assertEquals("Config(SimpleConfigObject({\"myconfig\":{\"myinnerconfig\":{\"myproperty\":1}}}))", config.toString());
     }
 
     @Test
