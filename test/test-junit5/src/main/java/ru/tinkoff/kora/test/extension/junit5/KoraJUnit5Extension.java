@@ -196,10 +196,6 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             .toList();
 
         if (!koraAppTest.config().isBlank()) {
-            if (Arrays.stream(koraAppTest.application().getDeclaredMethods()).anyMatch(m -> m.getName().equals("config"))) {
-                throw new ExtensionConfigurationException("@KoraAppTest#configuration is specified, but " + koraAppTest.application() + " already specify config() method for configuration");
-            }
-
             try {
                 final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_" + context.getRequiredTestClass().getSimpleName() + "_" + koraAppTest.application().getSimpleName();
                 CtClass ctclass;
@@ -209,7 +205,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                     ctclass = ClassPool.getDefault().getCtClass(koraAppTest.application().getCanonicalName());
                 }
 
-                if (Arrays.stream(ctclass.getMethods()).noneMatch(m -> m.getName().equals("config"))) {
+                final Optional<CtMethod> configMethod = Arrays.stream(ctclass.getMethods()).filter(m -> m.getName().equals("config")).findFirst();
+                if (configMethod.isEmpty()) {
                     ctclass.defrost();
                     if (Arrays.stream(koraAppTest.application().getInterfaces()).noneMatch(i -> i.equals(ConfigModule.class))) {
                         ctclass.addInterface(ClassPool.getDefault().get(ConfigModule.class.getCanonicalName()));
@@ -237,6 +234,11 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                     final Class<?> applicationWithConfig = ctclass.toClass();
                     var application = new KoraAppMeta.Application(applicationWithConfig, koraAppTest.application());
                     return new KoraAppMeta(application, classes, processors, koraAppTest.shareMode());
+                } else {
+                    ctclass.defrost();
+                    final String config = koraAppTest.config().replace("\n", "\\n");
+                    configMethod.get().setBody("return com.typesafe.config.ConfigFactory.parseString(\"%s\").resolve();".formatted(config));
+                    ctclass.writeFile("build/classes/java/test");
                 }
 
                 var application = new KoraAppMeta.Application(getClass().getClassLoader().loadClass(className), koraAppTest.application());
