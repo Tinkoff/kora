@@ -14,25 +14,46 @@ import java.lang.annotation.*;
 public @interface KoraAppTest {
 
     enum CompilationShareMode {
+
+        /**
+         * {@link KoraAppTest#classes()} instances are create one time only
+         */
         PER_RUN,
+
+        /**
+         * {@link KoraAppTest#classes()} instances are recreated each Test Class
+         */
         PER_CLASS,
+
+        /**
+         * {@link KoraAppTest#classes()} instances are recreated each Test Method
+         */
         PER_METHOD
     }
 
     /**
      * @return class loader share mode between different test executions
      */
-    CompilationShareMode shareMode() default CompilationShareMode.PER_CLASS;
+    CompilationShareMode shareMode() default CompilationShareMode.PER_METHOD;
 
     /**
      * @return class annotated with {@link ru.tinkoff.kora.common.KoraApp}
      */
     Class<?> application();
 
+    /**
+     * @return application configuration in HOCON format
+     */
     @Language("HOCON")
-    String configuration() default "";
+    String config() default "";
 
+    /**
+     * @return classes that are applicable for Annotation Processing and are parts of {@link ru.tinkoff.kora.common.KoraApp}
+     */
     Class<? extends Lifecycle>[] classes();
 
+    /**
+     * @return annotation processors used to process {@link #classes()}
+     */
     Class<? extends AbstractKoraProcessor>[] processors() default {};
 }
