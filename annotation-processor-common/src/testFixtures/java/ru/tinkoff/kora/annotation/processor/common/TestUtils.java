@@ -132,6 +132,10 @@ public class TestUtils {
     }
 
     public static ClassLoader annotationProcessFiles(List<String> targetFiles, List<String> targetClasses, boolean clearClasses, List<Processor> processors) throws Exception {
+        return annotationProcessFiles(targetFiles, targetClasses, clearClasses, p -> true, processors);
+    }
+
+    public static ClassLoader annotationProcessFiles(List<String> targetFiles, List<String> targetClasses, boolean clearClasses, Predicate<Path> clearClassesPredicate, List<Processor> processors) throws Exception {
         var compiler = ToolProvider.getSystemJavaCompiler();
         var out = new StringWriter();
         var diagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
@@ -146,7 +150,7 @@ public class TestUtils {
             if (clearClasses) {
                 try (var s = Files.walk(outClasses)) {
                     s.forEach(p -> {
-                        if (!Files.isDirectory(p)) {
+                        if (!Files.isDirectory(p) && clearClassesPredicate.test(p)) {
                             try {
                                 Files.delete(p);
                             } catch (IOException e) {
