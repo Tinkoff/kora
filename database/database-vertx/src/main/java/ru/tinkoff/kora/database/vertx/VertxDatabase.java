@@ -14,6 +14,7 @@ import ru.tinkoff.kora.database.common.telemetry.DataBaseTelemetry;
 import ru.tinkoff.kora.database.common.telemetry.DataBaseTelemetryFactory;
 import ru.tinkoff.kora.vertx.common.VertxUtil;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -39,29 +40,19 @@ public class VertxDatabase implements Lifecycle, Wrapped<Pool>, VertxConnectionF
     }
 
     @Override
-    public Mono<SqlConnection> currentConnection() {
-        return Mono.deferContextual(reactorContext -> {
-            var ctx = Context.Reactor.current(reactorContext);
-            var connection = ctx.get(this.connectionKey);
-            if (connection == null) {
-                return Mono.empty();
-            } else {
-                return Mono.just(connection);
-            }
-        });
+    public SqlConnection currentConnection() {
+        var ctx = Context.current();
+        return ctx.get(this.connectionKey);
     }
 
     @Override
-    public Mono<SqlConnection> newConnection() {
-        return Mono.create(sink -> {
-            this.pool.getConnection(result -> {
-                if (result.succeeded()) {
-                    sink.success(result.result());
-                } else {
-                    sink.error(result.cause());
-                }
-            });
-        });
+    public CompletionStage<SqlConnection> newConnection() {
+        return this.pool.getConnection().toCompletionStage();
+    }
+
+    @Override
+    public Pool pool() {
+        return this.pool;
     }
 
     @Override

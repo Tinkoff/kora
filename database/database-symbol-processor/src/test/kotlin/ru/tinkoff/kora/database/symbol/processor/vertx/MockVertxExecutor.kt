@@ -37,6 +37,9 @@ class MockVertxExecutor : VertxConnectionFactory {
     override fun currentConnection() = Mono.just(connection)
 
     override fun newConnection() = Mono.just(connection)
+    override fun pool(): Pool {
+        TODO("Not yet implemented")
+    }
 
     override fun telemetry() = telemetry
 
