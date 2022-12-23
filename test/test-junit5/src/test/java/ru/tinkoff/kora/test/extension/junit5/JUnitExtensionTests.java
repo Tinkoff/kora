@@ -3,10 +3,18 @@ package ru.tinkoff.kora.test.extension.junit5;
 import com.typesafe.config.Config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
+import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProcessor;
 
 @KoraAppTest(
-    application = TestApplication.class,
-    classes = {TestFirstComponent.class, TestSecondComponent.class},
+    application = SimpleApplication.class,
+    classes = {
+        TestFirstComponent.class, TestSecondComponent.class
+    },
+    processors = {
+        HttpClientAnnotationProcessor.class,
+        ConfigRootAnnotationProcessor.class
+    },
     config = """
         myconfig {
           myinnerconfig {
