@@ -32,10 +32,10 @@ public class FlywayJdbcDatabaseInterceptorTest {
             0,
             new Properties()
         );
+
         var dataBase = new JdbcDatabase(config, new DefaultDataBaseTelemetryFactory(null, null, null));
         dataBase.init().block();
         try {
-
             var interceptor = new FlywayJdbcDatabaseInterceptor();
             Assertions.assertSame(dataBase, interceptor.init(dataBase).block(), "FlywayJdbcDatabaseInterceptor should return same reference on init");
 
@@ -55,6 +55,5 @@ public class FlywayJdbcDatabaseInterceptorTest {
         } finally {
             dataBase.release().block();
         }
-
     }
 }

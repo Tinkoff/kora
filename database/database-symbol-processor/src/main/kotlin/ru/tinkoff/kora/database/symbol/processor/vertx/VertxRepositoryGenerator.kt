@@ -72,7 +72,7 @@ class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLo
 
         b.addCode("return ")
         if (batchParam != null) {
-            b.addCode("%T.batch(this._vertxConnectionFactory, _query, _batchParams).thenReturn(%T)\n", VertxTypes.repositoryHelper, Unit::class)
+            b.addCode("%T.batch(this._vertxConnectionFactory, _query, _batchParams, {r -> r.rowCount()}).thenReturn(%T)\n", VertxTypes.repositoryHelper, Unit::class)
         } else if (isFlow) {
             b.addCode(
                 "%T.flux(this._vertxConnectionFactory, _query, _tuple, %N).asFlow()\n",

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.extension.*;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
@@ -99,7 +100,14 @@ public final class PostgresTestContainer implements TestExecutionListener, Param
             var params = getParams();
             var dbName = randomName("db");
 
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
             params.execute("CREATE DATABASE " + dbName + " ALLOW_CONNECTIONS true");
+
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

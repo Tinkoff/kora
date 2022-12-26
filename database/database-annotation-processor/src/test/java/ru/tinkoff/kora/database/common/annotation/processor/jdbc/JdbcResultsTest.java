@@ -35,9 +35,9 @@ public class JdbcResultsTest {
         ctx.addMock(TypeRef.of(JdbcEntity.TestEntityJdbcRowMapperNonFinal.class));
         ctx.addMock(TypeRef.of(JdbcEntity.TestEntityFieldJdbcResultColumnMapperNonFinal.class));
         ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, Void.class));
-        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, Integer.class));
-        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, TypeRef.of(List.class, Integer.class)));
-        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, TypeRef.of(Optional.class, Integer.class)));
+        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, Short.class));
+        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, TypeRef.of(List.class, Short.class)));
+        ctx.addMock(TypeRef.of(JdbcResultSetMapper.class, TypeRef.of(Optional.class, Short.class)));
         repository = ctx.newInstance(DbTestUtils.compileClass(AllowedResultsRepository.class));
         reactiveRepository = ctx.newInstance(DbTestUtils.compileClass(AllowedMonoResultsRepository.class));
     }
@@ -56,27 +56,27 @@ public class JdbcResultsTest {
 
     @Test
     void testReturnPrimitive() throws SQLException {
-        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Integer.class));
-        when(rowMapper.apply(any())).thenReturn(42);
-        assertThat(repository.returnPrimitive()).isEqualTo(42);
+        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Short.class));
+        when(rowMapper.apply(any())).thenReturn(((short) 42));
+        assertThat(repository.returnPrimitive()).isEqualTo(((short) 42));
         verify(rowMapper).apply(any());
     }
 
     @Test
     void testReturnObject() throws SQLException {
-        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Integer.class));
+        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Short.class));
         reset(rowMapper);
-        when(rowMapper.apply(any())).thenReturn(42);
-        assertThat(repository.returnObject()).isEqualTo(42);
+        when(rowMapper.apply(any())).thenReturn(((short) 42));
+        assertThat(repository.returnObject()).isEqualTo(((short) 42));
         verify(rowMapper).apply(any());
     }
 
     @Test
     void testReturnNullableObject() throws SQLException {
-        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Integer.class));
+        var rowMapper = ctx.findInstance(TypeRef.of(JdbcResultSetMapper.class, Short.class));
         reset(rowMapper);
-        when(rowMapper.apply(any())).thenReturn(42);
-        assertThat(repository.returnNullableObject()).isEqualTo(42);
+        when(rowMapper.apply(any())).thenReturn(((short) 42));
+        assertThat(repository.returnNullableObject()).isEqualTo(((short) 42));
         verify(rowMapper).apply(any());
 
         reset(rowMapper);

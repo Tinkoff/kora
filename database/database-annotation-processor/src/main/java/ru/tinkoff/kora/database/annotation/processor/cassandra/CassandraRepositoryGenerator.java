@@ -4,6 +4,7 @@ import com.squareup.javapoet.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
+import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
@@ -24,10 +25,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class CassandraRepositoryGenerator implements RepositoryGenerator {
     private final TypeMirror repositoryInterface;
@@ -58,6 +56,9 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
         var repositoryType = (DeclaredType) repositoryElement.asType();
         var queryMethods = DbUtils.findQueryMethods(this.types, this.elements, repositoryElement);
         this.enrichWithExecutor(repositoryElement, type, constructor);
+
+        var resultMappers = new HashMap<String, DbUtils.Mapper>();
+
         for (var method : queryMethods) {
             var methodType = (ExecutableType) this.types.asMemberOf(repositoryType, method);
             var parameters = QueryParameterParser.parse(this.types, CassandraTypes.CONNECTION, method, methodType);
@@ -65,8 +66,11 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
             var queryString = CommonUtils.parseAnnotationValueWithoutDefault(queryAnnotation, "value").toString();
             var query = QueryWithParameters.parse(filer, queryString, parameters);
             this.parseResultMappers(method, parameters, methodType)
-                .map(List::of)
-                .ifPresent(resultMapper -> DbUtils.addMappers(this.types, type, constructor, resultMapper));
+                .filter(mapper -> !resultMappers.containsKey(mapper.name()))
+                .ifPresent(mapper -> {
+                    DbUtils.addMappers(this.types, type, constructor, List.of(mapper));
+                    resultMappers.put(mapper.name(), mapper);
+                });
             DbUtils.addMappers(this.types, type, constructor, DbUtils.parseParameterMappers(
                 method,
                 parameters,
@@ -152,11 +156,16 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
 
 
     private Optional<DbUtils.Mapper> parseResultMappers(ExecutableElement method, List<QueryParameter> parameters, ExecutableType methodType) {
+        if (MethodUtils.isVoid(method)) {
+            return Optional.empty();
+        }
+
         for (var parameter : parameters) {
             if (parameter instanceof QueryParameter.BatchParameter) {
                 return Optional.empty();
             }
         }
+
         var returnType = methodType.getReturnType();
         var mapperName = DbUtils.resultMapperName(method);
         var mappings = CommonUtils.parseMapping(method);
@@ -169,17 +178,20 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
             if (reactiveResultSetMapper != null) {
                 return Optional.of(new DbUtils.Mapper(reactiveResultSetMapper.mapperClass(), mapperType, mapperName));
             }
+
             if (rowMapper != null) {
                 return Optional.of(new DbUtils.Mapper(rowMapper.mapperClass(), mapperType, mapperName, c -> CodeBlock.of("$T.flux($L)", CassandraTypes.REACTIVE_RESULT_SET_MAPPER, c)));
             }
             return Optional.of(new DbUtils.Mapper(mapperType, mapperName));
         }
+
         if (CommonUtils.isMono(returnType)) {
             var monoParam = Visitors.visitDeclaredType(returnType, dt -> dt.getTypeArguments().get(0));
             var mapperType = ParameterizedTypeName.get(CassandraTypes.REACTIVE_RESULT_SET_MAPPER, TypeName.get(monoParam), TypeName.get(returnType));
             if (reactiveResultSetMapper != null) {
                 return Optional.of(new DbUtils.Mapper(reactiveResultSetMapper.mapperClass(), mapperType, mapperName));
             }
+
             if (rowMapper != null) {
                 if (CommonUtils.isList(monoParam)) {
                     return Optional.of(new DbUtils.Mapper(rowMapper.mapperClass(), mapperType, mapperName, c -> CodeBlock.of("$T.monoList($L)", CassandraTypes.REACTIVE_RESULT_SET_MAPPER, c)));
@@ -189,13 +201,12 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
             }
             return Optional.of(new DbUtils.Mapper(mapperType, mapperName));
         }
-        if (returnType.getKind() == TypeKind.VOID) {
-            return Optional.empty();
-        }
+
         var mapperType = ParameterizedTypeName.get(CassandraTypes.RESULT_SET_MAPPER, TypeName.get(returnType).box());
         if (resultSetMapper != null) {
             return Optional.of(new DbUtils.Mapper(resultSetMapper.mapperClass(), mapperType, mapperName));
         }
+
         if (rowMapper != null) {
             if (CommonUtils.isList(returnType)) {
                 return Optional.of(new DbUtils.Mapper(rowMapper.mapperClass(), mapperType, mapperName, c -> CodeBlock.of("$T.listResultSetMapper($L)", CassandraTypes.RESULT_SET_MAPPER, c)));

@@ -88,7 +88,7 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
 
     private MethodSpec generate(ExecutableElement method, ExecutableType methodType, QueryWithParameters query, List<QueryParameter> parameters) {
         var sql = query.rawQuery();
-        for (var parameter : query.parameters()) {
+        for (var parameter : query.parameters().stream().sorted(Comparator.<QueryWithParameters.QueryParameter>comparingInt(s -> s.sqlParameterName().length()).reversed()).toList()) {
             for (Integer sqlIndex : parameter.sqlIndexes()) {
                 sql = sql.replace(":" + parameter.sqlParameterName(), "$" + (sqlIndex + 1));
             }
