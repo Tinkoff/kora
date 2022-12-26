@@ -115,6 +115,7 @@ public class DbUtils {
             .filter(m -> !m.isEmpty())
             .map(m -> m.get(0))
             .flatMap(DbUtils::getFlattenTypeName)
+            .flatMap(suffix -> getFlattenTypeName(returnType).map(typePrefix -> "_" + typePrefix + "_" + suffix))
             .or(() -> getFlattenTypeName(returnType))
             .map(type -> "_" + type)
             .orElseGet(() -> "_" + method.getSimpleName());

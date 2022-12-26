@@ -66,6 +66,7 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
         for (int i = 0; i < parameters.size(); i++) {
             var parameter = parameters.get(i);
             var parameterName = parameter.name();
+
             if (parameter instanceof ru.tinkoff.kora.database.annotation.processor.model.QueryParameter.ConnectionParameter) {
                 continue;
             }

@@ -91,7 +91,6 @@ public interface AllowedParametersRepository extends R2dbcRepository {
         """)
     Mono<Void> allNativeParametersDto(JdbcEntity.AllNativeTypesEntity entity);
 
-
     @Query("INSERT INTO test(value1, value2) VALUES (:value, :valueTest)")
     Mono<Void> parametersWithSimilarNames(String value, int valueTest);
 

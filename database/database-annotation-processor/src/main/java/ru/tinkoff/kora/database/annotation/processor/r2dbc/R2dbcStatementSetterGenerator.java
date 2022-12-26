@@ -15,14 +15,14 @@ import java.util.Objects;
 
 final class R2dbcStatementSetterGenerator {
 
-    private R2dbcStatementSetterGenerator() { }
+    private R2dbcStatementSetterGenerator() {}
 
     public static void generate(MethodSpec.Builder b, ExecutableElement method, QueryWithParameters sqlWithParameters, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         if (batchParam != null) {
             b.addCode("""
-                for (int i = 0; i < entity.size(); i++) {
-                  var _batch_entity = entity.get(i);$>
-                """);
+                for (int i = 0; i < $L.size(); i++) {
+                  var _batch_$L = $L.get(i);$>
+                """, batchParam.name(), batchParam.name(), batchParam.name());
         }
 
         for (int i = 0, sqlIndex = 1; i < parameters.size(); i++, sqlIndex++) {
@@ -44,12 +44,12 @@ final class R2dbcStatementSetterGenerator {
                     for (var index : sqlParameter.sqlIndexes()) {
                         if (CommonUtils.isNullable(simpleParameter.variable())) {
                             b.addCode("""
-                                    if($L == null) {
-                                      _stmt.bindNull($L, $L.class);
-                                    } else {
-                                      _stmt.bind($L, $L);
-                                    }
-                                    """, parameterName, index, nativeType, index, parameterName);
+                                if($L == null) {
+                                  _stmt.bindNull($L, $L.class);
+                                } else {
+                                  _stmt.bind($L, $L);
+                                }
+                                """, parameterName, index, nativeType, index, parameterName);
                         } else {
                             b.addCode("_stmt.bind($L, $L);\n", index, parameterName);
                         }
@@ -68,7 +68,12 @@ final class R2dbcStatementSetterGenerator {
                         ? parameterName + "." + field.element().getSimpleName() + "()"
                         : parameterName + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
 
-                    var sqlParameter = sqlWithParameters.find(entityParameter.name() + "." + field.element().getSimpleName());
+                    final String sqlParameterName = entityParameter.name() + "." + field.element().getSimpleName();
+                    var sqlParameter = sqlWithParameters.find(sqlParameterName);
+                    if (sqlParameter == null) {
+                        throw new IllegalArgumentException("Expected to find SQL parameter '" + sqlParameterName + ", but SQL query contained none:\n" + sqlWithParameters.rawQuery());
+                    }
+
                     var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(field.typeMirror()));
                     if (nativeType != null) {
                         for (var index : sqlParameter.sqlIndexes()) {
@@ -96,9 +101,9 @@ final class R2dbcStatementSetterGenerator {
 
         if (batchParam != null) {
             b.addCode("""
-                if(i != entity.size() - 1) {
+                if(i != $L.size() - 1) {
                   _stmt.add();
-                }""");
+                }""", batchParam.name());
             b.addCode("\n$<}\n");
         }
     }

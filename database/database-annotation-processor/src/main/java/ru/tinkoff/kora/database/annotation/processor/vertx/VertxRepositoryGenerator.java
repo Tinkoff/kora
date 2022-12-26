@@ -87,14 +87,10 @@ public final class VertxRepositoryGenerator implements RepositoryGenerator {
 
     private MethodSpec generate(ExecutableElement method, ExecutableType methodType, QueryWithParameters query, List<QueryParameter> parameters) {
         var sql = query.rawQuery();
-        var params = new ArrayList<Map.Entry<QueryWithParameters.QueryParameter, Integer>>(query.parameters().size());
-        for (int i = 0; i < query.parameters().size(); i++) {
-            var parameter = query.parameters().get(i);
-            params.add(Map.entry(parameter, i));
-        }
-
-        for (var parameter : params.stream().sorted(Comparator.<Map.Entry<QueryWithParameters.QueryParameter, Integer>, Integer>comparing(p -> p.getKey().sqlParameterName().length()).reversed()).toList()) {
-            sql = sql.replace(":" + parameter.getKey().sqlParameterName(), "$" + (parameter.getValue() + 1));
+        for (var parameter : query.parameters().stream().sorted(Comparator.<QueryWithParameters.QueryParameter>comparingInt(s -> s.sqlParameterName().length()).reversed()).toList()) {
+            for (Integer sqlIndex : parameter.sqlIndexes()) {
+                sql = sql.replace(":" + parameter.sqlParameterName(), "$" + (sqlIndex + 1));
+            }
         }
 
         var b = DbUtils.queryMethodBuilder(method, methodType);

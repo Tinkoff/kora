@@ -22,7 +22,7 @@ public interface AllowedResultsRepository extends JdbcRepository {
     UpdateCount returnUpdateCount();
 
     @Query("SELECT test")
-    int returnPrimitive();
+    short returnPrimitive();
 
     @Query("INSERT INTO test(test) VALUES (:someint)")
     int[] returnBatchUpdate(@Batch List<Integer> someint);
@@ -31,11 +31,11 @@ public interface AllowedResultsRepository extends JdbcRepository {
     void returnBatchVoid(@Batch List<Integer> someint);
 
     @Query("SELECT test")
-    Integer returnObject();
+    Short returnObject();
 
     @Query("SELECT test")
     @Nullable
-    Integer returnNullableObject();
+    Short returnNullableObject();
 
     @Query("SELECT test")
     @Mapping(JdbcEntity.TestEntityJdbcRowMapper.class)

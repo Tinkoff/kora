@@ -47,6 +47,7 @@ public record DbEntity(TypeMirror typeMirror, TypeElement typeElement, EntityTyp
                 return new DbEntity.EntityField(element, type, columnName);
             })
             .toList();
+
         return new DbEntity(typeElement.asType(), typeElement, EntityType.RECORD, fields);
     }
 
@@ -97,10 +98,9 @@ public record DbEntity(TypeMirror typeMirror, TypeElement typeElement, EntityTyp
                 sink.accept(new DbEntity.EntityField(field, fieldType, columnName));
             })
             .toList();
-        if (fields.isEmpty()) {
-            return null;
-        }
-        return new DbEntity(typeMirror, typeElement, EntityType.BEAN, fields);
-    }
 
+        return (fields.isEmpty())
+            ? null
+            : new DbEntity(typeMirror, typeElement, EntityType.BEAN, fields);
+    }
 }
