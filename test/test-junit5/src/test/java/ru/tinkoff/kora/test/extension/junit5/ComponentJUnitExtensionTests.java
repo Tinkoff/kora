@@ -8,7 +8,7 @@ import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProc
 
 @KoraAppTest(
     application = SimpleApplication.class,
-    classes = { SimpleFirstComponent.class, SimpleSecondComponent.class },
+    components = { SimpleFirstComponent.class, SimpleSecondComponent.class },
     processors = {
         HttpClientAnnotationProcessor.class,
         ConfigRootAnnotationProcessor.class
