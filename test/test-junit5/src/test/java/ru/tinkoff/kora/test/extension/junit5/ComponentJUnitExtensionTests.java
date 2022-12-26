@@ -8,9 +8,7 @@ import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProc
 
 @KoraAppTest(
     application = SimpleApplication.class,
-    classes = {
-        TestFirstComponent.class, TestSecondComponent.class
-    },
+    classes = { SimpleFirstComponent.class, SimpleSecondComponent.class },
     processors = {
         HttpClientAnnotationProcessor.class,
         ConfigRootAnnotationProcessor.class
@@ -22,7 +20,7 @@ import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProc
           }
         }
         """)
-public class JUnitExtensionTests extends Assertions {
+public class ComponentJUnitExtensionTests extends Assertions {
 
     @Test
     void emptyTest() {
@@ -35,12 +33,12 @@ public class JUnitExtensionTests extends Assertions {
     }
 
     @Test
-    void singleComponentInjected(TestFirstComponent firstComponent) {
+    void singleComponentInjected(SimpleFirstComponent firstComponent) {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void twoComponentsInjected(TestFirstComponent firstComponent, TestSecondComponent secondComponent) {
+    void twoComponentsInjected(SimpleFirstComponent firstComponent, SimpleSecondComponent secondComponent) {
         assertEquals("1", firstComponent.get());
         assertEquals("1", secondComponent.get());
     }

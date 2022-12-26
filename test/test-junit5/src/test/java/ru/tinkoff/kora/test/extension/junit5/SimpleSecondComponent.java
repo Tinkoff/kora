@@ -4,11 +4,11 @@ import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.common.Component;
 
 @Component
-public class TestSecondComponent implements MockLifecycle {
+public class SimpleSecondComponent {
 
-    private final TestFirstComponent firstComponent;
+    private final SimpleFirstComponent firstComponent;
 
-    public TestSecondComponent(TestFirstComponent firstComponent) {
+    public SimpleSecondComponent(SimpleFirstComponent firstComponent) {
         this.firstComponent = firstComponent;
     }
 

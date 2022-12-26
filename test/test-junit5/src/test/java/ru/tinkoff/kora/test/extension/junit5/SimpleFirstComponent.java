@@ -4,7 +4,7 @@ import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.common.Component;
 
 @Component
-public class TestFirstComponent implements MockLifecycle {
+public class SimpleFirstComponent {
 
     public String get() {
         return "1";

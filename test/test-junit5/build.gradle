@@ -1,5 +1,6 @@
 dependencies {
     api libs.junit.jupiter
+    api testFixtures(project(":annotation-processor-common"))
 
     implementation "org.javassist:javassist:3.29.2-GA"
     implementation libs.jetbrains.annotations
@@ -7,7 +8,6 @@ dependencies {
     implementation project(":common")
     implementation project(":config:config-common")
     implementation project(":kora-app-annotation-processor")
-    implementation testFixtures(project(":annotation-processor-common"))
 
     testImplementation project(":annotation-processors")
     testImplementation project(":http:http-client-jdk")
