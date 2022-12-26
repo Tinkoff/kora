@@ -51,19 +51,8 @@ public @interface KoraAppTest {
 
     /**
      * @return classes that are applicable for Annotation Processing and are parts of {@link ru.tinkoff.kora.common.KoraApp}
-     * @see MockLifecycle is used by classes if they don't implement {@link Lifecycle} themselves
-     * <pre>{@code
-     *      @literal @Component
-     *      public class TestFirstComponent implements MockLifecycle {
-     *
-     *          public String get() {
-     *              return "1";
-     *          }
-     *      }
-     * }
-     * </pre>
      */
-    Class<? extends Lifecycle>[] classes();
+    Class<?>[] classes();
 
     /**
      * @return annotation processors used to process {@link #classes()}
