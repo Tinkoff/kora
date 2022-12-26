@@ -206,7 +206,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         }
 
         try {
-            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Application_" + context.getRequiredTestClass().getSimpleName() + "_" + koraAppTest.application().getSimpleName();
+            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Application_" + context.getRequiredTestClass().getSimpleName();
             CtClass ctclass;
             try {
                 ctclass = ClassPool.getDefault().getCtClass(className);
@@ -273,7 +273,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 })
                 .toArray(CtClass[]::new);
 
-            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Aggregator_" + context.getRequiredTestClass().getSimpleName() + "_" + koraAppTest.application().getSimpleName();
+            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Aggregator_" + context.getRequiredTestClass().getSimpleName();
             CtClass ctclass;
             try {
                 ctclass = ClassPool.getDefault().getCtClass(className);
