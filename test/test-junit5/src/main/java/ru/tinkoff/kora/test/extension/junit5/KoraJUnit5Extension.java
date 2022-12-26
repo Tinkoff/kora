@@ -188,7 +188,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     private KoraAppMeta getKoraAppMeta(KoraAppTest koraAppTest, ExtensionContext context) {
-        var classes = Arrays.stream(koraAppTest.classes())
+        var classes = Arrays.stream(koraAppTest.components())
             .distinct()
             .sorted(Comparator.comparing(Class::getCanonicalName))
             .toList();
@@ -258,7 +258,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     private Class<?> getAggregatorClass(KoraAppTest koraAppTest, ExtensionContext context) {
         try {
-            var classes = Arrays.stream(koraAppTest.classes())
+            var classes = Arrays.stream(koraAppTest.components())
                 .distinct()
                 .sorted(Comparator.comparing(Class::getCanonicalName))
                 .toList();
