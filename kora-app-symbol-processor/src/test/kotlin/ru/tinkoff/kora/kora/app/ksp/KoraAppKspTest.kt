@@ -451,9 +451,9 @@ class KoraAppKspTest {
                     return@filter true
                 }
                 if (nonTagged) {
-                    return@filter node.tags.isEmpty()
+                    return@filter node.tags().isEmpty()
                 }
-                return@filter tags.all { listOf(*node.tags).contains(it) }
+                return@filter tags.all { listOf(*node.tags()).contains(it) }
             }.map { it as Node<T> }
             .toList()
     }
