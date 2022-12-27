@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 
 public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
 
+    private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
+
     record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraAppTest.CompilationShareMode shareMode) {
 
         public Graph get() {
@@ -52,7 +54,6 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     static class AbstractGraph implements Graph {
 
-        protected final Logger logger = LoggerFactory.getLogger(getClass());
         protected final Supplier<? extends ApplicationGraphDraw> graphSupplier;
         protected InitializedGraph initializedGraph;
 
@@ -129,26 +130,25 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     @Override
     public void beforeEach(ExtensionContext context) {
         var graph = getGraph(context);
-        if (graph instanceof PerMethodGraph) {
+        if (graph == null) {
+            final KoraAppMeta meta = findKoraAppTest(context)
+                .map(koraAppTest -> getKoraAppMeta(koraAppTest, context))
+                .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
+
+            var storage = context.getStore(NAMESPACE);
+            var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(meta, KoraJUnit5Extension::getApplicationGraphSupplier);
+            graph = graphSupplier.get();
+            storage.put(KoraAppTest.class, meta);
+            storage.put(Graph.class, graph);
+            graph.initialize();
+        } else if (graph instanceof PerMethodGraph) {
             graph.initialize();
         }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        final KoraAppMeta meta = findKoraAppTest(context)
-            .map(koraAppTest -> getKoraAppMeta(koraAppTest, context))
-            .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
 
-        var storage = context.getStore(NAMESPACE);
-        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(meta, KoraJUnit5Extension::getApplicationGraphSupplier);
-        var graph = graphSupplier.get();
-        storage.put(KoraAppTest.class, meta);
-        storage.put(Graph.class, graph);
-
-        if (graph instanceof PerClassGraph || graph instanceof PerRunGraph) {
-            graph.initialize();
-        }
     }
 
     @Override
@@ -188,6 +188,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     private KoraAppMeta getKoraAppMeta(KoraAppTest koraAppTest, ExtensionContext context) {
+        final long started = System.nanoTime();
         var classes = Arrays.stream(koraAppTest.components())
             .distinct()
             .sorted(Comparator.comparing(Class::getCanonicalName))
@@ -200,7 +201,14 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
         var aggregator = getAggregatorClass(koraAppTest, context);
 
-        if (koraAppTest.config().isBlank()) {
+        final String koraAppConfig = context.getTestInstance()
+            .filter(inst -> inst instanceof KoraAppTestConfigProvider)
+            .map(inst -> ((KoraAppTestConfigProvider) inst).config())
+            .map(String::trim)
+            .orElse(koraAppTest.config().trim());
+
+        if (koraAppConfig.isBlank()) {
+            logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
                 aggregator, classes, processors, koraAppTest.shareMode());
         }
@@ -215,7 +223,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             }
 
             final Optional<CtMethod> configMethod = Arrays.stream(ctclass.getDeclaredMethods()).filter(m -> m.getName().equals("config")).findFirst();
-            final String config = escape(koraAppTest.config().trim());
+            final String config = escape(koraAppConfig);
 
             if (configMethod.isEmpty()) {
                 ctclass.defrost();
@@ -243,12 +251,16 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
                 final Class<?> applicationWithConfig = ctclass.toClass();
                 var application = new KoraAppMeta.Application(applicationWithConfig, koraAppTest.application());
+
+                logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
                 return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.shareMode());
             } else {
                 ctclass.defrost();
                 configMethod.get().setBody("return com.typesafe.config.ConfigFactory.parseString(\"%s\").resolve();".formatted(config));
                 ctclass.writeFile("build/in-test-generated/classes");
                 var application = new KoraAppMeta.Application(getClass().getClassLoader().loadClass(className), koraAppTest.application());
+
+                logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
                 return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.shareMode());
             }
         } catch (Exception e) {
@@ -346,6 +358,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     @SuppressWarnings("unchecked")
     private static GraphSupplier getApplicationGraphSupplier(KoraAppMeta meta) {
         try {
+            final long started = System.nanoTime();
+
             final List<String> classesAsFiles = meta.classes.stream()
                 .map(targetClass -> {
                     var targetPackage = targetClass.getPackageName().replace('.', '/');
@@ -394,6 +408,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphSupplier = constructors[0].newInstance();
 
+            logger.info("@KoraAppTest compilation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new GraphSupplier(graphSupplier, meta.shareMode);
         } catch (ClassNotFoundException e) {
             throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.real, e);
