@@ -90,5 +90,3 @@ include(
 )
 
 apply from: 'dependencies.gradle'
-
-include 'test-junit5-example'
