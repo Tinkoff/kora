@@ -55,7 +55,7 @@ def isPublishedLibrary = { Project p ->
     if (!p.childProjects.isEmpty()) {
         return false
     }
-    if (p.parent.name == "test") {
+    if (p.parent.name == "test" && p.name != "test-junit5") {
         return false
     }
     if (p.name == 'maven-parent') {

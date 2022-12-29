@@ -4,6 +4,7 @@ import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.Lifecycle;
 
 public interface MockLifecycle extends Lifecycle {
+
     @Override
     default Mono<Void> init() {
         return Mono.empty();
