@@ -7,9 +7,7 @@ import ru.tinkoff.kora.database.annotation.processor.model.QueryParameter;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.*;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.*;
@@ -108,13 +106,51 @@ public class DbUtils {
     }
 
     public static String resultMapperName(ExecutableElement method, String... names) {
-        var sb = new StringBuilder("$" + method.getSimpleName());
+        var returnType = CommonUtils.isMono(method.getReturnType())
+            ? ((DeclaredType) method.getReturnType()).getTypeArguments().get(0)
+            : method.getReturnType();
+
+        var mappersData = CommonUtils.parseMapping(method);
+        var mapperSuffix = Optional.ofNullable(mappersData.mapperClasses())
+            .filter(m -> !m.isEmpty())
+            .map(m -> m.get(0))
+            .flatMap(DbUtils::getFlattenTypeName)
+            .or(() -> getFlattenTypeName(returnType))
+            .map(type -> "_" + type)
+            .orElseGet(() -> "_" + method.getSimpleName());
+
+        var sb = new StringBuilder("_resultMapper");
         for (var name : names) {
             sb.append("_").append(name);
         }
-        return sb.append("_resultMapper").toString();
+
+        return sb.append(mapperSuffix).toString();
     }
 
+    private static Optional<String> getFlattenTypeName(TypeMirror mirror) {
+        if(mirror instanceof PrimitiveType) {
+            var type = TypeName.get(mirror).box();
+            var typeAsStr = type.toString();
+            return Optional.of(typeAsStr.substring(typeAsStr.lastIndexOf('.') + 1));
+        } else if(mirror instanceof DeclaredType dt) {
+            final StringBuilder builder = new StringBuilder(dt.asElement().getSimpleName().toString());
+            final List<Optional<String>> flatGenerics = ((DeclaredType) mirror).getTypeArguments().stream()
+                .map(DbUtils::getFlattenTypeName)
+                .toList();
+
+            for (Optional<String> flatGeneric : flatGenerics) {
+                if(flatGeneric.isEmpty()) {
+                    return Optional.empty();
+                } else {
+                    builder.append("_").append(flatGeneric.get());
+                }
+            }
+
+            return Optional.of(builder.toString());
+        } else {
+            return Optional.empty();
+        }
+    }
 
     public record Mapper(@Nullable TypeMirror typeMirror, TypeName typeName, String name, @Nullable Function<CodeBlock, CodeBlock> wrapper) {
         public Mapper(TypeName typeName, String name) {
@@ -201,7 +237,6 @@ public class DbUtils {
                         mappers.add(new DbUtils.Mapper(mapperType, mapperName));
                     }
                 }
-                continue;
             }
         }
         return mappers;
