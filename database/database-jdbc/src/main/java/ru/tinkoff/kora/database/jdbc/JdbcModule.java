@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface JdbcModule extends DataBaseModule {
+
     default <T> JdbcResultSetMapper<Optional<T>> optionalResultSetMapper(JdbcRowMapper<T> rowMapper) {
         return JdbcResultSetMapper.optionalResultSetMapper(rowMapper);
     }
