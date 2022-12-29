@@ -60,7 +60,7 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
             }
         }
 
-        List<QueryParameter> params = new ArrayList<QueryParameter>();
+        List<QueryParameter> params = new ArrayList<>();
 
         for (int i = 0; i < parameters.size(); i++) {
             var parameter = parameters.get(i);
@@ -77,19 +77,21 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
             }
             if (parameter instanceof ru.tinkoff.kora.database.annotation.processor.model.QueryParameter.EntityParameter entityParameter) {
                 for (var field : entityParameter.entity().entityFields()) {
-                    parseSimpleParameter(rawSql, i, parameterName + "." + field.element().getSimpleName()).ifPresent(params::add);
+                    parseSimpleParameter(rawSql, i, parameterName + "." + field.columnName()).ifPresent(params::add);
                 }
             }
             if (params.size() == size) {
                 throw new ProcessingErrorException("Parameter usage was not found in query: " + parameterName, parameter.variable());
             }
         }
+
         var paramsNumbers = params
             .stream()
             .map(QueryParameter::sqlIndexes)
             .flatMap(Collection::stream)
             .sorted()
             .toList();
+
         params = params.stream()
             .map(p -> new QueryParameter(p.sqlParameterName(), p.methodIndex(), p.sqlIndexes()
                 .stream()
