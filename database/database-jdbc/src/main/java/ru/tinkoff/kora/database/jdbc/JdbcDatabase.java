@@ -15,22 +15,22 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class JdbcDataBase implements Lifecycle, Wrapped<DataSource>, JdbcConnectionFactory {
+public class JdbcDatabase implements Lifecycle, Wrapped<DataSource>, JdbcConnectionFactory {
     private final Context.Key<Connection> connectionKey = new Context.Key<>() {
         @Override
         protected Connection copy(Connection object) {
             return null;
         }
     };
-    private final JdbcDataBaseConfig dataBaseConfig;
+    private final JdbcDatabaseConfig dataBaseConfig;
     private final HikariDataSource dataSource;
     private final DataBaseTelemetry telemetry;
 
-    public JdbcDataBase(JdbcDataBaseConfig dataBaseConfig, DataBaseTelemetryFactory telemetryFactory) {
+    public JdbcDatabase(JdbcDatabaseConfig dataBaseConfig, DataBaseTelemetryFactory telemetryFactory) {
         this(dataBaseConfig, telemetryFactory == null ? null : telemetryFactory.get(dataBaseConfig.poolName(), "", dataBaseConfig.username()));
     }
 
-    public JdbcDataBase(JdbcDataBaseConfig dataBaseConfig, DataBaseTelemetry telemetry) {
+    public JdbcDatabase(JdbcDatabaseConfig dataBaseConfig, DataBaseTelemetry telemetry) {
         this.dataBaseConfig = dataBaseConfig;
         this.telemetry = telemetry;
         this.dataSource = new HikariDataSource(this.dataBaseConfig.toHikariConfig());

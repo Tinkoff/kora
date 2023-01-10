@@ -3,33 +3,34 @@ package ru.tinkoff.kora.database.jdbc;
 import com.zaxxer.hikari.HikariConfig;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.Properties;
 
-public record JdbcDataBaseConfig(
+public record JdbcDatabaseConfig(
     String username,
     String password,
     String jdbcUrl,
     String poolName,
-    long connectionTimeout,
-    long validationTimeout,
-    long idleTimeout,
+    Duration connectionTimeout,
+    Duration validationTimeout,
+    Duration idleTimeout,
+    Duration maxLifetime,
     long leakDetectionThreshold,
-    long maxLifetime,
     int maxPoolSize,
     int minIdle,
     Properties dsProperties
 ) {
 
-    public JdbcDataBaseConfig(
+    public JdbcDatabaseConfig(
         String username,
         String password,
         String jdbcUrl,
         String poolName,
-        @Nullable Long connectionTimeout,
-        @Nullable Long validationTimeout,
-        @Nullable Long idleTimeout,
+        @Nullable Duration connectionTimeout,
+        @Nullable Duration validationTimeout,
+        @Nullable Duration idleTimeout,
+        @Nullable Duration maxLifetime,
         @Nullable Long leakDetectionThreshold,
-        @Nullable Long maxLifetime,
         @Nullable Integer maxPoolSize,
         @Nullable Integer minIdle,
         @Nullable Properties dsProperties) {
@@ -37,11 +38,11 @@ public record JdbcDataBaseConfig(
             password,
             jdbcUrl,
             poolName,
-            connectionTimeout != null ? connectionTimeout : 30000,
-            validationTimeout != null ? validationTimeout : 5000,
-            idleTimeout != null ? idleTimeout : 10 * 60 * 1000,
+            connectionTimeout != null ? connectionTimeout : Duration.ofSeconds(30),
+            validationTimeout != null ? validationTimeout : Duration.ofSeconds(5),
+            idleTimeout != null ? idleTimeout : Duration.ofMinutes(10),
+            maxLifetime != null ? maxLifetime : Duration.ofMinutes(30),
             leakDetectionThreshold != null ? leakDetectionThreshold : 0,
-            maxLifetime != null ? maxLifetime : 30 * 60 * 1000,
             maxPoolSize != null ? maxPoolSize : 10,
             minIdle != null ? minIdle : 0,
             dsProperties != null ? props(dsProperties) : new Properties()
@@ -54,17 +55,17 @@ public record JdbcDataBaseConfig(
         return properties;
     }
 
-    public JdbcDataBaseConfig {
+    public JdbcDatabaseConfig {
         assert dsProperties != null;
     }
 
     public HikariConfig toHikariConfig() {
         var config = new HikariConfig();
-        config.setConnectionTimeout(this.connectionTimeout);
-        config.setValidationTimeout(this.validationTimeout);
-        config.setIdleTimeout(this.idleTimeout);
+        config.setConnectionTimeout(this.connectionTimeout.toMillis());
+        config.setValidationTimeout(this.validationTimeout.toMillis());
+        config.setIdleTimeout(this.idleTimeout.toMillis());
+        config.setMaxLifetime(this.maxLifetime.toMillis());
         config.setLeakDetectionThreshold(this.leakDetectionThreshold);
-        config.setMaxLifetime(this.maxLifetime);
         config.setMaximumPoolSize(this.maxPoolSize);
         config.setMinimumIdle(this.minIdle);
         config.setUsername(this.username);
@@ -74,9 +75,7 @@ public record JdbcDataBaseConfig(
         config.setInitializationFailTimeout(-1);
         config.setAutoCommit(true);
 
-
         config.setDataSourceProperties(this.dsProperties);
-
         config.setRegisterMbeans(false);
 
         return config;
