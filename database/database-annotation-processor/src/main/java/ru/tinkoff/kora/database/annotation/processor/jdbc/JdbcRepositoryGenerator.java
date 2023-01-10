@@ -69,6 +69,7 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
             var resultMapper = this.parseResultMapper(method, methodType, parameters)
                 .map(rm -> DbUtils.addMapper(resultMappers, rm))
                 .orElse(null);
+
             DbUtils.addMappers(parameterMappers, DbUtils.parseParameterMappers(
                 parameters,
                 query,
@@ -136,9 +137,11 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
         if (isMono) {
             b.addCode("return $T.fromCompletionStage(() -> $T.supplyAsync(() -> {$>\n", Mono.class, CompletableFuture.class);
         }
+
         var connection = parameters.stream().filter(QueryParameter.ConnectionParameter.class::isInstance).findFirst()
             .map(p -> CodeBlock.of("$L", p.variable()))
             .orElse(CodeBlock.of("this._connectionFactory.currentConnection()"));
+
         b.addCode("""
             var _conToUse = $L;
             $T _conToClose;
