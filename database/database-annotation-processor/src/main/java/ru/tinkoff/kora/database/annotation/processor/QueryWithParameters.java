@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record QueryWithParameters(String rawQuery, List<QueryParameter> parameters) {
+
     public record QueryParameter(String sqlParameterName, int methodIndex, List<Integer> sqlIndexes) {}
 
     @Nullable
@@ -84,12 +85,14 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
                 throw new ProcessingErrorException("Parameter usage was not found in query: " + parameterName, parameter.variable());
             }
         }
+
         var paramsNumbers = params
             .stream()
             .map(QueryParameter::sqlIndexes)
             .flatMap(Collection::stream)
             .sorted()
             .toList();
+
         params = params.stream()
             .map(p -> new QueryParameter(p.sqlParameterName(), p.methodIndex(), p.sqlIndexes()
                 .stream()
@@ -115,10 +118,9 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
             }
             result.add(index);
         }
-        if (result.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(new QueryParameter(sqlParameterName, methodParameterNumber, result));
-    }
 
+        return (result.isEmpty())
+            ? Optional.empty()
+            : Optional.of(new QueryParameter(sqlParameterName, methodParameterNumber, result));
+    }
 }
