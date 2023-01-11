@@ -72,6 +72,7 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
                     DbUtils.addMappers(this.types, type, constructor, List.of(mapper));
                     resultMappers.put(mapper.name(), mapper);
                 });
+
             DbUtils.addMappers(this.types, type, constructor, DbUtils.parseParameterMappers(
                 method,
                 parameters,
@@ -231,6 +232,5 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
             constructorBuilder.addParameter(R2dbcTypes.CONNECTION_FACTORY, "_connectionFactory");
         }
         constructorBuilder.addStatement("this._connectionFactory = _connectionFactory");
-
     }
 }
