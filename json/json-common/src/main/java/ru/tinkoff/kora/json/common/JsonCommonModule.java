@@ -69,6 +69,10 @@ public interface JsonCommonModule {
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_DATE} is used intentionally for OffsetID formatting
+     * @return writer
+     */
     @DefaultComponent
     default JsonWriter<LocalDate> localDateJsonWriter() {
         return (gen, object) -> {
@@ -80,6 +84,10 @@ public interface JsonCommonModule {
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_DATE} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<LocalDate> localDateJsonReader() {
         return parser -> switch (parser.currentToken()) {
@@ -95,16 +103,20 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_LOCAL_TIME));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_LOCAL_TIME));
             }
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_LOCAL_TIME} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<LocalTime> localTimeJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> LocalTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_LOCAL_TIME);
+            case VALUE_STRING -> LocalTime.parse(parser.getValueAsString(), DateTimeFormatter.ISO_LOCAL_TIME);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -115,16 +127,20 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_LOCAL_DATE_TIME));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_LOCAL_DATE_TIME));
             }
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_LOCAL_DATE_TIME} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<LocalDateTime> localDateTimeJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> LocalDateTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_LOCAL_DATE_TIME);
+            case VALUE_STRING -> LocalDateTime.parse(parser.getValueAsString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -135,16 +151,20 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_OFFSET_TIME));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_OFFSET_TIME));
             }
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_OFFSET_TIME} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<OffsetTime> offsetTimeJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> OffsetTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_OFFSET_TIME);
+            case VALUE_STRING -> OffsetTime.parse(parser.getValueAsString(), DateTimeFormatter.ISO_OFFSET_TIME);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -155,16 +175,20 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_OFFSET_DATE_TIME));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_OFFSET_DATE_TIME));
             }
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<OffsetDateTime> offsetDateTimeJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> OffsetDateTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_OFFSET_DATE_TIME);
+            case VALUE_STRING -> OffsetDateTime.parse(parser.getValueAsString(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -175,16 +199,20 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_ZONED_DATE_TIME));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_ZONED_DATE_TIME));
             }
         };
     }
 
+    /**
+     * {@link DateTimeFormatter#ISO_ZONED_DATE_TIME} is used intentionally for flexible nanos precision parsing
+     * @return reader
+     */
     @DefaultComponent
     default JsonReader<ZonedDateTime> zonedDateTimeJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> ZonedDateTime.parse(parser.getValueAsString(), DateTimeFormatters.ISO_ZONED_DATE_TIME);
+            case VALUE_STRING -> ZonedDateTime.parse(parser.getValueAsString(), DateTimeFormatter.ISO_ZONED_DATE_TIME);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -195,7 +223,7 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(DateTimeFormatters.ISO_INSTANT.format(object));
+                gen.writeString(DateTimeFormatter.ISO_INSTANT.format(object));
             }
         };
     }
@@ -204,7 +232,7 @@ public interface JsonCommonModule {
     default JsonReader<Instant> instantJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> DateTimeFormatters.ISO_INSTANT.parse(parser.getValueAsString()).query(Instant::from);
+            case VALUE_STRING -> DateTimeFormatter.ISO_INSTANT.parse(parser.getValueAsString()).query(Instant::from);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -215,7 +243,7 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_YEAR));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_YEAR));
             }
         };
     }
@@ -224,7 +252,7 @@ public interface JsonCommonModule {
     default JsonReader<Year> yearJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> Year.parse(parser.getValueAsString(), DateTimeFormatters.ISO_YEAR);
+            case VALUE_STRING -> Year.parse(parser.getValueAsString(), KoraDateTimeFormatters.ISO_YEAR);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -235,7 +263,7 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_YEAR_MONTH));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_YEAR_MONTH));
             }
         };
     }
@@ -244,7 +272,7 @@ public interface JsonCommonModule {
     default JsonReader<YearMonth> yearMonthJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> YearMonth.parse(parser.getValueAsString(), DateTimeFormatters.ISO_YEAR_MONTH);
+            case VALUE_STRING -> YearMonth.parse(parser.getValueAsString(), KoraDateTimeFormatters.ISO_YEAR_MONTH);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
     }
@@ -255,7 +283,7 @@ public interface JsonCommonModule {
             if (object == null) {
                 gen.writeNull();
             } else {
-                gen.writeString(object.format(DateTimeFormatters.ISO_MONTH_DAY));
+                gen.writeString(object.format(KoraDateTimeFormatters.ISO_MONTH_DAY));
             }
         };
     }
@@ -264,7 +292,7 @@ public interface JsonCommonModule {
     default JsonReader<MonthDay> monthDayJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_STRING -> MonthDay.parse(parser.getValueAsString(), DateTimeFormatters.ISO_MONTH_DAY);
+            case VALUE_STRING -> MonthDay.parse(parser.getValueAsString(), KoraDateTimeFormatters.ISO_MONTH_DAY);
             default -> throw new JsonParseException(parser, "Expecting VALUE_STRING token, got " + parser.currentToken());
         };
 
@@ -287,7 +315,7 @@ public interface JsonCommonModule {
             case VALUE_NULL -> null;
             case VALUE_STRING -> {
                 final String valueAsString = parser.getValueAsString();
-                for (Month month : DateTimeFormatters.MONTHS) {
+                for (Month month : KoraDateTimeFormatters.MONTHS) {
                     if (month.name().equalsIgnoreCase(valueAsString)) {
                         yield month;
                     }
@@ -317,7 +345,7 @@ public interface JsonCommonModule {
             case VALUE_NULL -> null;
             case VALUE_STRING -> {
                 final String valueAsString = parser.getValueAsString();
-                for (DayOfWeek dayOfWeek : DateTimeFormatters.DAY_OF_WEEKS) {
+                for (DayOfWeek dayOfWeek : KoraDateTimeFormatters.DAY_OF_WEEKS) {
                     if (dayOfWeek.name().equalsIgnoreCase(valueAsString)) {
                         yield dayOfWeek;
                     }

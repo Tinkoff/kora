@@ -10,9 +10,9 @@ import java.time.format.SignStyle;
 
 import static java.time.temporal.ChronoField.*;
 
-final class DateTimeFormatters {
+final class KoraDateTimeFormatters {
 
-    private DateTimeFormatters() {}
+    private KoraDateTimeFormatters() {}
 
     static final Month[] MONTHS = Month.values();
     static final DayOfWeek[] DAY_OF_WEEKS = DayOfWeek.values();
@@ -47,11 +47,6 @@ final class DateTimeFormatters {
         .toFormatter()
         .withResolverStyle(ResolverStyle.STRICT)
         .withChronology(IsoChronology.INSTANCE);
-
-    /**
-     * @see DateTimeFormatter#ISO_INSTANT
-     */
-    static final DateTimeFormatter ISO_INSTANT = DateTimeFormatter.ISO_INSTANT;
 
     /**
      * uuuu-MM-dd

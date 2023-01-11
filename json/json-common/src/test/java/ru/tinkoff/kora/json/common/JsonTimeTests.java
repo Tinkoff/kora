@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.TemporalAmount;
 import java.util.Date;
 
 class JsonTimeTests extends Assertions implements JsonCommonModule {
@@ -16,7 +19,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = localDateJsonWriter();
         var reader = localDateJsonReader();
-        var value = LocalDate.of(2020, 10, 11);
+        var value = LocalDate.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -32,7 +35,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = localTimeJsonWriter();
         var reader = localTimeJsonReader();
-        var value = LocalTime.of(12, 13);
+        var value = LocalTime.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -40,7 +43,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
 
         // then
         var valueRestored = reader.read(valueAsBytes);
-        assertEquals(value, valueRestored);
+        assertEquals(value.truncatedTo(ChronoUnit.MILLIS), valueRestored);
     }
 
     @Test
@@ -48,9 +51,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = localDateTimeJsonWriter();
         var reader = localDateTimeJsonReader();
-        var value = LocalDateTime.of(
-            LocalDate.of(2020, 10, 11),
-            LocalTime.of(12, 13));
+        var value = LocalDateTime.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -58,7 +59,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
 
         // then
         var valueRestored = reader.read(valueAsBytes);
-        assertEquals(value, valueRestored);
+        assertEquals(value.truncatedTo(ChronoUnit.MILLIS), valueRestored);
     }
 
     @Test
@@ -66,7 +67,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = offsetTimeJsonWriter();
         var reader = offsetTimeJsonReader();
-        var value = OffsetTime.of(LocalTime.of(22, 10, 11), ZoneOffset.UTC);
+        var value = OffsetTime.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -74,7 +75,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
 
         // then
         var valueRestored = reader.read(valueAsBytes);
-        assertEquals(value, valueRestored);
+        assertEquals(value.truncatedTo(ChronoUnit.MILLIS), valueRestored);
     }
 
     @Test
@@ -82,11 +83,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = offsetDateTimeJsonWriter();
         var reader = offsetDateTimeJsonReader();
-        var value = OffsetDateTime.of(
-            LocalDateTime.of(
-                LocalDate.of(2020, 10, 11),
-                LocalTime.of(12, 13)),
-            ZoneOffset.UTC);
+        var value = OffsetDateTime.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -94,7 +91,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
 
         // then
         var valueRestored = reader.read(valueAsBytes);
-        assertEquals(value, valueRestored);
+        assertEquals(value.truncatedTo(ChronoUnit.MILLIS), valueRestored);
     }
 
     @Test
@@ -102,11 +99,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         // given
         var writer = zonedDateTimeJsonWriter();
         var reader = zonedDateTimeJsonReader();
-        var value = ZonedDateTime.of(
-            LocalDateTime.of(
-                LocalDate.of(2020, 10, 11),
-                LocalTime.of(12, 13)),
-            ZoneId.systemDefault());
+        var value = ZonedDateTime.now();
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
@@ -114,7 +107,7 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
 
         // then
         var valueRestored = reader.read(valueAsBytes);
-        assertEquals(value, valueRestored);
+        assertEquals(value.truncatedTo(ChronoUnit.MILLIS), valueRestored);
     }
 
     @Test
@@ -155,6 +148,22 @@ class JsonTimeTests extends Assertions implements JsonCommonModule {
         var writer = yearMonthJsonWriter();
         var reader = yearMonthJsonReader();
         var value = YearMonth.now();
+
+        // when
+        final byte[] valueAsBytes = writer.toByteArray(value);
+        assertNotEquals(0, valueAsBytes.length);
+
+        // then
+        var valueRestored = reader.read(valueAsBytes);
+        assertEquals(value, valueRestored);
+    }
+
+    @Test
+    void monthDeserializedAndSerialized() throws IOException {
+        // given
+        var writer = monthJsonWriter();
+        var reader = monthJsonReader();
+        var value = Month.AUGUST;
 
         // when
         final byte[] valueAsBytes = writer.toByteArray(value);
