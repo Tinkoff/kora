@@ -35,31 +35,52 @@ public class R2dbcStatementSetterGenerator {
                 parameterName = "_batch_" + parameter.name();
             }
 
-            if (parameter instanceof QueryParameter.SimpleParameter simpleParamter) {
+            if (parameter instanceof QueryParameter.SimpleParameter simpleParameter) {
                 var sqlParameter = Objects.requireNonNull(sqlWithParameters.find(i));
-                var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(simpleParamter.type()));
+                var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(simpleParameter.type()));
                 if (nativeType != null) {
                     for (var index : sqlParameter.sqlIndexes()) {
-                        b.addCode("_stmt.bind($L, $L);\n", index, parameterName);
+                        if (CommonUtils.isNullable(simpleParameter.variable())) {
+                            b.addCode("""
+                                    if($L == null) {
+                                      _stmt.bindNull($L, $L.class);
+                                    } else {
+                                      _stmt.bind($L, $L);
+                                    }
+                                    """, parameterName, index, nativeType, index, parameterName);
+                        } else {
+                            b.addCode("_stmt.bind($L, $L);\n", index, parameterName);
+                        }
                     }
                 } else {
-                    var mapper = DbUtils.parameterMapperName(method, simpleParamter.variable());
+                    var mapper = DbUtils.parameterMapperName(method, simpleParameter.variable());
                     for (var index : sqlParameter.sqlIndexes()) {
                         b.addCode("$L.apply(_stmt, $L, $L);\n", mapper, index, parameterName);
                     }
                 }
             }
 
-            if (parameter instanceof QueryParameter.EntityParameter entityParam) {
-                for (var field : entityParam.entity().entityFields()) {
-                    var fieldAccessor = entityParam.entity().entityType() == DbEntity.EntityType.RECORD
+            if (parameter instanceof QueryParameter.EntityParameter entityParameter) {
+                for (var field : entityParameter.entity().entityFields()) {
+                    var fieldAccessor = (entityParameter.entity().entityType() == DbEntity.EntityType.RECORD)
                         ? parameterName + "." + field.element().getSimpleName() + "()"
                         : parameterName + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
-                    var sqlParameter = sqlWithParameters.find(entityParam.name() + "." + field.element().getSimpleName());
+
+                    var sqlParameter = sqlWithParameters.find(entityParameter.name() + "." + field.element().getSimpleName());
                     var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(field.typeMirror()));
                     if (nativeType != null) {
                         for (var index : sqlParameter.sqlIndexes()) {
-                            b.addCode("_stmt.bind($L, $L);\n", index, fieldAccessor);
+                            if (CommonUtils.isNullable(field.element())) {
+                                b.addCode("""
+                                    if($L == null) {
+                                      _stmt.bindNull($L, $L.class);
+                                    } else {
+                                      _stmt.bind($L, $L);
+                                    }
+                                    """, fieldAccessor, index, nativeType, index, fieldAccessor);
+                            } else {
+                                b.addCode("_stmt.bind($L, $L);\n", index, fieldAccessor);
+                            }
                         }
                     } else {
                         var mapper = DbUtils.parameterMapperName(method, parameter.variable(), field.element().getSimpleName().toString());
@@ -73,9 +94,9 @@ public class R2dbcStatementSetterGenerator {
 
         if (batchParam != null) {
             b.addCode("""
-                      if(i != entity.size() - 1) {
-                        _stmt.add();
-                      }""");
+                if(i != entity.size() - 1) {
+                  _stmt.add();
+                }""");
             b.addCode("\n$<}\n");
         }
     }
