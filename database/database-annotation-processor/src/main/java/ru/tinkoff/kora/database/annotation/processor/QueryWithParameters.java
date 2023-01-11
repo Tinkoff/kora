@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record QueryWithParameters(String rawQuery, List<QueryParameter> parameters) {
+
     public record QueryParameter(String sqlParameterName, int methodIndex, List<Integer> sqlIndexes) {}
 
     @Nullable
@@ -117,10 +118,9 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
             }
             result.add(index);
         }
-        if (result.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(new QueryParameter(sqlParameterName, methodParameterNumber, result));
-    }
 
+        return (result.isEmpty())
+            ? Optional.empty()
+            : Optional.of(new QueryParameter(sqlParameterName, methodParameterNumber, result));
+    }
 }

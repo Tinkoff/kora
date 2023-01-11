@@ -6,6 +6,7 @@ import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
+import ru.tinkoff.kora.common.Context;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
 import ru.tinkoff.kora.database.annotation.processor.QueryWithParameters;
@@ -21,19 +22,18 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.*;
 
-public final class R2DbcRepositoryGenerator implements RepositoryGenerator {
+public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
     private final TypeMirror repositoryInterface;
     private final Types types;
     private final Elements elements;
     private final Filer filer;
 
-    public R2DbcRepositoryGenerator(ProcessingEnvironment processingEnv) {
+    public R2dbcRepositoryGenerator(ProcessingEnvironment processingEnv) {
         var repository = processingEnv.getElementUtils().getTypeElement(R2dbcTypes.R2DBC_REPOSITORY.canonicalName());
         if (repository == null) {
             this.repositoryInterface = null;
@@ -87,14 +87,10 @@ public final class R2DbcRepositoryGenerator implements RepositoryGenerator {
 
     private MethodSpec generate(ExecutableElement method, ExecutableType methodType, QueryWithParameters query, List<QueryParameter> parameters) {
         var sql = query.rawQuery();
-        var params = new ArrayList<Map.Entry<QueryWithParameters.QueryParameter, Integer>>(query.parameters().size());
-        for (int i = 0; i < query.parameters().size(); i++) {
-            var parameter = query.parameters().get(i);
-            params.add(Map.entry(parameter, i));
-        }
-
-        for (var parameter : params.stream().sorted(Comparator.<Map.Entry<QueryWithParameters.QueryParameter, Integer>, Integer>comparing(p -> p.getKey().sqlParameterName().length()).reversed()).toList()) {
-            sql = sql.replace(":" + parameter.getKey().sqlParameterName(), "$" + (parameter.getValue() + 1));
+        for (var parameter : query.parameters()) {
+            for (Integer sqlIndex : parameter.sqlIndexes()) {
+                sql = sql.replace(":" + parameter.sqlParameterName(), "$" + (sqlIndex + 1));
+            }
         }
 
         var b = DbUtils.queryMethodBuilder(method, methodType);
@@ -109,42 +105,41 @@ public final class R2DbcRepositoryGenerator implements RepositoryGenerator {
 
         b.addCode("var _result = ");
         b.addCode("$T.deferContextual(_reactorCtx -> {$>\n", isFlux ? Flux.class : Mono.class);
-        b.addCode("var _telemetry = this._connectionFactory.telemetry().createContext(ru.tinkoff.kora.common.Context.Reactor.current(_reactorCtx), _query);\n");
+        b.addCode("var _telemetry = this._connectionFactory.telemetry().createContext($T.Reactor.current(_reactorCtx), _query);\n", Context.class);
         b.addCode("return this._connectionFactory.withConnection$L(_con -> {$>\n", isFlux ? "Flux" : "");
         b.addCode("var _stmt = _con.createStatement(_query.sql());\n");
 
         R2dbcStatementSetterGenerator.generate(b, method, query, parameters, batchParam);
-
         b.addCode("var _flux = $T.<$T>from(_stmt.execute());\n", Flux.class, R2dbcTypes.RESULT);
 
         if (returnType.toString().equals(Long.class.getCanonicalName())) {
-            b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).single(0L)\n");
+            b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0L, Long::sum)\n");
         } else if (returnType.toString().equals(Integer.class.getCanonicalName())) {
-            b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).map(l -> l.intValue()).single(0)\n");
+            b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0, (acc, val) -> Math.addExact(acc, val.intValue()))\n");
         } else if (MethodUtils.isVoid(returnType)) {
-            b.addCode("return _flux\n");
+            b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0L, Long::sum)\n");
         } else {
             b.addCode("return $L.apply(_flux)\n", DbUtils.resultMapperName(method));
         }
 
-        var suffix = MethodUtils.isVoid(returnType)
-            ? ".then();"
-            : ";";
-
-        b.addCode("""
-              .doOnEach(_s -> {
-                if (_s.isOnComplete()) {
-                  _telemetry.close(null);
-                } else if (_s.isOnError()) {
-                  _telemetry.close(_s.getThrowable());
-                }
-              })%s
-            """.formatted(suffix));
+        if (isMono) {
+            b.addCode("""
+                .doOnSuccess(r -> _telemetry.close(null))
+                .doOnError(e -> _telemetry.close(e));""");
+        } else {
+            b.addCode("""
+                .doOnComplete(() -> _telemetry.close(null))
+                .doOnError(e -> _telemetry.close(e));""");
+        }
 
         b.addCode("$<\n});");
-        b.addCode("$<\n});");
+        b.addCode("$<\n});\n");
         if (isMono || isFlux) {
-            b.addCode("return _result;\n");
+            if (MethodUtils.isVoid(returnType)) {
+                b.addCode("return _result.then();\n");
+            } else {
+                b.addCode("return _result;\n");
+            }
         } else if (MethodUtils.isVoid(method)) {
             b.addCode("_result.then().block();");
         } else {
