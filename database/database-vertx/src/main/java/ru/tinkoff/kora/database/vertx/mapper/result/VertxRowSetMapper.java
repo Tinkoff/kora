@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VertxRowSetMapper<T> extends Mapping.MappingFunction {
+
     T apply(RowSet<Row> rows);
 
     static <T> VertxRowSetMapper<Optional<T>> optionalRowSetMapper(VertxRowMapper<T> rowMapper) {

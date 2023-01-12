@@ -8,6 +8,7 @@ import ru.tinkoff.kora.netty.common.NettyCommonModule;
 import ru.tinkoff.kora.vertx.common.VertxCommonModule;
 
 public interface VertxDatabaseModule extends VertxDatabaseBaseModule {
+
     default VertxDatabaseConfig vertxDatabaseConfig(Config config, ConfigValueExtractor<VertxDatabaseConfig> extractor) {
         var value = config.getValue("db");
         return extractor.extract(value);

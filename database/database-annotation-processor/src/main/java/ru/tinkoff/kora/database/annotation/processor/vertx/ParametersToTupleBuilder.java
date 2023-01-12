@@ -17,7 +17,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class ParametersToTupleBuilder {
+public final class ParametersToTupleBuilder {
+
+    private ParametersToTupleBuilder() { }
+
+    private record Param(List<Integer> index, String name, CodeBlock code) {}
 
     public static void generate(MethodSpec.Builder b, QueryWithParameters sqlWithParameters, ExecutableElement method, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         if (batchParam != null) {
@@ -29,7 +33,7 @@ public class ParametersToTupleBuilder {
                 }
             }
         }
-        record Param(List<Integer> index, String name, CodeBlock code) {}
+
         var sqlParams = parameters.stream()
             .filter(Predicate.not(p -> p instanceof QueryParameter.ConnectionParameter))
             .map(p -> {
@@ -63,6 +67,7 @@ public class ParametersToTupleBuilder {
                         if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
                             continue;
                         }
+
                         var variableName = entityParam.variable().getSimpleName() + "$" + field.element().getSimpleName();
                         var fieldAccessor = entityParam.entity().entityType() == DbEntity.EntityType.RECORD
                             ? e.getKey() + "." + field.element().getSimpleName() + "()"
@@ -85,30 +90,24 @@ public class ParametersToTupleBuilder {
                 }
             })
             .toList();
-        for (var sqlParam : sqlParams) {
-            b.addCode("var _$L = $L;\n", sqlParam.name, sqlParam.code);
-        }
-        var sqlIndexes = sqlParams.stream()
-            .flatMap(p -> p.index.stream().map(i -> Map.entry(p.name, i)))
-            .sorted(Map.Entry.comparingByValue())
-            .map(Map.Entry::getKey)
-            .toList();
-        if (sqlIndexes.isEmpty()) {
+
+        if (sqlParams.isEmpty()) {
             b.addCode("var _tuple = $T.tuple();\n", VertxTypes.TUPLE);
         } else {
             b.addCode("var _tuple = $T.of($>\n", VertxTypes.TUPLE);
-            for (int i = 0; i < sqlIndexes.size(); i++) {
+            for (int i = 0; i < sqlParams.size(); i++) {
+                var sqlParam = sqlParams.get(i);
                 if (i > 0) {
                     b.addCode(",\n");
                 }
-                b.addCode("_$L", sqlIndexes.get(i));
+                b.addCode(sqlParam.code());
             }
             b.addCode("$<\n);\n");
         }
+
         if (batchParam != null) {
-            b.addCode("_batchParams.add(_tuple);\n");
+            b.addCode("_batchParams.add(_tuple);");
             b.addCode("$<\n}\n");
         }
     }
-
 }
