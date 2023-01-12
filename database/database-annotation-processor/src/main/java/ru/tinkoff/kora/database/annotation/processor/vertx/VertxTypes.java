@@ -3,7 +3,10 @@ package ru.tinkoff.kora.database.annotation.processor.vertx;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 
-public class VertxTypes {
+public final class VertxTypes {
+
+    private VertxTypes() { }
+
     public static final ClassName CONNECTION = ClassName.get("io.vertx.sqlclient", "SqlConnection");
     public static final ClassName ROW = ClassName.get("io.vertx.sqlclient", "Row");
     public static final ClassName TUPLE = ClassName.get("io.vertx.sqlclient", "Tuple");

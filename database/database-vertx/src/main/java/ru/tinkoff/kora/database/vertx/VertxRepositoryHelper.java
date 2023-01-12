@@ -13,7 +13,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class VertxRepositoryHelper {
+public final class VertxRepositoryHelper {
+
+    private VertxRepositoryHelper() {}
+
     public static <T> Mono<T> mono(VertxConnectionFactory connectionFactory, QueryContext query, Tuple params, VertxRowSetMapper<T> mapper) {
         Function<SqlConnection, Mono<T>> connectionCallback = connection -> Mono.create(sink -> {
             var telemetry = connectionFactory.telemetry().createContext(Context.Reactor.current(sink.contextView()), query);
@@ -30,16 +33,19 @@ public class VertxRepositoryHelper {
             });
         });
 
-        return connectionFactory.currentConnection().map(Optional::of).defaultIfEmpty(Optional.empty()).flatMap(o -> {
-            if (o.isPresent()) {
-                return connectionCallback.apply(o.get());
-            }
-            return Mono.defer(() -> Mono.usingWhen(connectionFactory.newConnection(), connectionCallback, $connection -> Mono.fromRunnable($connection::close)));
-        });
+        return connectionFactory.currentConnection()
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMap(o -> {
+                if (o.isPresent()) {
+                    return connectionCallback.apply(o.get());
+                }
+                return Mono.defer(() -> Mono.usingWhen(connectionFactory.newConnection(), connectionCallback, connection -> Mono.fromRunnable(connection::close)));
+            });
     }
 
-    public static Mono<Void> batch(VertxConnectionFactory connectionFactory, QueryContext query, List<Tuple> params) {
-        Function<SqlConnection, Mono<Void>> connectionCallback = connection -> Mono.create(sink -> {
+    public static <T> Mono<T> batch(VertxConnectionFactory connectionFactory, QueryContext query, List<Tuple> params, VertxRowSetMapper<T> mapper) {
+        Function<SqlConnection, Mono<T>> connectionCallback = connection -> Mono.create(sink -> {
             var telemetry = connectionFactory.telemetry().createContext(Context.Reactor.current(sink.contextView()), query);
             connection.preparedQuery(query.sql()).executeBatch(params, rowSetEvent -> {
                 if (rowSetEvent.failed()) {
@@ -47,21 +53,26 @@ public class VertxRepositoryHelper {
                     sink.error(rowSetEvent.cause());
                     return;
                 }
+                var row = rowSetEvent.result();
+                var result = mapper.apply(row);
                 telemetry.close(null);
-                sink.success();
+                sink.success(result);
             });
         });
 
-        return connectionFactory.currentConnection().map(Optional::of).defaultIfEmpty(Optional.empty()).flatMap(o -> {
-            if (o.isPresent()) {
-                return connectionCallback.apply(o.get());
-            }
-            return Mono.defer(() -> Mono.usingWhen(connectionFactory.newConnection(), connectionCallback, $connection -> Mono.fromRunnable($connection::close)));
-        });
+        return connectionFactory.currentConnection()
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMap(o -> {
+                if (o.isPresent()) {
+                    return connectionCallback.apply(o.get());
+                }
+                return Mono.defer(() -> Mono.usingWhen(connectionFactory.newConnection(), connectionCallback, connection -> Mono.fromRunnable(connection::close)));
+            });
     }
 
     public static <T> Flux<T> flux(VertxConnectionFactory connectionFactory, QueryContext query, Tuple params, VertxRowMapper<T> mapper) {
-        Function<SqlConnection, Flux<T>> $connectionCallback = connection -> Flux.create(sink -> {
+        Function<SqlConnection, Flux<T>> connectionCallback = connection -> Flux.create(sink -> {
             var telemetry = connectionFactory.telemetry().createContext(Context.Reactor.current(sink.contextView()), query);
             connection.prepare(query.sql(), statementEvent -> {
                 if (statementEvent.failed()) {
@@ -88,11 +99,14 @@ public class VertxRepositoryHelper {
             });
         });
 
-        return connectionFactory.currentConnection().map(Optional::of).defaultIfEmpty(Optional.empty()).flatMapMany(o -> {
-            if (o.isPresent()) {
-                return $connectionCallback.apply(o.get());
-            }
-            return Flux.defer(() -> Flux.usingWhen(connectionFactory.newConnection(), $connectionCallback, $connection -> Mono.fromRunnable($connection::close)));
-        });
+        return connectionFactory.currentConnection()
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMapMany(o -> {
+                if (o.isPresent()) {
+                    return connectionCallback.apply(o.get());
+                }
+                return Flux.defer(() -> Flux.usingWhen(connectionFactory.newConnection(), connectionCallback, connection -> Mono.fromRunnable(connection::close)));
+            });
     }
 }

@@ -63,9 +63,9 @@ public interface NettyCommonModule {
             size = NettyRuntime.availableProcessors() * 2;
         }
 
-        if (Epoll.isAvailable()) {
+        if (isClassPresent("io.netty.channel.epoll.Epoll") && Epoll.isAvailable()) {
             return new EpollEventLoopGroup(size, threadFactory);
-        } else if (KQueue.isAvailable()) {
+        } else if (isClassPresent("io.netty.channel.kqueue.KQueue") && KQueue.isAvailable()) {
             return new KQueueEventLoopGroup(size, threadFactory);
         } else {
             return new NioEventLoopGroup(size, threadFactory);

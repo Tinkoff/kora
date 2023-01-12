@@ -11,7 +11,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-public class VertxNativeTypes {
+public final class VertxNativeTypes {
+
+    private VertxNativeTypes() { }
 
     @Nullable
     public static VertxNativeType find(TypeName typeName) {

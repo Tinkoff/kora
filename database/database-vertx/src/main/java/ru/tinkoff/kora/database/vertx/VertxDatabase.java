@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class VertxDatabase implements Lifecycle, Wrapped<Pool>, VertxConnectionFactory {
+
     private final Context.Key<SqlConnection> connectionKey = new Context.Key<>() {
         @Override
         protected SqlConnection copy(SqlConnection object) {
