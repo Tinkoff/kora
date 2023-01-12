@@ -12,8 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-public class JdbcNativeTypes {
-    private static final List<JdbcNativeType> nativeTypes;
+public final class JdbcNativeTypes {
+
+    private JdbcNativeTypes() { }
+
+    private static final List<JdbcNativeType> NATIVE_TYPES;
 
     static {
         var booleanPrimitive = JdbcNativeType.of(
@@ -75,7 +78,7 @@ public class JdbcNativeTypes {
             (stmtName, i) -> CodeBlock.of("$L.setNull($L, $T.DATE)", stmtName, i, java.sql.Types.class)
         );
 
-        nativeTypes = List.of(
+        NATIVE_TYPES = List.of(
             booleanPrimitive,
             booleanBoxed,
             intPrimitive,
@@ -94,7 +97,7 @@ public class JdbcNativeTypes {
 
     @Nullable
     public static JdbcNativeType findNativeType(TypeName typeName) {
-        for (var nativeParameterType : nativeTypes) {
+        for (var nativeParameterType : NATIVE_TYPES) {
             if (Objects.equals(nativeParameterType.type(), typeName)) {
                 return nativeParameterType;
             }

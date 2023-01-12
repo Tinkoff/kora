@@ -113,9 +113,9 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
         R2dbcStatementSetterGenerator.generate(b, method, query, parameters, batchParam);
         b.addCode("var _flux = $T.<$T>from(_stmt.execute());\n", Flux.class, R2dbcTypes.RESULT);
 
-        if (returnType.toString().equals(Long.class.getCanonicalName())) {
+        if (!isFlux && returnType.toString().equals(Long.class.getCanonicalName())) {
             b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0L, Long::sum)\n");
-        } else if (returnType.toString().equals(Integer.class.getCanonicalName())) {
+        } else if (!isFlux && returnType.toString().equals(Integer.class.getCanonicalName())) {
             b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0, (acc, val) -> Math.addExact(acc, val.intValue()))\n");
         } else if (MethodUtils.isVoid(returnType)) {
             b.addCode("return _flux.flatMap(_res -> _res.getRowsUpdated()).reduce(0L, Long::sum)\n");
@@ -159,13 +159,20 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
             return Optional.empty();
         }
 
-        final boolean isFlux = CommonUtils.isFlux(returnType);
         final boolean isMono = CommonUtils.isMono(returnType);
-        if (isMono || isFlux) {
+        if (isMono) {
             var publisherParam = Visitors.visitDeclaredType(returnType, dt -> dt.getTypeArguments().get(0));
             if (MethodUtils.isVoid(publisherParam)
                 || publisherParam.toString().equals(Integer.class.getCanonicalName())
                 || publisherParam.toString().equals(Long.class.getCanonicalName())) {
+                return Optional.empty();
+            }
+        }
+
+        final boolean isFlux = CommonUtils.isFlux(returnType);
+        if (isMono || isFlux) {
+            var publisherParam = Visitors.visitDeclaredType(returnType, dt -> dt.getTypeArguments().get(0));
+            if (MethodUtils.isVoid(publisherParam)) {
                 return Optional.empty();
             }
         }

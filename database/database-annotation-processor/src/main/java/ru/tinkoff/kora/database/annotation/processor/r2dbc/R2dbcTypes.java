@@ -2,7 +2,10 @@ package ru.tinkoff.kora.database.annotation.processor.r2dbc;
 
 import com.squareup.javapoet.ClassName;
 
-public class R2dbcTypes {
+public final class R2dbcTypes {
+
+    private R2dbcTypes() { }
+
     public static final ClassName CONNECTION = ClassName.get("io.r2dbc.spi", "Connection");
     public static final ClassName ROW = ClassName.get("io.r2dbc.spi", "Row");
     public static final ClassName RESULT = ClassName.get("io.r2dbc.spi", "Result");
