@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 
 public final class ParametersToTupleBuilder {
 
-    private ParametersToTupleBuilder() { }
+    private ParametersToTupleBuilder() {}
 
     private record Param(List<Integer> index, String name, CodeBlock code) {}
 
@@ -95,8 +95,15 @@ public final class ParametersToTupleBuilder {
             b.addCode("var _tuple = $T.tuple();\n", VertxTypes.TUPLE);
         } else {
             b.addCode("var _tuple = $T.of($>\n", VertxTypes.TUPLE);
-            for (int i = 0; i < sqlParams.size(); i++) {
-                var sqlParam = sqlParams.get(i);
+
+            var sortedParameters = sqlParams.stream()
+                .flatMap(p -> p.index().stream().map(i -> Map.entry(i, p)))
+                .sorted(Map.Entry.comparingByKey())
+                .map(Map.Entry::getValue)
+                .toList();
+
+            for (int i = 0; i < sortedParameters.size(); i++) {
+                var sqlParam = sortedParameters.get(i);
                 if (i > 0) {
                     b.addCode(",\n");
                 }
