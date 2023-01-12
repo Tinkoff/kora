@@ -14,7 +14,9 @@ import java.util.List;
 
 import static ru.tinkoff.kora.annotation.processor.common.CommonUtils.isNullable;
 
-public class StatementSetterGenerator {
+final class StatementSetterGenerator {
+
+    private StatementSetterGenerator() { }
 
     public static CodeBlock generate(ExecutableElement method, QueryWithParameters sqlWithParameters, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         var b = CodeBlock.builder();

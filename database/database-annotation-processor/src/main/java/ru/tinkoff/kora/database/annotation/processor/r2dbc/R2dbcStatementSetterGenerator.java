@@ -13,7 +13,9 @@ import javax.lang.model.element.ExecutableElement;
 import java.util.List;
 import java.util.Objects;
 
-public class R2dbcStatementSetterGenerator {
+final class R2dbcStatementSetterGenerator {
+
+    private R2dbcStatementSetterGenerator() { }
 
     public static void generate(MethodSpec.Builder b, ExecutableElement method, QueryWithParameters sqlWithParameters, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         if (batchParam != null) {

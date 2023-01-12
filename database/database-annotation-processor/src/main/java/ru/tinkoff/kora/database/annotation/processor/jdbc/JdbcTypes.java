@@ -2,7 +2,10 @@ package ru.tinkoff.kora.database.annotation.processor.jdbc;
 
 import com.squareup.javapoet.ClassName;
 
-public class JdbcTypes {
+public final class JdbcTypes {
+
+    private JdbcTypes() { }
+
     public static final ClassName CONNECTION = ClassName.get("java.sql", "Connection");
     public static final ClassName CONNECTION_FACTORY = ClassName.get("ru.tinkoff.kora.database.jdbc", "JdbcConnectionFactory");
     public static final ClassName JDBC_REPOSITORY = ClassName.get("ru.tinkoff.kora.database.jdbc", "JdbcRepository");

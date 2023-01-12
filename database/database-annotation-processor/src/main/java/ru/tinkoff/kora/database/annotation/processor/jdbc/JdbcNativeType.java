@@ -7,6 +7,7 @@ import javax.lang.model.util.Types;
 import java.util.function.BiFunction;
 
 public interface JdbcNativeType {
+
     TypeName type();
 
     CodeBlock extract(String rs, CodeBlock index);

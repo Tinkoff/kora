@@ -30,6 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.stream.IntStream;
 
 public final class JdbcRepositoryGenerator implements RepositoryGenerator {
+
     private final TypeMirror repositoryInterface;
     private final Types types;
     private final Elements elements;
@@ -85,7 +86,12 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
             ? ((DeclaredType) method.getReturnType()).getTypeArguments().get(0)
             : method.getReturnType();
 
-        if (MethodUtils.isVoid(returnType)) {
+        if (MethodUtils.isVoid(returnType)
+            || returnType.toString().equals(Integer.class.getCanonicalName())
+            || returnType.toString().equals("int")
+            || returnType.toString().equals(Long.class.getCanonicalName())
+            || returnType.toString().equals("long")
+            || returnType.toString().equals(DbUtils.UPDATE_COUNT.canonicalName())) {
             return Optional.empty();
         }
 
@@ -93,17 +99,6 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
         if (batchParam != null) {
             // either void or update count, no way to parse results from db with jdbc api
             return Optional.empty();
-        }
-
-        if (returnType.toString().equals(DbUtils.UPDATE_COUNT.canonicalName())) {
-            return Optional.empty();
-        }
-
-        if (returnType.toString().equals(Integer.class.getCanonicalName())
-            || returnType.toString().equals("int")
-            || returnType.toString().equals(Long.class.getCanonicalName())
-            || returnType.toString().equals("long")) {
-           return Optional.empty();
         }
 
         var mapperName = DbUtils.resultMapperName(method);

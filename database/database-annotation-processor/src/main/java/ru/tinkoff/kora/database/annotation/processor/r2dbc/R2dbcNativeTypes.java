@@ -11,9 +11,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-public class R2dbcNativeTypes {
+public final class R2dbcNativeTypes {
 
-    private static final Set<TypeName> nativeTypes = Set.of(
+    private R2dbcNativeTypes() { }
+
+    private static final Set<TypeName> NATIVE_TYPES = Set.of(
         TypeName.INT,
         TypeName.INT.box(),
         TypeName.LONG,
@@ -32,7 +34,7 @@ public class R2dbcNativeTypes {
 
     @Nullable
     public static TypeName findAndBox(TypeName typeName) {
-        if (nativeTypes.contains(typeName)) {
+        if (NATIVE_TYPES.contains(typeName)) {
             return typeName.isPrimitive()
                 ? typeName.box()
                 : typeName;
