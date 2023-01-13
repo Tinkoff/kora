@@ -60,7 +60,6 @@ public final class ValidationAnnotationProcessor extends AbstractKoraProcessor {
             final TypeSpec.Builder validatorSpecBuilder = TypeSpec.classBuilder(meta.validator().implementation().simpleName())
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addSuperinterface(typeName)
-                .addAnnotation(Component.class)
                 .addAnnotation(AnnotationSpec.builder(ClassName.get(Generated.class))
                     .addMember("value", "$S", this.getClass().getCanonicalName())
                     .build());

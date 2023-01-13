@@ -3,6 +3,7 @@ package ru.tinkoff.kora.validation.annotation.processor;
 import org.junit.jupiter.api.Assertions;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.application.graph.TypeRef;
+import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Bar;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Foo;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.Taz;
