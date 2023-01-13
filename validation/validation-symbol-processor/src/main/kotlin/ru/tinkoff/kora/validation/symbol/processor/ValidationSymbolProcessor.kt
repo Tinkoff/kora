@@ -52,7 +52,6 @@ class ValidationSymbolProcessor(private val environment: SymbolProcessorEnvironm
         val typeName = meta.validator.contract.asPoetType()
         val validatorSpecBuilder = TypeSpec.classBuilder(meta.validator.implementation.simpleName)
             .addSuperinterface(typeName)
-            .addAnnotation(Component::class)
             .addAnnotation(
                 AnnotationSpec.builder(Generated::class)
                     .addMember("%S", this.javaClass.canonicalName)

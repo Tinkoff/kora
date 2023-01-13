@@ -3,6 +3,7 @@ package ru.tinkoff.kora.validation.symbol.processor
 import com.google.devtools.ksp.KspExperimental
 import org.junit.jupiter.api.Assertions
 import ru.tinkoff.kora.application.graph.TypeRef
+import ru.tinkoff.kora.kora.app.ksp.KoraAppProcessorProvider
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import ru.tinkoff.kora.validation.common.Validator
 import ru.tinkoff.kora.validation.common.constraint.ValidationModule

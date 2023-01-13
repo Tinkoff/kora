@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(":symbol-processor-common")
+    implementation project(":kora-app-symbol-processor")
 
     implementation libs.ksp.api
     implementation libs.kotlin.reflect

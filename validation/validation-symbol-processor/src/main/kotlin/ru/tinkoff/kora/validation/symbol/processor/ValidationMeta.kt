@@ -48,7 +48,7 @@ data class Type(private val reference: KSTypeReference?, val packageName: String
     }
 
     @KspExperimental
-        fun asPoetType(nullable: Boolean = false): TypeName {
+    fun asPoetType(nullable: Boolean = false): TypeName {
         return if (generic.isEmpty()) {
             ClassName.bestGuess(canonicalName()).copy(nullable)
         } else {
