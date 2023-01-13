@@ -14,9 +14,9 @@ import java.util.List;
 
 import static ru.tinkoff.kora.annotation.processor.common.CommonUtils.isNullable;
 
-final class StatementSetterGenerator {
+final class JdbcStatementSetterGenerator {
 
-    private StatementSetterGenerator() { }
+    private JdbcStatementSetterGenerator() { }
 
     public static CodeBlock generate(ExecutableElement method, QueryWithParameters sqlWithParameters, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         var b = CodeBlock.builder();
@@ -71,9 +71,11 @@ final class StatementSetterGenerator {
                     if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
                         continue;
                     }
+
                     var name = entityParameter.entity().entityType() == DbEntity.EntityType.RECORD
                         ? parameterName + "." + field.element().getSimpleName() + "()"
                         : parameterName + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
+
                     var nativeType = JdbcNativeTypes.findNativeType(TypeName.get(field.typeMirror()));
                     if (nativeType != null) {
                         if (isNullable(field.element())) {

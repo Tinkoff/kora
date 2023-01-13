@@ -5,6 +5,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
+import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Context;
 import ru.tinkoff.kora.common.Tag;
@@ -92,6 +93,11 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
             for (Integer sqlIndex : parameter.sqlIndexes()) {
                 sql = sql.replace(":" + parameter.sqlParameterName(), "$" + (sqlIndex + 1));
             }
+        }
+
+        var unusedParameters = DbUtils.findUnusedParameters(sql);
+        if (!unusedParameters.isEmpty()) {
+            throw new ProcessingErrorException("Found unknown SQL parameter declarations: " + unusedParameters, method);
         }
 
         var b = DbUtils.queryMethodBuilder(method, methodType);

@@ -4,6 +4,7 @@ import com.squareup.javapoet.*;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
+import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils.Mapper;
@@ -136,6 +137,11 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
             sql = sql.replace(":" + parameter.sqlParameterName(), "?");
         }
 
+        var unusedParameters = DbUtils.findUnusedParameters(sql);
+        if (!unusedParameters.isEmpty()) {
+            throw new ProcessingErrorException("Found unknown SQL parameter declarations: " + unusedParameters, method);
+        }
+
         var b = DbUtils.queryMethodBuilder(method, methodType);
         final boolean isMono = CommonUtils.isMono(methodType.getReturnType());
         if (isMono) {
@@ -167,7 +173,7 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
             try (_conToClose; var _stmt = _conToUse.prepareStatement(_query.sql())) {$>
             """, connection, JdbcTypes.CONNECTION, DbUtils.QUERY_CONTEXT, query.rawQuery(), sql);
 
-        b.addCode(StatementSetterGenerator.generate(method, query, parameters, batchParam));
+        b.addCode(JdbcStatementSetterGenerator.generate(method, query, parameters, batchParam));
 
         if (MethodUtils.isVoid(returnType)) {
             if (batchParam != null) {

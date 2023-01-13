@@ -416,7 +416,7 @@ public class KoraCodegen extends DefaultCodegen {
             var model = (Map<String, Object>) obj;
             var models = (List<Map<String, Object>>) model.get("models");
             var codegenModel = (CodegenModel) models.get(0).get("model");
-            var additionalConstructor = codegenModel.getHasRequired() && codegenModel.getHasVars() && codegenModel.getVars().size() != codegenModel.getRequiredVars().size();
+            var additionalConstructor = codegenModel.getHasVars() && codegenModel.getVars().size() != codegenModel.getRequiredVars().size();
             model.put("additionalConstructor", additionalConstructor);
         }
         return objs;
@@ -1134,6 +1134,10 @@ public class KoraCodegen extends DefaultCodegen {
             for (int i = 0; i < lastIdx; i++) {
                 var response = op.responses.get(i);
                 response.vendorExtensions.put("hasMore", true);
+            }
+            op.vendorExtensions.put("singleResponse", op.responses.size() == 1);
+            for (var response : op.responses) {
+                response.vendorExtensions.put("singleResponse", op.responses.size() == 1);
             }
             if (op.hasAuthMethods) {
                 if (this.codegenMode.name().contains("SERVER")) {

@@ -14,7 +14,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw
-import ru.tinkoff.kora.common.annotation.Generated
+
 import ru.tinkoff.kora.kora.app.ksp.component.ComponentDependency
 import ru.tinkoff.kora.kora.app.ksp.component.DependencyClaim
 import ru.tinkoff.kora.kora.app.ksp.component.ResolvedComponent
@@ -25,6 +25,7 @@ import ru.tinkoff.kora.kora.app.ksp.interceptor.ComponentInterceptors
 import ru.tinkoff.kora.ksp.common.AnnotationUtils.findAnnotation
 import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
 import ru.tinkoff.kora.ksp.common.CommonClassNames
+import ru.tinkoff.kora.ksp.common.KspCommonUtils.generated
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.visitClass
 import java.io.IOException
@@ -180,11 +181,12 @@ class KoraAppProcessor(
         try {
             val rootErasure = declaration.asStarProjectedType()
             val rootModule = ModuleDeclaration.MixedInModule(declaration)
+            val filterObjectMethods: (KSFunctionDeclaration) -> Boolean = {
+                val name = it.simpleName.asString()
+                name != "equals" && name != "hashCode" && name != "toString"// todo find out a better way to filter object methods
+            }
             val mixedInComponents = declaration.getAllFunctions()
-                .filter {
-                    val name = it.simpleName.asString()
-                    name != "equals" && name != "hashCode" && name != "toString"// todo find out a better way to filter object methods
-                }
+                .filter(filterObjectMethods)
                 .toMutableList()
 
             val submodules = declaration.superTypes.map { it.resolve() }
@@ -202,7 +204,8 @@ class KoraAppProcessor(
             val annotatedModules = allModules
                 .filter { !it.asStarProjectedType().isAssignableFrom(rootErasure) }
                 .map { ModuleDeclaration.AnnotatedModule(it) }
-            val annotatedModuleComponentsTmp = annotatedModules.flatMap { it.element.getAllFunctions().map { f -> ComponentDeclaration.fromModule(ctx!!, it, f) } }
+            val annotatedModuleComponentsTmp = annotatedModules
+                .flatMap { it.element.getAllFunctions().filter(filterObjectMethods).map { f -> ComponentDeclaration.fromModule(ctx!!, it, f) } }
             val annotatedModuleComponents = ArrayList(annotatedModuleComponentsTmp)
             for (annotatedComponent in annotatedModuleComponentsTmp) {
                 if (annotatedComponent.method.modifiers.contains(Modifier.OVERRIDE)) {
@@ -243,17 +246,10 @@ class KoraAppProcessor(
     }
 
     private fun processGenerated(resolver: Resolver) {
-        if(log.isInfoEnabled) {
-            val generated = resolver.getSymbolsWithAnnotation(Generated::class.qualifiedName.toString())
-                .joinToString("\n") { obj -> obj.location.toString() }
-                .trimIndent()
-
-            if(generated.isNotBlank()) {
-                log.info("Generated previous Round: {}", generated)
-            } else {
-                log.info("Nothing was generated previous Round.")
-            }
-        }
+        log.info("Generated from prev round:{}", resolver.getSymbolsWithAnnotation(CommonClassNames.generated.canonicalName)
+            .joinToString("\n") { obj -> obj.location.toString() }
+            .trimIndent()
+        )
     }
 
     private fun processModules(resolver: Resolver): Boolean {
@@ -327,6 +323,7 @@ class KoraAppProcessor(
         )
         val classBuilder = TypeSpec.classBuilder(moduleName)
             .addOriginatingKSFile(containingFile)
+            .generated(KoraAppProcessor::class)
             .addModifiers(KModifier.PUBLIC, KModifier.OPEN)
             .addSuperinterface(declaration.toClassName())
 
@@ -353,6 +350,7 @@ class KoraAppProcessor(
             val packageName = appPart.packageName.asString()
             val b = TypeSpec.interfaceBuilder(appPart.simpleName.asString() + "SubmoduleImpl")
                 .addSuperinterface(appPart.toClassName())
+                .generated(KoraAppProcessor::class)
             var componentCounter = 0
             for (component in components) {
                 b.addOriginatingKSFile(component.containingFile!!)
@@ -423,6 +421,7 @@ class KoraAppProcessor(
         val functionSuperInterface = functionDeclaration.toClassName().parameterizedBy(implClass, CommonClassNames.applicationGraphDraw)
         val classBuilder = TypeSpec.classBuilder(graphName)
             .addOriginatingKSFile(containingFile)
+            .generated(KoraAppProcessor::class)
             .addSuperinterface(supplierSuperInterface)
             .addSuperinterface(functionSuperInterface)
             .addFunction(
