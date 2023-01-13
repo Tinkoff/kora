@@ -64,15 +64,15 @@ final class R2dbcStatementSetterGenerator {
 
             if (parameter instanceof QueryParameter.EntityParameter entityParameter) {
                 for (var field : entityParameter.entity().entityFields()) {
+                    final String sqlParameterName = entityParameter.name() + "." + field.element().getSimpleName();
+                    var sqlParameter = sqlWithParameters.find(sqlParameterName);
+                    if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
+                        continue;
+                    }
+
                     var fieldAccessor = (entityParameter.entity().entityType() == DbEntity.EntityType.RECORD)
                         ? parameterName + "." + field.element().getSimpleName() + "()"
                         : parameterName + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
-
-                    final String sqlParameterName = entityParameter.name() + "." + field.element().getSimpleName();
-                    var sqlParameter = sqlWithParameters.find(sqlParameterName);
-                    if (sqlParameter == null) {
-                        throw new IllegalArgumentException("Expected to find SQL parameter '" + sqlParameterName + ", but SQL query contained none:\n" + sqlWithParameters.rawQuery());
-                    }
 
                     var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(field.typeMirror()));
                     if (nativeType != null) {

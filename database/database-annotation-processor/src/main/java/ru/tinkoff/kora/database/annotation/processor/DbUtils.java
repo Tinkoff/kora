@@ -13,6 +13,8 @@ import javax.lang.model.util.Types;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class DbUtils {
@@ -26,6 +28,8 @@ public class DbUtils {
     public static final ClassName ENTITY_CONSTRUCTOR_ANNOTATION = ClassName.get("ru.tinkoff.kora.database.common.annotation", "EntityConstructor");
     public static final ClassName QUERY_CONTEXT = ClassName.get("ru.tinkoff.kora.database.common", "QueryContext");
     public static final ClassName UPDATE_COUNT = ClassName.get("ru.tinkoff.kora.database.common", "UpdateCount");
+
+    private static final Pattern PARAMETER_PATTERN = Pattern.compile(":_?[a-zA-Z][a-zA-Z0-9_.]*");
 
     public static List<ExecutableElement> findQueryMethods(Types types, Elements elements, TypeElement repositoryElement) {
         return DbUtils.collectInterfaces(types, repositoryElement).stream()
@@ -129,18 +133,18 @@ public class DbUtils {
     }
 
     private static Optional<String> getFlattenTypeName(TypeMirror mirror) {
-        if(mirror instanceof PrimitiveType) {
+        if (mirror instanceof PrimitiveType) {
             var type = TypeName.get(mirror).box();
             var typeAsStr = type.toString();
             return Optional.of(typeAsStr.substring(typeAsStr.lastIndexOf('.') + 1));
-        } else if(mirror instanceof DeclaredType dt) {
+        } else if (mirror instanceof DeclaredType dt) {
             final StringBuilder builder = new StringBuilder(dt.asElement().getSimpleName().toString());
             final List<Optional<String>> flatGenerics = ((DeclaredType) mirror).getTypeArguments().stream()
                 .map(DbUtils::getFlattenTypeName)
                 .toList();
 
             for (Optional<String> flatGeneric : flatGenerics) {
-                if(flatGeneric.isEmpty()) {
+                if (flatGeneric.isEmpty()) {
                     return Optional.empty();
                 } else {
                     builder.append("_").append(flatGeneric.get());
@@ -243,4 +247,14 @@ public class DbUtils {
         return mappers;
     }
 
+    public static List<String> findUnusedParameters(String sqlWithParameters) {
+        final Matcher matcher = PARAMETER_PATTERN.matcher(sqlWithParameters);
+        final List<String> matched = new ArrayList<>();
+        while (matcher.find()) {
+            var group = matcher.group();
+            matched.add(group);
+        }
+
+        return matched;
+    }
 }

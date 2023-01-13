@@ -5,6 +5,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
+import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
@@ -21,7 +22,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -93,6 +93,11 @@ public final class VertxRepositoryGenerator implements RepositoryGenerator {
             }
         }
 
+        var unusedParameters = DbUtils.findUnusedParameters(sql);
+        if (!unusedParameters.isEmpty()) {
+            throw new ProcessingErrorException("Found unknown SQL parameter declarations: " + unusedParameters, method);
+        }
+
         var b = DbUtils.queryMethodBuilder(method, methodType);
         b.addStatement(CodeBlock.of("var _query = new $T(\n  $S,\n  $S\n)", DbUtils.QUERY_CONTEXT, query.rawQuery(), sql));
         var batchParam = parameters.stream().filter(QueryParameter.BatchParameter.class::isInstance).findFirst().orElse(null);
@@ -104,7 +109,7 @@ public final class VertxRepositoryGenerator implements RepositoryGenerator {
         }
 
         b.addCode("$T.deferContextual(_reactorCtx -> {$>\n", isFlux ? Flux.class : Mono.class);
-        ParametersToTupleBuilder.generate(b, query, method, parameters, batchParam);
+        VertxParametersToTupleBuilder.generate(b, query, method, parameters, batchParam);
 
         var returnType = isMono || isFlux
             ? ((DeclaredType) method.getReturnType()).getTypeArguments().get(0)

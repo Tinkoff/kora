@@ -49,10 +49,10 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
                 packageName = "";
                 resourceName = path;
             }
-            try (var is = filer.getResource(StandardLocation.SOURCE_PATH, packageName, resourceName).openInputStream()){
+            try (var is = filer.getResource(StandardLocation.SOURCE_PATH, packageName, resourceName).openInputStream()) {
                 rawSql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             } catch (IOException e) {
-                try (var is = filer.getResource(StandardLocation.CLASS_PATH, packageName, resourceName).openInputStream()){
+                try (var is = filer.getResource(StandardLocation.CLASS_PATH, packageName, resourceName).openInputStream()) {
                     rawSql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                 } catch (IOException e1) {
                     e.addSuppressed(e1);
@@ -83,7 +83,7 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
                 }
             }
             if (params.size() == size) {
-                throw new ProcessingErrorException("Parameter usage was not found in query: " + parameterName, parameter.variable());
+                throw new ProcessingErrorException("Expected parameter usage in query: " + parameterName, parameter.variable());
             }
         }
 
@@ -104,7 +104,6 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
 
         return new QueryWithParameters(rawSql, params);
     }
-
 
     private static Optional<QueryParameter> parseSimpleParameter(String rawSql, int methodParameterNumber, String sqlParameterName) {
         int index = -1;

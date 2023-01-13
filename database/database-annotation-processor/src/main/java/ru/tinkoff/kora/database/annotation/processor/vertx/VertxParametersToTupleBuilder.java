@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public final class ParametersToTupleBuilder {
+public final class VertxParametersToTupleBuilder {
 
-    private ParametersToTupleBuilder() {}
+    private VertxParametersToTupleBuilder() {}
 
     private record Param(List<Integer> index, String name, CodeBlock code) {}
 
