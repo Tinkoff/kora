@@ -104,45 +104,54 @@ public final class VertxRepositoryGenerator implements RepositoryGenerator {
         var isVoid = isVoid(returnType);
 
         ParametersToTupleBuilder.generate(b, query, method, parameters, batchParam);
+        var resultMapper = isVoid
+            ? CodeBlock.of("(rs) -> null")
+            : CodeBlock.of("$L", DbUtils.resultMapperName(method));
+        if (returnType.getKind() != TypeKind.VOID) {
+            b.addCode("return ");
+        }
         if (batchParam != null) {
             if (isCompletionStage) {
                 if (connectionParam == null) {
-                    b.addCode("return $T.batchCompletionStage(this._connectionFactory, _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER);
+                    b.addCode("$T.batchCompletionStage(this._connectionFactory, _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER);
                 } else {
-                    b.addCode("return $T.batchCompletionStage($N, this._connectionFactory.telemetry(), _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name());
+                    b.addCode("$T.batchCompletionStage($N, this._connectionFactory.telemetry(), _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name());
+                }
+                if (isVoid) {
+                    b.addCode("  .thenApply(v -> (Void) null)\n");
                 }
             } else {
                 if (connectionParam == null) {
-                    b.addCode("return $T.batchMono(this._connectionFactory, _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER);
+                    b.addCode("$T.batchMono(this._connectionFactory, _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER);
                 } else {
-                    b.addCode("return $T.batchMono($N, this._connectionFactory.telemetry(), _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name());
+                    b.addCode("$T.batchMono($N, this._connectionFactory.telemetry(), _query, _batchParams)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name());
+                }
+                if (isVoid) {
+                    b.addCode("  .then()\n");
                 }
             }
         } else if (isFlux) {
             if (connectionParam == null) {
-                b.addCode("return $T.flux(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, DbUtils.resultMapperName(method));
+                b.addCode("$T.flux(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, DbUtils.resultMapperName(method));
             } else {
-                b.addCode("return $T.flux($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), DbUtils.resultMapperName(method));
+                b.addCode("$T.flux($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), DbUtils.resultMapperName(method));
             }
         } else if (isMono) {
             if (connectionParam == null) {
-                b.addCode("return $T.mono(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, DbUtils.resultMapperName(method));
+                b.addCode("$T.mono(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, resultMapper);
             } else {
-                b.addCode("return $T.mono($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), DbUtils.resultMapperName(method));
+                b.addCode("$T.mono($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), resultMapper);
             }
         } else {
             if (connectionParam == null) {
-                b.addCode("return $T.completionStage(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, DbUtils.resultMapperName(method));
+                b.addCode("$T.completionStage(this._connectionFactory, _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, resultMapper);
             } else {
-                b.addCode("return $T.completionStage($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), DbUtils.resultMapperName(method));
+                b.addCode("$T.completionStage($N, this._connectionFactory.telemetry(), _query, _tuple, $L)\n", VertxTypes.REPOSITORY_HELPER, connectionParam.name(), resultMapper);
             }
         }
         if (isFlux) {
             b.addCode(";\n");
         } else if (isMono) {
-            if (isVoid) {
-                b.addCode("  .then()");
-            }
             b.addCode(";\n");
         } else if (isCompletionStage) {
             if (isVoid) {
