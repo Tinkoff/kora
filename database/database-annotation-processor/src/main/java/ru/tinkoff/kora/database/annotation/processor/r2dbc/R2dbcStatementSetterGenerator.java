@@ -94,9 +94,9 @@ public class R2dbcStatementSetterGenerator {
 
         if (batchParam != null) {
             b.addCode("""
-                if(i != entity.size() - 1) {
+                if(i != $L.size() - 1) {
                   _stmt.add();
-                }""");
+                }""", batchParam.name());
             b.addCode("\n$<}\n");
         }
     }
