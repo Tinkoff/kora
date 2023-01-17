@@ -39,7 +39,7 @@ class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLo
         val repositoryResolvedType = repositoryType.asStarProjectedType()
         for (method in repositoryType.findQueryMethods()) {
             val methodType = method.asMemberOf(repositoryResolvedType)
-            val parameters = QueryParameterParser.parse(VertxTypes.connection, method, methodType)
+            val parameters = QueryParameterParser.parse(listOf(VertxTypes.sqlConnection, VertxTypes.sqlClient), method, methodType)
             val queryAnnotation = method.findAnnotation(DbUtils.queryAnnotation)!!
             val queryString = queryAnnotation.findValue<String>("value")!!
             val query = QueryWithParameters.parse(queryString, parameters)
@@ -70,31 +70,35 @@ class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLo
         val isSuspend = funDeclaration.isSuspend()
         val isFlow = funDeclaration.isFlow()
         ParametersToTupleBuilder.generate(b, query, funDeclaration, parameters, batchParam)
+        val connectionParameter = parameters.asSequence().filterIsInstance<QueryParameter.ConnectionParameter>().firstOrNull()?.variable?.name?.asString()
 
         b.addCode("return ")
         if (batchParam != null) {
-            b.addCode("%T.batchCompletionStage(this._vertxConnectionFactory, _query, _batchParams)\n", VertxTypes.repositoryHelper)
+            if (connectionParameter == null) {
+                b.addCode("%T.batchCompletionStage(this._vertxConnectionFactory, _query, _batchParams)\n", VertxTypes.repositoryHelper)
+            } else {
+                b.addCode("%T.batchCompletionStage(%N, this._vertxConnectionFactory.telemetry(), _query, _batchParams)\n", VertxTypes.repositoryHelper, connectionParameter)
+            }
             if (function.returnType == resolver.builtIns.unitType) {
                 b.addCode("  .thenApply {}")
             }
         } else if (isFlow) {
-            b.addCode(
-                "%T.flux(this._vertxConnectionFactory, _query, _tuple, %N).asFlow()\n",
-                VertxTypes.repositoryHelper,
-                funDeclaration.resultMapperName()
-            )
-        } else {
-            if (function.returnType == resolver.builtIns.unitType) {
-                b.addCode(
-                    "%T.completionStage(this._vertxConnectionFactory, _query, _tuple) {}\n",
-                    VertxTypes.repositoryHelper
-                )
+            if (connectionParameter == null) {
+                b.addCode("%T.flux(this._vertxConnectionFactory, _query, _tuple, %N).asFlow()\n", VertxTypes.repositoryHelper, funDeclaration.resultMapperName())
             } else {
-                b.addCode(
-                    "%T.completionStage(this._vertxConnectionFactory, _query, _tuple, %N)\n",
-                    VertxTypes.repositoryHelper,
-                    funDeclaration.resultMapperName()
-                )
+                b.addCode("%T.flux(%N, this._vertxConnectionFactory.telemetry(), _query, _tuple, %N).asFlow()\n", VertxTypes.repositoryHelper, connectionParameter, funDeclaration.resultMapperName())
+            }
+        } else {
+            if (connectionParameter == null) {
+                b.addCode("%T.completionStage(this._vertxConnectionFactory, _query, _tuple", VertxTypes.repositoryHelper)
+            } else {
+                b.addCode("%T.completionStage(%N, this._vertxConnectionFactory.telemetry(), _query, _tuple", VertxTypes.repositoryHelper, connectionParameter)
+            }
+
+            if (function.returnType == resolver.builtIns.unitType) {
+                b.addCode(") {}\n")
+            } else {
+                b.addCode(", %N)\n", funDeclaration.resultMapperName())
             }
         }
         if (isSuspend) {
