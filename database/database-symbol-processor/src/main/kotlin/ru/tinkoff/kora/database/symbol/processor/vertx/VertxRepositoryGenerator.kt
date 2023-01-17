@@ -29,6 +29,7 @@ import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
 import ru.tinkoff.kora.ksp.common.parseMappingData
 
 class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLogger: KSPLogger) : RepositoryGenerator {
+    private val await = MemberName("kotlinx.coroutines.future", "await")
     private val repositoryInterface = resolver.getClassDeclarationByName(resolver.getKSNameFromString(VertxTypes.repository.canonicalName))?.asStarProjectedType()
     override fun repositoryInterface() = repositoryInterface
 
@@ -72,7 +73,10 @@ class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLo
 
         b.addCode("return ")
         if (batchParam != null) {
-            b.addCode("%T.batch(this._vertxConnectionFactory, _query, _batchParams).thenReturn(%T)\n", VertxTypes.repositoryHelper, Unit::class)
+            b.addCode("%T.batchCompletionStage(this._vertxConnectionFactory, _query, _batchParams)\n", VertxTypes.repositoryHelper)
+            if (function.returnType == resolver.builtIns.unitType) {
+                b.addCode("  .thenApply {}")
+            }
         } else if (isFlow) {
             b.addCode(
                 "%T.flux(this._vertxConnectionFactory, _query, _tuple, %N).asFlow()\n",
@@ -82,28 +86,23 @@ class VertxRepositoryGenerator(private val resolver: Resolver, private val kspLo
         } else {
             if (function.returnType == resolver.builtIns.unitType) {
                 b.addCode(
-                    "%L.mono(this._vertxConnectionFactory, _query, _tuple) {}\n",
+                    "%T.completionStage(this._vertxConnectionFactory, _query, _tuple) {}\n",
                     VertxTypes.repositoryHelper
                 )
             } else {
                 b.addCode(
-                    "%L.mono(this._vertxConnectionFactory, _query, _tuple, %N)\n",
+                    "%T.completionStage(this._vertxConnectionFactory, _query, _tuple, %N)\n",
                     VertxTypes.repositoryHelper,
                     funDeclaration.resultMapperName()
                 )
             }
         }
         if (isSuspend) {
-            if (function.returnType!!.isMarkedNullable) {
-                b.addCode("  .awaitSingleOrNull()")
-            } else {
-                b.addCode("  .awaitSingle()")
-            }
+            b.addCode("  .%M()", await)
         } else if (!isFlow) {
+            b.addCode("  .toCompletableFuture().join()")
             if (function.returnType!!.isMarkedNullable) {
-                b.addCode("  .block()!!")
-            } else {
-                b.addCode("  .block()")
+                b.addCode("!!")
             }
         }
         return b.build()
