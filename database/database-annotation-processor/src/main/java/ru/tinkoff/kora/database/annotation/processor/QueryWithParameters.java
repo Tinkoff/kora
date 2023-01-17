@@ -78,7 +78,7 @@ public record QueryWithParameters(String rawQuery, List<QueryParameter> paramete
             }
             if (parameter instanceof ru.tinkoff.kora.database.annotation.processor.model.QueryParameter.EntityParameter entityParameter) {
                 for (var field : entityParameter.entity().entityFields()) {
-                    parseSimpleParameter(rawSql, i, parameterName + "." + field.columnName()).ifPresent(params::add);
+                    parseSimpleParameter(rawSql, i, parameterName + "." + field.element().getSimpleName()).ifPresent(params::add);
                 }
             }
             if (params.size() == size) {

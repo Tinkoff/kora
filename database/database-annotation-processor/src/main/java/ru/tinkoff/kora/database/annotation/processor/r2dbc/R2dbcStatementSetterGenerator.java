@@ -18,9 +18,9 @@ public class R2dbcStatementSetterGenerator {
     public static void generate(MethodSpec.Builder b, ExecutableElement method, QueryWithParameters sqlWithParameters, List<QueryParameter> parameters, @Nullable QueryParameter batchParam) {
         if (batchParam != null) {
             b.addCode("""
-                for (int i = 0; i < entity.size(); i++) {
-                  var _batch_entity = entity.get(i);$>
-                """);
+                for (int i = 0; i < $L.size(); i++) {
+                  var _batch_$L = $L.get(i);$>
+                """, batchParam.name(), batchParam.name(), batchParam.name());
         }
 
         for (int i = 0, sqlIndex = 1; i < parameters.size(); i++, sqlIndex++) {
