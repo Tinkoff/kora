@@ -73,20 +73,23 @@ public class VertxDatabase implements Lifecycle, Wrapped<Pool>, VertxConnectionF
 
                     var complete = new AtomicBoolean();
 
-                    return Future.<T>future(promise -> callback.apply(connection).subscribe(
-                        v -> {
-                            if (complete.compareAndSet(false, true)) {
-                                promise.complete(v);
-                            }
-                        },
-                        promise::fail,
-                        () -> {
-                            if (complete.compareAndSet(false, true)) {
-                                promise.complete();
-                            }
-                        },
-                        Context.Reactor.inject(reactorContext, ctx)
-                    ));
+                    return Future.<T>future(promise -> {
+                        ctx.inject();
+                        callback.apply(connection).subscribe(
+                            v -> {
+                                if (complete.compareAndSet(false, true)) {
+                                    promise.complete(v);
+                                }
+                            },
+                            promise::fail,
+                            () -> {
+                                if (complete.compareAndSet(false, true)) {
+                                    promise.complete();
+                                }
+                            },
+                            Context.Reactor.inject(reactorContext, ctx)
+                        );
+                    });
                 }, asyncResult -> {
                     if (asyncResult.failed()) {
                         sink.error(asyncResult.cause());
@@ -108,6 +111,7 @@ public class VertxDatabase implements Lifecycle, Wrapped<Pool>, VertxConnectionF
                 return callback.apply(connection);
             }
             return Mono.create(sink -> connection.begin(txEvent -> {
+                ctx.inject();
                 if (txEvent.failed()) {
                     sink.error(txEvent.cause());
                     return;
