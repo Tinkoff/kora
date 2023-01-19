@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentMatchers;
+import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.mockito.verification.VerificationMode;
 import reactor.core.publisher.Flux;
@@ -56,14 +57,12 @@ import static ru.tinkoff.kora.http.common.HttpMethod.POST;
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public abstract class HttpServerTestKit {
     protected static PrivateApiMetrics registry = Mockito.mock(PrivateApiMetrics.class);
-    private ReadinessProbe readinessProbe = Mockito.mock(ReadinessProbe.class);
-    private SettablePromiseOf<ReadinessProbe> readinessProbePromise = new SettablePromiseOf<>(readinessProbe);
-    private LivenessProbe livenessProbe = Mockito.mock(LivenessProbe.class);
-    private SettablePromiseOf<LivenessProbe> livenessProbePromise = new SettablePromiseOf<>(livenessProbe);
+    private final ReadinessProbe readinessProbe = Mockito.mock(ReadinessProbe.class);
+    private final SettablePromiseOf<ReadinessProbe> readinessProbePromise = new SettablePromiseOf<>(readinessProbe);
+    private final LivenessProbe livenessProbe = Mockito.mock(LivenessProbe.class);
+    private final SettablePromiseOf<LivenessProbe> livenessProbePromise = new SettablePromiseOf<>(livenessProbe);
 
-
-
-    private static ValueOf<HttpServerConfig> config = valueOf(new HttpServerConfig(0, 0, HttpServerConfig.DEFAULT_PRIVATE_API_METRICS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_READINESS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_LIVENESS_PATH, false, 1, 10, 1));
+    private static final ValueOf<HttpServerConfig> config = valueOf($HttpServerConfig_ConfigValueExtractor.DEFAULTS);
 
     private final PrivateApiHandler privateApiHandler = new PrivateApiHandler(config, valueOf(Optional.of(registry)), All.of(readinessProbePromise), All.of(livenessProbePromise));
 
@@ -715,6 +714,7 @@ public abstract class HttpServerTestKit {
     Request.Builder privateApiRequest(String path) {
         return request(this.privateHttpServer.port(), path);
     }
+
     Request.Builder request(String path) {
         return request(this.httpServer.port(), path);
     }
