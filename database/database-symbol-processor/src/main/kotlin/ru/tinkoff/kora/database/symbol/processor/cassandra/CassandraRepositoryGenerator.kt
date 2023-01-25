@@ -103,7 +103,7 @@ class CassandraRepositoryGenerator(private val resolver: Resolver) : RepositoryG
             }
             if (isSuspend) {
                 if (returnType.isMarkedNullable) {
-                    b.addCode("%M", awaitSingleOrNull)
+                    b.addCode(".%M()", awaitSingleOrNull)
                 } else {
                     b.addCode(".%M()", awaitSingle)
                 }
