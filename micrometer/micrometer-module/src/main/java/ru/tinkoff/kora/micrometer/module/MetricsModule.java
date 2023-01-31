@@ -10,6 +10,7 @@ import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import reactor.core.publisher.Mono;
@@ -70,6 +71,7 @@ public interface MetricsModule {
             new JvmThreadMetrics().bindTo(meterRegistry);
             new FileDescriptorMetrics().bindTo(meterRegistry);
             new UptimeMetrics().bindTo(meterRegistry);
+            new LogbackMetrics().bindTo(meterRegistry);
         }
 
         @Override
