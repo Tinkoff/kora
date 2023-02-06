@@ -5,7 +5,6 @@ import com.squareup.javapoet.TypeName;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
 import ru.tinkoff.kora.database.annotation.processor.QueryWithParameters;
-import ru.tinkoff.kora.database.annotation.processor.entity.DbEntity;
 import ru.tinkoff.kora.database.annotation.processor.model.QueryParameter;
 
 import javax.annotation.Nullable;
@@ -67,16 +66,14 @@ public class R2dbcStatementSetterGenerator {
             }
 
             if (parameter instanceof QueryParameter.EntityParameter entityParameter) {
-                for (var field : entityParameter.entity().entityFields()) {
-                    var fieldAccessor = (entityParameter.entity().entityType() == DbEntity.EntityType.RECORD)
-                        ? parameterName + "." + field.element().getSimpleName() + "()"
-                        : parameterName + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
+                for (var field : entityParameter.entity().columns()) {
+                    var fieldAccessor = field.accessor();
 
-                    var sqlParameter = sqlWithParameters.find(entityParameter.name() + "." + field.element().getSimpleName());
+                    var sqlParameter = sqlWithParameters.find(field.queryParameterName(entityParameter.name()));
                     if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
                         continue;
                     }
-                    var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(field.typeMirror()));
+                    var nativeType = R2dbcNativeTypes.findAndBox(TypeName.get(field.type()));
                     var mapping = CommonUtils.parseMapping(field.element()).getMapping(R2dbcTypes.PARAMETER_COLUMN_MAPPER);
                     if (nativeType != null && mapping == null) {
                         for (var index : sqlParameter.sqlIndexes()) {
@@ -98,9 +95,9 @@ public class R2dbcStatementSetterGenerator {
                             b.addCode("$L.apply(_stmt, $L, $L);\n", mapper, index, fieldAccessor);
                         }
                     } else {
-                        var mapper = parameterMappers.get(R2dbcTypes.PARAMETER_COLUMN_MAPPER, field.typeMirror(), field.element());
+                        var mapper = parameterMappers.get(R2dbcTypes.PARAMETER_COLUMN_MAPPER, field.type(), field.element());
                         for (var index : sqlParameter.sqlIndexes()) {
-                            b.addCode("$L.apply(_stmt, $L, $L);\n", mapper, index, fieldAccessor);
+                            b.addCode("$L.apply(_stmt, $L, $N.$N());\n", mapper, index, parameterName, fieldAccessor);
                         }
                     }
                 }

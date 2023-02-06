@@ -174,6 +174,22 @@ public class JdbcResultsTest extends AbstractJdbcRepositoryTest {
     }
 
     @Test
+    public void returnIntArrayBatch() throws SQLException {
+        var repository = compileJdbc(List.of(), """
+            @Repository
+            public interface TestRepository extends JdbcRepository {
+                @Query("INSERT INTO test(test) VALUES (:someint)")
+                int[] returnVoidBatch(@Batch java.util.List<Integer> someint);
+            }
+            """);
+        when(executor.preparedStatement.executeBatch()).thenReturn(new int[]{1, 2, 3});
+        var result = (int[]) repository.invoke("returnVoidBatch", List.of(1, 2, 3));
+
+        verify(executor.preparedStatement).executeBatch();
+        assertThat(result).containsExactly(1, 2, 3);
+    }
+
+    @Test
     public void testFinalResultSetMapper() throws SQLException {
         var repository = compileJdbc(List.of(), """
             @Repository

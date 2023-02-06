@@ -5,8 +5,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
+import ru.tinkoff.kora.database.annotation.processor.DbUtils;
 import ru.tinkoff.kora.database.annotation.processor.QueryWithParameters;
-import ru.tinkoff.kora.database.annotation.processor.entity.DbEntity;
 import ru.tinkoff.kora.database.annotation.processor.model.QueryParameter;
 
 import javax.annotation.Nullable;
@@ -67,16 +67,14 @@ public class ParametersToTupleBuilder {
                     }
                 } else {
                     var entityParam = (QueryParameter.EntityParameter) e.getValue();
-                    for (var field : entityParam.entity().entityFields()) {
-                        var sqlParameter = sqlWithParameters.find(entityParam.variable().getSimpleName() + "." + field.element().getSimpleName());
+                    for (var field : entityParam.entity().columns()) {
+                        var sqlParameter = sqlWithParameters.find(field.queryParameterName(entityParam.name()));
                         if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
                             continue;
                         }
-                        var variableName = entityParam.variable().getSimpleName() + "$" + field.element().getSimpleName();
-                        var fieldAccessor = entityParam.entity().entityType() == DbEntity.EntityType.RECORD
-                            ? e.getKey() + "." + field.element().getSimpleName() + "()"
-                            : e.getKey() + ".get" + CommonUtils.capitalize(field.element().getSimpleName().toString()) + "()";
-                        var nativeType = VertxNativeTypes.find(TypeName.get(field.typeMirror()));
+                        var variableName = field.variableName();
+                        var fieldAccessor = CodeBlock.of("$N.$N()", e.getKey(), field.accessor());
+                        var nativeType = VertxNativeTypes.find(TypeName.get(field.type()));
                         var mapping = CommonUtils.parseMapping(field.element()).getMapping(VertxTypes.PARAMETER_COLUMN_MAPPER);
                         if (nativeType != null && mapping == null) {
                             sink.accept(new Param(
