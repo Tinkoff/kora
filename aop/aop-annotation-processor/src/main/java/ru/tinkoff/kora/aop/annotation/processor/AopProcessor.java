@@ -17,6 +17,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AopProcessor {
     private static final Logger log = LoggerFactory.getLogger(AopProcessor.class);
@@ -123,7 +124,7 @@ public class AopProcessor {
 
         private String computeFieldName(ConstructorParamKey key) {
             var qualifiedType = key.type().toString();
-            if(qualifiedType.indexOf('<') > 0) {
+            if (qualifiedType.indexOf('<') > 0) {
                 qualifiedType = qualifiedType.substring(0, qualifiedType.indexOf('<'));
             }
 
@@ -144,7 +145,7 @@ public class AopProcessor {
 
         private String computeFieldName(ConstructorInitializedParamKey key) {
             var qualifiedType = key.type().toString();
-            if(qualifiedType.indexOf('<') > 0) {
+            if (qualifiedType.indexOf('<') > 0) {
                 qualifiedType = qualifiedType.substring(0, qualifiedType.indexOf('<'));
             }
 
@@ -185,19 +186,17 @@ public class AopProcessor {
         var aopContext = new KoraAspect.AspectContext(typeFieldFactory);
 
         var typeBuilder = TypeSpec.classBuilder(AopUtils.aopProxyName(typeElement))
-            .addAnnotation(AnnotationSpec.builder(Generated.class)
-                .addMember("value", CodeBlock.of("$S", AopAnnotationProcessor.class.getCanonicalName()))
-                .build())
             .superclass(typeElement.asType())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-        if (typeElement.getAnnotation(Component.class) != null) {
-            typeBuilder.addAnnotation(Component.class);
-        }
         var tag = CommonUtils.findAnnotation(this.elements, this.types, typeElement, this.tagAnnotationTypeMirror);
         if (tag != null) {
             typeBuilder.addAnnotation(AnnotationSpec.get(tag));
         }
+
+        var appliedProcessors = new LinkedHashSet<String>();
+        appliedProcessors.add(AopAnnotationProcessor.class.getCanonicalName());
+
         var typeMethods = CommonUtils.findMethods(typeElement, m -> !m.contains(Modifier.STATIC) && (m.contains(Modifier.PROTECTED) || m.contains(Modifier.PUBLIC)));
         for (var typeMethod : typeMethods) {
             var methodLevelTypeAspects = new ArrayList<>(typeLevelAspects);
@@ -275,8 +274,22 @@ public class AopProcessor {
             b.add(");\n");
             overridenMethod.addCode(b.build());
             typeBuilder.addMethod(overridenMethod.build());
+
+            aspectsToApply.forEach(a -> appliedProcessors.add(a.getClass().getCanonicalName()));
         }
 
+        var generated = appliedProcessors.stream()
+            .map(a -> CodeBlock.of("$S", a))
+            .collect(CodeBlock.joining(", ", "{", "}"));
+
+        typeBuilder
+            .addAnnotation(AnnotationSpec.builder(Generated.class)
+                .addMember("value", generated)
+                .build());
+
+        if (typeElement.getAnnotation(Component.class) != null) {
+            typeBuilder.addAnnotation(Component.class);
+        }
 
         var constructorBuilder = MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC);

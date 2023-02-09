@@ -150,14 +150,14 @@ final class MyValidStringValidator implements Validator<String> {
 
 2) Создать Interface, который будет наследовать `ValidatorFactory`:
 ```java
-public interface MyValidValidatorFactory<T> extends ValidatorFactory<T> { }
+public interface MyValidValidatorFactory extends ValidatorFactory<String> { }
 ```
 
 3) Зарегистрировать Bean для `ValidatorFactory` для требуемых типов:
 ```java
 @Module
 public interface ValidationModule {
-    default MyValidValidatorFactory<String> myValidStringConstraintFactory() {
+    default MyValidValidatorFactory myValidStringConstraintFactory() {
         return MyValidStringValidator::new;
     }
 }
