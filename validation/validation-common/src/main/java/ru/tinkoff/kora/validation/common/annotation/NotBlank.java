@@ -8,8 +8,8 @@ import java.lang.annotation.*;
  * The annotated element must not be {@code null} and must contain at least one non-whitespace character
  */
 @Documented
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.FIELD})
+@Retention(value = RetentionPolicy.CLASS)
+@Target(value = {ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 @ValidatedBy(NotBlankValidatorFactory.class)
 public @interface NotBlank {
 }

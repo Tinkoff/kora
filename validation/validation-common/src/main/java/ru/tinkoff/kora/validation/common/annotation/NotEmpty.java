@@ -15,8 +15,8 @@ import java.lang.annotation.*;
  * </ul>
  */
 @Documented
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.FIELD})
+@Retention(value = RetentionPolicy.CLASS)
+@Target(value = {ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 @ValidatedBy(NotEmptyValidatorFactory.class)
 public @interface NotEmpty {
 }

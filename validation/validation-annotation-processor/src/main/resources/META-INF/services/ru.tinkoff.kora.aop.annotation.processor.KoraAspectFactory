@@ -1,0 +1,2 @@
+ru.tinkoff.kora.validation.annotation.processor.aop.ValidateOutputMethodKoraAspectFactory
+ru.tinkoff.kora.validation.annotation.processor.aop.ValidateInputMethodKoraAspectFactory

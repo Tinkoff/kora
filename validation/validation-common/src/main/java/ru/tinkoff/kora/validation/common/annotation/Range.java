@@ -5,8 +5,8 @@ import ru.tinkoff.kora.validation.common.constraint.factory.RangeValidatorFactor
 import java.lang.annotation.*;
 
 @Documented
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.FIELD})
+@Retention(value = RetentionPolicy.CLASS)
+@Target(value = {ElementType.METHOD,ElementType.FIELD, ElementType.PARAMETER})
 @ValidatedBy(RangeValidatorFactory.class)
 public @interface Range {
 

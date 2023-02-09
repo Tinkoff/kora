@@ -2,9 +2,9 @@ package ru.tinkoff.kora.validation.symbol.processor.testdata
 
 import ru.tinkoff.kora.validation.common.annotation.NotEmpty
 import ru.tinkoff.kora.validation.common.annotation.Size
-import ru.tinkoff.kora.validation.common.annotation.Validated
+import ru.tinkoff.kora.validation.common.annotation.Valid
 
-@Validated
+@Valid
 class Bar {
 
     @NotEmpty
@@ -17,6 +17,6 @@ class Bar {
     @Size(min = 1, max = 5)
     var codes: List<Int> = emptyList()
 
-    @Validated
+    @Valid
     var tazs: List<Taz> = emptyList()
 }

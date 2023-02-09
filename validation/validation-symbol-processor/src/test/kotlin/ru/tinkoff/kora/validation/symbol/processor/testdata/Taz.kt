@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.validation.symbol.processor.testdata
 
 import ru.tinkoff.kora.validation.common.annotation.Pattern
-import ru.tinkoff.kora.validation.common.annotation.Validated
+import ru.tinkoff.kora.validation.common.annotation.Valid
 
-@Validated
+@Valid
 data class Taz(@Pattern("\\d+") val number: String)

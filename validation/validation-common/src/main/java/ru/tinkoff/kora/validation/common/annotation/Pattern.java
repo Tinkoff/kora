@@ -6,8 +6,8 @@ import ru.tinkoff.kora.validation.common.constraint.factory.PatternValidatorFact
 import java.lang.annotation.*;
 
 @Documented
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.FIELD})
+@Retention(value = RetentionPolicy.CLASS)
+@Target(value = {ElementType.METHOD,ElementType.FIELD, ElementType.PARAMETER})
 @ValidatedBy(PatternValidatorFactory.class)
 public @interface Pattern {
 
