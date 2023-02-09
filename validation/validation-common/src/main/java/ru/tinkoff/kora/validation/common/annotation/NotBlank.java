@@ -6,6 +6,12 @@ import java.lang.annotation.*;
 
 /**
  * The annotated element must not be {@code null} and must contain at least one non-whitespace character
+ * <p>
+ * Supported types are:
+ * <ul>
+ * <li>{@code CharSequence} (at least one non-whitespace character)</li>
+ * <li>{@code String} (at least one non-whitespace character)</li>
+ * </ul>
  */
 @Documented
 @Retention(value = RetentionPolicy.CLASS)
