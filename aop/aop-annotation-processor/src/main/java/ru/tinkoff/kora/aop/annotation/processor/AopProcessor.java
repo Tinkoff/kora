@@ -241,6 +241,7 @@ public class AopProcessor {
                 if (result instanceof KoraAspect.ApplyResult.Noop) {
                     continue;
                 }
+
                 var methodBody = (KoraAspect.ApplyResult.MethodBody) result;
                 var methodName = "_" + typeMethod.getSimpleName() + "_AopProxy_" + aspect.getClass().getSimpleName();
                 superCall = methodName;
@@ -258,6 +259,8 @@ public class AopProcessor {
                 }
                 m.returns(TypeName.get(typeMethod.getReturnType()));
                 typeBuilder.addMethod(m.build());
+
+                appliedProcessors.add(aspect.getClass().getCanonicalName());
             }
             var b = CodeBlock.builder();
             if (typeMethod.getReturnType().getKind() != TypeKind.VOID) {
@@ -274,8 +277,6 @@ public class AopProcessor {
             b.add(");\n");
             overridenMethod.addCode(b.build());
             typeBuilder.addMethod(overridenMethod.build());
-
-            aspectsToApply.forEach(a -> appliedProcessors.add(a.getClass().getCanonicalName()));
         }
 
         var generated = appliedProcessors.stream()

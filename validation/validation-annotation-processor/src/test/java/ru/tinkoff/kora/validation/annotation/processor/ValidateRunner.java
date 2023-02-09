@@ -17,10 +17,12 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
     protected ValidateSync getValidateSync() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Foo_Validator");
-            return (ValidateSync) clazz.getConstructors()[0].newInstance(notEmptyStringConstraintFactory(),
-                patternStringConstraintFactory(),
-                getTazValidator());
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateSync__AopProxy");
+            return (ValidateSync) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+                notEmptyStringConstraintFactory(),
+                getTazValidator(),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -28,13 +30,15 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
         }
     }
 
-    protected Validator<ValidBar> getMonoValid() {
+    protected ValidateMono getValidateMono() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Bar_Validator");
-            return (Validator<ValidBar>) clazz.getConstructors()[0].newInstance(
-                sizeListConstraintFactory(TypeRef.of(Integer.class)),
-                getTazValidator());
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateMono__AopProxy");
+            return (ValidateMono) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+                notEmptyStringConstraintFactory(),
+                getTazValidator(),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -42,13 +46,15 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
         }
     }
 
-    protected Validator<ValidBar> getFluxValid() {
+    protected ValidateFlux getValidateFlux() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$Bar_Validator");
-            return (Validator<ValidBar>) clazz.getConstructors()[0].newInstance(
-                sizeListConstraintFactory(TypeRef.of(Integer.class)),
-                getTazValidator());
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateFlux__AopProxy");
+            return (ValidateFlux) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+                notEmptyStringConstraintFactory(),
+                getTazValidator(),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -59,7 +65,7 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
     protected Validator<ValidTaz> getTazValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidatedTaz_Validator");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidTaz_Validator");
             return (Validator<ValidTaz>) clazz.getConstructors()[0].newInstance(patternStringConstraintFactory());
         } catch (RuntimeException e) {
             throw e;

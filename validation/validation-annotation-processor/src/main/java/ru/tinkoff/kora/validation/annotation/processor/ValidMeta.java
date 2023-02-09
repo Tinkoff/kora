@@ -27,7 +27,7 @@ public record ValidMeta(Type source, Validator validator, TypeElement sourceElem
         this(source,
             new Validator(
                 Type.ofName(VALIDATOR_TYPE.canonicalName(), List.of(source)),
-                new Type(source.packageName, "$" + source.simpleName()  + "_Validator", List.of(source))
+                new Type(source.packageName, "$" + source.simpleName() + "_Validator", List.of(source))
             ),
             sourceElement, fields);
     }
@@ -124,7 +124,7 @@ public record ValidMeta(Type source, Validator validator, TypeElement sourceElem
 
         @Override
         public String toString() {
-            if(generic().isEmpty()) {
+            if (generic().isEmpty()) {
                 return canonicalName();
             }
 

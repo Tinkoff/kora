@@ -6,10 +6,10 @@ import ru.tinkoff.kora.aop.annotation.processor.KoraAspectFactory;
 import javax.annotation.processing.ProcessingEnvironment;
 import java.util.Optional;
 
-public class ValidateInputMethodKoraAspectFactory implements KoraAspectFactory {
+public class ValidateMethodArgumentKoraAspectFactory implements KoraAspectFactory {
 
     @Override
     public Optional<KoraAspect> create(ProcessingEnvironment processingEnvironment) {
-        return Optional.of(new ValidateInputMethodKoraAspect(processingEnvironment));
+        return Optional.of(new ValidateMethodArgumentKoraAspect(processingEnvironment));
     }
 }

@@ -11,7 +11,6 @@ import ru.tinkoff.kora.validation.annotation.processor.ValidUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import java.util.*;
@@ -20,56 +19,59 @@ import java.util.concurrent.Future;
 import static com.squareup.javapoet.CodeBlock.joining;
 import static ru.tinkoff.kora.validation.annotation.processor.ValidMeta.*;
 
-public class ValidateOutputMethodKoraAspect implements KoraAspect {
+public class ValidateMethodResultKoraAspect implements KoraAspect {
 
-    private static final ClassName VALIDATED_INPUT_TYPE = ClassName.get("ru.tinkoff.kora.validation.common.annotation", "ValidateOutput");
+    private static final ClassName VALIDATE_TYPE = ClassName.get("ru.tinkoff.kora.validation.common.annotation", "Validate");
 
     private final ProcessingEnvironment env;
 
-    public ValidateOutputMethodKoraAspect(ProcessingEnvironment env) {
+    public ValidateMethodResultKoraAspect(ProcessingEnvironment env) {
         this.env = env;
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(VALIDATED_INPUT_TYPE.canonicalName());
+        return Set.of(VALIDATE_TYPE.canonicalName());
     }
 
     @Override
     public ApplyResult apply(ExecutableElement method, String superCall, AspectContext aspectContext) {
-        if (MethodUtils.isFuture(method, env)) {
-            throw new ProcessingErrorException("@ValidateOutput can't be applied for types assignable from " + Future.class, method);
-        }
-
         final boolean isMono = MethodUtils.isMono(method, env);
         final boolean isFlux = MethodUtils.isFlux(method, env);
-        if (MethodUtils.isVoid(method)) {
-            throw new ProcessingErrorException("@ValidateOutput can't be applied for types assignable from " + Void.class, method);
-        } else if (isMono || isFlux) {
-            if (MethodUtils.getGenericType(method.getReturnType()).filter(MethodUtils::isVoid).isPresent()) {
-                throw new ProcessingErrorException("@ValidateOutput can't be applied for types assignable from " + Void.class, method);
-            }
-        }
-
         final TypeMirror returnType = (isMono || isFlux)
             ? MethodUtils.getGenericType(method.getReturnType()).orElseThrow()
             : method.getReturnType();
 
         var validationBody = buildValidationCodeBlock(method, returnType, aspectContext);
+        if (validationBody.isEmpty()) {
+            return ApplyResult.Noop.INSTANCE;
+        }
+
+        if (MethodUtils.isFuture(method, env)) {
+            throw new ProcessingErrorException("@Validate for Return Value can't be applied for types assignable from " + Future.class, method);
+        }
+
+        if (MethodUtils.isVoid(method)) {
+            throw new ProcessingErrorException("@Validate for Return Value can't be applied for types assignable from " + Void.class, method);
+        } else if (isMono || isFlux) {
+            if (MethodUtils.getGenericType(method.getReturnType()).filter(MethodUtils::isVoid).isPresent()) {
+                throw new ProcessingErrorException("@Validate for Return Value can't be applied for types assignable from " + Void.class, method);
+            }
+        }
 
         final CodeBlock body;
         if (isMono) {
-            body = buildBodyMono(method, superCall, validationBody);
+            body = buildBodyMono(method, superCall, validationBody.get());
         } else if (isFlux) {
-            body = buildBodyFlux(method, superCall, validationBody);
+            body = buildBodyFlux(method, superCall, validationBody.get());
         } else {
-            body = buildBodySync(method, superCall, validationBody);
+            body = buildBodySync(method, superCall, validationBody.get());
         }
 
         return new ApplyResult.MethodBody(body);
     }
 
-    private CodeBlock buildValidationCodeBlock(ExecutableElement method, TypeMirror returnType, AspectContext aspectContext) {
+    private Optional<CodeBlock> buildValidationCodeBlock(ExecutableElement method, TypeMirror returnType, AspectContext aspectContext) {
         final boolean isMono = MethodUtils.isMono(method, env);
         final boolean isFlux = MethodUtils.isFlux(method, env);
 
@@ -78,8 +80,8 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
             ? List.of(new ValidMeta.Validated(ValidMeta.Type.ofType(returnType)))
             : Collections.emptyList();
 
-        if(constraints.isEmpty() && validates.isEmpty()) {
-            throw new ProcessingErrorException("@ValidateOutput is present on method declaration, but no Return Type validation declarations present", method);
+        if (constraints.isEmpty() && validates.isEmpty()) {
+            return Optional.empty();
         }
 
         var isNullable = CommonUtils.isNullable(method);
@@ -113,7 +115,7 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
 
             var constraintField = aspectContext.fieldFactory().constructorInitialized(constraintType, createExec);
             if (isNullable && !isPrimitive && !isMono && !isFlux) {
-                validationBody.beginControlFlow("if($N != null)");
+                validationBody.beginControlFlow("if(_result != null)");
                 validationBody.addStatement("_violations.addAll($N.validate(_result))", constraintField);
                 validationBody.endControlFlow();
             } else {
@@ -125,7 +127,7 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
             .addStatement("throw new $T(_violations)", EXCEPTION_TYPE)
             .endControlFlow();
 
-        return validationBody.build();
+        return Optional.of(validationBody.build());
     }
 
     private CodeBlock buildBodySync(ExecutableElement method, String superCall, CodeBlock validationBlock) {
@@ -134,14 +136,14 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
         var builder = CodeBlock.builder();
         if (isNullable) {
             builder.add("""
-                var _result = $L;
-                """, superMethod.toString())
+                    var _result = $L;
+                    """, superMethod.toString())
                 .add(validationBlock)
                 .build();
         } else {
             builder.add("""
-                var _result = $L;
-                """, superMethod.toString())
+                    var _result = $L;
+                    """, superMethod.toString())
                 .add(validationBlock)
                 .build();
         }
@@ -171,7 +173,7 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
             .unindent()
             .unindent()
             .add("""
-                
+                                
                 });""")
             .build();
     }
@@ -192,7 +194,7 @@ public class ValidateOutputMethodKoraAspect implements KoraAspect {
             .unindent()
             .unindent()
             .add("""
-                
+                                
                 });""")
             .build();
     }

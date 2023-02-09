@@ -30,7 +30,7 @@ public final class ValidUtils {
                                 LinkedHashMap::new
                             ));
 
-                        if(parameters.size() > 0) {
+                        if (parameters.size() > 0) {
                             factoryRawType.asElement().getEnclosedElements()
                                 .stream()
                                 .filter(e -> e.getKind() == ElementKind.METHOD)

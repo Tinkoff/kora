@@ -18,7 +18,7 @@ public abstract class ValidRunner extends Assertions implements ValidationModule
     protected Validator<ValidFoo> getFooValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidatedFoo_Validator");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidFoo_Validator");
             return (Validator<ValidFoo>) clazz.getConstructors()[0].newInstance(notEmptyStringConstraintFactory(),
                 patternStringConstraintFactory(),
                 rangeLongConstraintFactory(),
@@ -33,7 +33,7 @@ public abstract class ValidRunner extends Assertions implements ValidationModule
     protected Validator<ValidBar> getBarValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidatedBar_Validator");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidBar_Validator");
             return (Validator<ValidBar>) clazz.getConstructors()[0].newInstance(
                 sizeListConstraintFactory(TypeRef.of(Integer.class)),
                 listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)));
@@ -47,7 +47,7 @@ public abstract class ValidRunner extends Assertions implements ValidationModule
     protected Validator<ValidTaz> getTazValidator() {
         try {
             final ClassLoader classLoader = getClassLoader();
-            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidatedTaz_Validator");
+            final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidTaz_Validator");
             return (Validator<ValidTaz>) clazz.getConstructors()[0].newInstance(patternStringConstraintFactory());
         } catch (RuntimeException e) {
             throw e;

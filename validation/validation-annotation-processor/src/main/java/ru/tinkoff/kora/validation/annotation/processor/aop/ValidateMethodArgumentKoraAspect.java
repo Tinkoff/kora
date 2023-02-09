@@ -2,9 +2,10 @@ package ru.tinkoff.kora.validation.annotation.processor.aop;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
-import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.aop.annotation.processor.KoraAspect;
 import ru.tinkoff.kora.validation.annotation.processor.ValidMeta;
 import ru.tinkoff.kora.validation.annotation.processor.ValidUtils;
@@ -14,37 +15,32 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import java.util.*;
-import java.util.concurrent.Future;
 
 import static com.squareup.javapoet.CodeBlock.joining;
 import static ru.tinkoff.kora.validation.annotation.processor.ValidMeta.*;
 
-public class ValidateInputMethodKoraAspect implements KoraAspect {
+public class ValidateMethodArgumentKoraAspect implements KoraAspect {
 
-    private static final ClassName VALIDATED_INPUT_TYPE = ClassName.get("ru.tinkoff.kora.validation.common.annotation", "ValidateInput");
+    private static final ClassName VALIDATE_TYPE = ClassName.get("ru.tinkoff.kora.validation.common.annotation", "Validate");
 
     private final ProcessingEnvironment env;
 
-    public ValidateInputMethodKoraAspect(ProcessingEnvironment env) {
+    public ValidateMethodArgumentKoraAspect(ProcessingEnvironment env) {
         this.env = env;
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(VALIDATED_INPUT_TYPE.canonicalName());
+        return Set.of(VALIDATE_TYPE.canonicalName());
     }
 
     @Override
     public ApplyResult apply(ExecutableElement method, String superCall, AspectContext aspectContext) {
-        if (MethodUtils.isFuture(method, env)) {
-            throw new ProcessingErrorException("@ValidateInput can't be applied for types assignable from " + Future.class, method);
+        final boolean isAnyParameterValidated = method.getParameters().stream().anyMatch(ValidateMethodArgumentKoraAspect::isValidatable);
+        if (!isAnyParameterValidated) {
+            return ApplyResult.Noop.INSTANCE;
         }
 
-        final boolean isValidated = method.getAnnotationMirrors().stream().anyMatch(a -> a.getAnnotationType().toString().equals(VALID_TYPE.canonicalName()));
-        final boolean isAnyParameterValidated = method.getParameters().stream().anyMatch(ValidateInputMethodKoraAspect::isValidatable);
-        if (isValidated && !isAnyParameterValidated) {
-            throw new ProcessingErrorException("@ValidateInput is present on method declaration, but no Method Arguments validation declarations present", method);
-        }
 
         var codeBlock = CodeBlock.builder()
             .addStatement("var _violations = new $T<$T>($L)", ArrayList.class, VIOLATION_TYPE, method.getParameters().size() * 2);
@@ -96,15 +92,34 @@ public class ValidateInputMethodKoraAspect implements KoraAspect {
             .addStatement("throw new $T(_violations)", EXCEPTION_TYPE)
             .endControlFlow();
 
-        if (method.getReturnType().getKind() != TypeKind.VOID) {
-            codeBlock.add("return ");
+        final CodeBlock superMethodCall = method.getParameters().stream()
+            .map(p -> CodeBlock.of("$N", p.getSimpleName()))
+            .collect(joining(", ", superCall + "(", ")"));
+
+        final boolean isMono = MethodUtils.isMono(method, env);
+        final boolean isFlux = MethodUtils.isFlux(method, env);
+        final CodeBlock methodBody;
+        if (isMono || isFlux) {
+            methodBody = CodeBlock.builder()
+                .add("return ")
+                .add(superMethodCall)
+                .add("""
+                    .doFirst(() -> {
+                    """)
+                .indent().indent()
+                .add(codeBlock.build())
+                .unindent().unindent()
+                .add("});")
+                .build();
+        } else {
+            if (!MethodUtils.isVoid(method)) {
+                codeBlock.add("return ");
+            }
+
+            methodBody = codeBlock.add(superMethodCall).add(";\n").build();
         }
 
-        codeBlock.add(method.getParameters().stream()
-            .map(p -> CodeBlock.of("$N", p.getSimpleName()))
-            .collect(joining(", ", superCall + "(", ");\n")));
-
-        return new ApplyResult.MethodBody(codeBlock.build());
+        return new ApplyResult.MethodBody(methodBody);
     }
 
     private static boolean isValidatable(VariableElement parameter) {
