@@ -5,7 +5,7 @@ import ru.tinkoff.kora.validation.common.annotation.Size
 import ru.tinkoff.kora.validation.common.annotation.Valid
 
 @Valid
-class Bar {
+class ValidBar {
 
     @NotEmpty
     var id: String? = null
@@ -18,5 +18,5 @@ class Bar {
     var codes: List<Int> = emptyList()
 
     @Valid
-    var tazs: List<Taz> = emptyList()
+    var tazs: List<ValidTaz> = emptyList()
 }

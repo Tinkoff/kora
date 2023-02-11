@@ -7,12 +7,12 @@ import ru.tinkoff.kora.validation.common.annotation.Valid
 import java.time.OffsetDateTime
 
 @Valid
-data class Foo(
+data class ValidFoo(
     @NotEmpty @Pattern("\\d+")
     val number: String,
     @Range(from = 1.0, to = 10.0)
     val code: Long,
     val timestamp: OffsetDateTime,
     @Valid
-    val bar: Bar?
+    val bar: ValidBar?
 )
