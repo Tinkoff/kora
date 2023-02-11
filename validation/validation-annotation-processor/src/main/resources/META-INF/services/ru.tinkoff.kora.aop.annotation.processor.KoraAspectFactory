@@ -1,2 +1,1 @@
-ru.tinkoff.kora.validation.annotation.processor.aop.ValidateMethodResultKoraAspectFactory
-ru.tinkoff.kora.validation.annotation.processor.aop.ValidateMethodArgumentKoraAspectFactory
+ru.tinkoff.kora.validation.annotation.processor.aop.ValidateMethodKoraAspectFactory

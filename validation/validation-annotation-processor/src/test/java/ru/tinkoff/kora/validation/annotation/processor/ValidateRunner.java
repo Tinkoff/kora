@@ -18,11 +18,13 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
         try {
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateSync__AopProxy");
-            return (ValidateSync) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+            return (ValidateSync) clazz.getConstructors()[0].newInstance(
+                rangeIntegerConstraintFactory(),
                 notEmptyStringConstraintFactory(),
                 getTazValidator(),
-                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
-                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class))
+            );
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -34,11 +36,13 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
         try {
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateMono__AopProxy");
-            return (ValidateMono) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+            return (ValidateMono) clazz.getConstructors()[0].newInstance(
+                rangeIntegerConstraintFactory(),
                 notEmptyStringConstraintFactory(),
                 getTazValidator(),
-                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
-                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class))
+            );
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -50,11 +54,13 @@ public abstract class ValidateRunner extends Assertions implements ValidationMod
         try {
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateFlux__AopProxy");
-            return (ValidateFlux) clazz.getConstructors()[0].newInstance(rangeIntegerConstraintFactory(),
+            return (ValidateFlux) clazz.getConstructors()[0].newInstance(
+                rangeIntegerConstraintFactory(),
                 notEmptyStringConstraintFactory(),
                 getTazValidator(),
-                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class)),
-                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)));
+                sizeListConstraintFactory(TypeRef.of(ValidTaz.class)),
+                listValidator(getTazValidator(), TypeRef.of(ValidTaz.class))
+            );
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

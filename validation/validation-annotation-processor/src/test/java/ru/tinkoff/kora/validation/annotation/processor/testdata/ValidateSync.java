@@ -33,4 +33,17 @@ public class ValidateSync {
             ? List.of(c3)
             : List.of(c3, c4);
     }
+
+    @Size(min = 1, max = 1)
+    @Nullable
+    @Valid
+    @Validate
+    public List<ValidTaz> validatedInputAndOutput(@Range(from = 1, to = 5) int c1,
+                                                  @NotEmpty String c2,
+                                                  @Valid ValidTaz c3,
+                                                  @Valid @Nullable ValidTaz c4) {
+        return (c4 == null)
+            ? List.of(c3)
+            : List.of(c3, c4);
+    }
 }

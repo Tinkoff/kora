@@ -144,11 +144,11 @@ public final class ValidAnnotationProcessor extends AbstractKoraProcessor {
                 .addCode(CodeBlock.join(List.of(
                         CodeBlock.of("""
                                 if(value == null) {
-                                    return $T.of(context.violates(\"Input value is null\"));
+                                    return $T.of(context.violates(\"$L input value should be not null, but was null\"));
                                 }
                                                                 
                                 final $T<Violation> _violations = new $T<>();""",
-                            List.class, List.class, ArrayList.class),
+                            List.class, meta.source().simpleName(), List.class, ArrayList.class),
                         CodeBlock.join(contextBuilder, "\n"),
                         CodeBlock.join(constraintBuilder, "\n"),
                         CodeBlock.of("return _violations;")),

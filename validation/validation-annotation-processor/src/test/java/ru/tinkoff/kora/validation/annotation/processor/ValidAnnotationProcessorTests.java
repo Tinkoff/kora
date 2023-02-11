@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.validation.annotation.processor;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.validation.common.ValidationContext;
 import ru.tinkoff.kora.validation.common.Violation;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.ValidBar;
@@ -10,6 +11,7 @@ import ru.tinkoff.kora.validation.annotation.processor.testdata.ValidTaz;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ValidAnnotationProcessorTests extends ValidRunner {
 
     @Test

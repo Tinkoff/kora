@@ -26,4 +26,16 @@ public class ValidateMono {
             ? Mono.just(List.of(c3))
             : Mono.just(List.of(c3, c4));
     }
+
+    @Size(min = 1, max = 1)
+    @Valid
+    @Validate
+    public Mono<List<ValidTaz>> validatedInputAndOutput(@Range(from = 1, to = 5) int c1,
+                                                        @NotEmpty String c2,
+                                                        @Valid ValidTaz c3,
+                                                        @Valid @Nullable ValidTaz c4) {
+        return (c4 == null)
+            ? Mono.just(List.of(c3))
+            : Mono.just(List.of(c3, c4));
+    }
 }
