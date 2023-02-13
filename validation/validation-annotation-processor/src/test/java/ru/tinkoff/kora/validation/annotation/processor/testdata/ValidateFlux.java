@@ -34,7 +34,19 @@ public class ValidateFlux {
     public Flux<List<ValidTaz>> validatedInputAndOutput(@Range(from = 1, to = 5) int c1,
                                                         @NotEmpty String c2,
                                                         @Valid ValidTaz c3,
-                                                        @Valid @Nullable ValidTaz c4) {
+                                                        @Nullable ValidTaz c4) {
+        return (c4 == null)
+            ? Flux.just(List.of(c3))
+            : Flux.just(List.of(c3, c4));
+    }
+
+    @Size(min = 1, max = 1)
+    @Valid
+    @Validate(failFast = true)
+    public Flux<List<ValidTaz>> validatedInputAndOutputAndFailFast(@Range(from = 1, to = 5) int c1,
+                                                                   @NotEmpty String c2,
+                                                                   @Valid ValidTaz c3,
+                                                                   @Nullable ValidTaz c4) {
         return (c4 == null)
             ? Flux.just(List.of(c3))
             : Flux.just(List.of(c3, c4));

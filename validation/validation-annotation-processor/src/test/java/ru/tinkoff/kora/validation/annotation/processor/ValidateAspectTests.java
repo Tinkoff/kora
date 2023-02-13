@@ -67,8 +67,8 @@ class ValidateAspectTests extends ValidateRunner {
         assertThrows(ViolationException.class, () -> service.validatedInput(0, "1", new ValidTaz("1")));
         assertThrows(ViolationException.class, () -> service.validatedInput(1, "", new ValidTaz("1")));
         assertThrows(ViolationException.class, () -> service.validatedInput(1, "1", new ValidTaz("A")));
-        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("A")));
-        assertEquals(4, inputViolations.getViolations().size());
+        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("1")));
+        assertEquals(3, inputViolations.getViolations().size());
     }
 
     @Test
@@ -77,7 +77,27 @@ class ValidateAspectTests extends ValidateRunner {
         var service = getValidateSync();
 
         // then
-        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("A")));
+        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("1")));
+        assertEquals(1, outputViolations.getViolations().size());
+    }
+
+    @Test
+    void validateInputOutputSyncFailFastForInput() {
+        // given
+        var service = getValidateSync();
+
+        // then
+        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutputAndFailFast(0, "", new ValidTaz("A"), new ValidTaz("1")));
+        assertEquals(1, inputViolations.getViolations().size());
+    }
+
+    @Test
+    void validateInputOutputSyncFailFastForOutput() {
+        // given
+        var service = getValidateSync();
+
+        // then
+        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutputAndFailFast(1, "1", new ValidTaz("A"), new ValidTaz("1")));
         assertEquals(1, outputViolations.getViolations().size());
     }
 
@@ -142,8 +162,8 @@ class ValidateAspectTests extends ValidateRunner {
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "", new ValidTaz("1"), null).block());
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("A"), null).block());
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("A")).block());
-        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("A")).block());
-        assertEquals(4, inputViolations.getViolations().size());
+        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("1")).block());
+        assertEquals(3, inputViolations.getViolations().size());
     }
 
     @Test
@@ -152,7 +172,7 @@ class ValidateAspectTests extends ValidateRunner {
         var service = getValidateMono();
 
         // then
-        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("A")).block());
+        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("1")).block());
         assertEquals(1, outputViolations.getViolations().size());
     }
 
@@ -217,8 +237,8 @@ class ValidateAspectTests extends ValidateRunner {
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "", new ValidTaz("1"), null).collectList().block());
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("A"), null).collectList().block());
         assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("A")).collectList().block());
-        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("A")).collectList().block());
-        assertEquals(4, inputViolations.getViolations().size());
+        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(0, "", new ValidTaz("A"), new ValidTaz("1")).collectList().block());
+        assertEquals(3, inputViolations.getViolations().size());
     }
 
     @Test
@@ -227,8 +247,27 @@ class ValidateAspectTests extends ValidateRunner {
         var service = getValidateFlux();
 
         // then
-        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("A")).collectList().block());
+        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("1"), new ValidTaz("1")).collectList().block());
         assertEquals(1, outputViolations.getViolations().size());
     }
 
+    @Test
+    void validateInputOutputFluxFailFastForInput() {
+        // given
+        var service = getValidateFlux();
+
+        // then
+        var inputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutputAndFailFast(0, "", new ValidTaz("A"), new ValidTaz("1")).collectList().block());
+        assertEquals(1, inputViolations.getViolations().size());
+    }
+
+    @Test
+    void validateInputOutputFluxFailFastForOutput() {
+        // given
+        var service = getValidateFlux();
+
+        // then
+        var outputViolations = assertThrows(ViolationException.class, () -> service.validatedInputAndOutput(1, "1", new ValidTaz("A"), new ValidTaz("1")).collectList().block());
+        assertEquals(1, outputViolations.getViolations().size());
+    }
 }
