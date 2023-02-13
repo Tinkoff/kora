@@ -165,7 +165,7 @@ class ValidSymbolProcessor(private val environment: SymbolProcessorEnvironment) 
 
         val validateMethodSpecBuilder = FunSpec.builder("validate")
             .addModifiers(KModifier.OVERRIDE)
-            .returns(Type(null, "kotlin.collections", "MutableList", listOf(VIOLATION_TYPE.canonicalName.asType())).asPoetType())
+            .returns("kotlin.collections.MutableList".asType(listOf(VIOLATION_TYPE.canonicalName.asType())).asPoetType())
             .addParameter(ParameterSpec.builder("value", meta.source.asPoetType(true)).build())
             .addParameter(ParameterSpec.builder("context", CONTEXT_TYPE.canonicalName.asType().asPoetType()).build())
             .addCode(
@@ -224,7 +224,7 @@ class ValidSymbolProcessor(private val environment: SymbolProcessorEnvironment) 
             declaration,
             ValidatorType(
                 VALIDATOR_TYPE.canonicalName.asType(listOf(source)),
-                Type(null, source.packageName, "\$" + source.simpleName + "_Validator", listOf(source)),
+                "${source.packageName}\$${source.simpleName}_Validator".asType(listOf(source)),
             ),
             fields
         )

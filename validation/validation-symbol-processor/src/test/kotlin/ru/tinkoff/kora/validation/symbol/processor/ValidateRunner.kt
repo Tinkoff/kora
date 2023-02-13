@@ -8,6 +8,8 @@ import ru.tinkoff.kora.ksp.common.symbolProcess
 import ru.tinkoff.kora.validation.common.Validator
 import ru.tinkoff.kora.validation.common.constraint.ValidationModule
 import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidTaz
+import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidateFlow
+import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidateSuspend
 import ru.tinkoff.kora.validation.symbol.processor.testdata.ValidateSync
 
 @KspExperimental
@@ -21,10 +23,36 @@ open class ValidateRunner : Assertions(), ValidationModule {
         val classLoader = getClassLoader()
         val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$ValidateSync__AopProxy")
         return clazz.constructors[0].newInstance(
-            sizeListConstraintFactory(TypeRef.of(Int::class.java))
-//            notEmptyStringConstraintFactory(),
-//            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java))
+            rangeIntegerConstraintFactory(),
+            notEmptyStringConstraintFactory(),
+            getTazValidator(),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
         ) as ValidateSync
+    }
+
+    protected open fun getValidateSuspend(): ValidateSuspend{
+        val classLoader = getClassLoader()
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$ValidateSuspend__AopProxy")
+        return clazz.constructors[0].newInstance(
+            rangeIntegerConstraintFactory(),
+            notEmptyStringConstraintFactory(),
+            getTazValidator(),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
+        ) as ValidateSuspend
+    }
+
+    protected open fun getValidateFlow(): ValidateFlow{
+        val classLoader = getClassLoader()
+        val clazz = classLoader!!.loadClass("ru.tinkoff.kora.validation.symbol.processor.testdata.\$ValidateFlow__AopProxy")
+        return clazz.constructors[0].newInstance(
+            rangeIntegerConstraintFactory(),
+            notEmptyStringConstraintFactory(),
+            getTazValidator(),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
+        ) as ValidateFlow
     }
 
     protected open fun getTazValidator(): Validator<ValidTaz> {
@@ -38,7 +66,9 @@ open class ValidateRunner : Assertions(), ValidationModule {
             if (classLoader == null) {
                 val classes = listOf(
                     ValidTaz::class,
-                    ValidateSync::class
+                    ValidateSync::class,
+                    ValidateSuspend::class,
+                    ValidateFlow::class,
                 )
                 classLoader = symbolProcess(classes, ValidSymbolProcessorProvider(), AopSymbolProcessorProvider())
             }

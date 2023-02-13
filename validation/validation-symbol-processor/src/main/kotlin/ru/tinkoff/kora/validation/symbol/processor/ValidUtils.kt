@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.validation.symbol.processor
 
+import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -23,7 +24,7 @@ class ValidUtils {
 
                             Constraint(
                                 origin.annotationType.asType(),
-                                Constraint.Factory(factory.declaration.qualifiedName!!.asString().asType(listOf(type.asType())), parameters)
+                                Constraint.Factory(factory.declaration.qualifiedName!!.asString().asType(listOf(type.resolve().makeNullable().asType())), parameters)
                             )
                         }
                         .firstOrNull()

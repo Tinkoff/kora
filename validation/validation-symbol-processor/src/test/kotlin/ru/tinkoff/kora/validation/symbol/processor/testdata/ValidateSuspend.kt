@@ -31,10 +31,10 @@ open class ValidateSuspend {
     @Size(min = 1, max = 1)
     @Valid
     @Validate
-    open suspend fun validatedInputOutput(
+    open suspend fun validatedInputAndOutput(
         @Range(from = 1.0, to = 5.0) c1: Int,
         @NotEmpty c2: String,
         @Valid c3: ValidTaz,
-        @Valid c4: ValidTaz?
+        c4: ValidTaz?
     ): List<ValidTaz>? = if (c4 == null) listOf(c3) else listOf(c3, c4)
 }

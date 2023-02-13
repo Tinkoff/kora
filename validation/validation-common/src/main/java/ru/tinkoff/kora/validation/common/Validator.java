@@ -30,7 +30,7 @@ public interface Validator<T> {
      */
     @Nonnull
     default List<Violation> validate(@Nullable T value) {
-        return validate(value, new SimpleValidationContext(SimpleValidationContext.SimpleFieldPath.ROOT, false));
+        return validate(value, ValidationContext.builder().build());
     }
 
     /**

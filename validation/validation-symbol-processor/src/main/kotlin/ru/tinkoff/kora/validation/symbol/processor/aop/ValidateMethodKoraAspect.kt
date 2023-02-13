@@ -5,6 +5,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.MemberName
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
@@ -28,19 +29,23 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {
-        val validationOutputCode = buildValidationOutputCode(method, aspectContext) ?: return KoraAspect.ApplyResult.Noop.INSTANCE
-
-        if (method.isFuture()) {
-            throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Future::class.java}", method)
-        } else if (method.isMono()) {
-            throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Mono::class.java}", method)
-        } else if (method.isFlux()) {
-            throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Flux::class.java}", method)
-        } else if (method.isVoid()) {
-            throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Void::class.java}", method)
+        val validationOutputCode = buildValidationOutputCode(method, aspectContext)
+        if (validationOutputCode != null) {
+            if (method.isFuture()) {
+                throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Future::class.java}", method)
+            } else if (method.isMono()) {
+                throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Mono::class.java}", method)
+            } else if (method.isFlux()) {
+                throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Flux::class.java}", method)
+            } else if (method.isVoid()) {
+                throw ProcessingErrorException("@Validate Return Value can't be applied for types assignable from ${Void::class.java}", method)
+            }
         }
 
-        val validationInputCode = buildValidationInputCode(method, aspectContext) ?: return KoraAspect.ApplyResult.Noop.INSTANCE
+        val validationInputCode = buildValidationInputCode(method, aspectContext)
+        if (validationOutputCode == null && validationInputCode == null) {
+            return KoraAspect.ApplyResult.Noop.INSTANCE
+        }
 
         val body = if (method.isFlow()) {
             buildBodyFlow(method, superCall, validationOutputCode, validationInputCode)
@@ -57,14 +62,14 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
         method: KSFunctionDeclaration,
         aspectContext: KoraAspect.AspectContext
     ): CodeBlock? {
-        val returnType = if (method.isFlow())
-            method.returnType!!.asType().generic.first()
+        val returnTypeReference = if (method.isFlow())
+            method.returnType!!.resolve().arguments.first().type!!
         else
-            method.returnType!!.asType()
+            method.returnType!!
 
-        val constraints = ValidUtils.getConstraints(method.returnType!!, method.annotations)
-        val validates = if (method.annotations.any { a -> a.annotationType.toString() == VALID_TYPE.canonicalName })
-            listOf(Validated(returnType))
+        val constraints = ValidUtils.getConstraints(returnTypeReference, method.annotations)
+        val validates = if (method.annotations.any { a -> a.annotationType.resolve().declaration.qualifiedName!!.asString() == VALID_TYPE.canonicalName })
+            listOf(Validated(returnTypeReference.resolve().makeNullable().asType()))
         else
             emptyList()
 
@@ -72,20 +77,40 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
             return null
         }
 
-        val resolvedReturnType = method.returnType!!.resolve()
-        val isNullable = resolvedReturnType.isMarkedNullable
+        val isNullable = if (method.isFlow())
+            method.returnType!!.resolve().arguments.first().type!!.resolve().isMarkedNullable
+        else
+            method.returnType!!.resolve().isMarkedNullable
 
         val builder = CodeBlock.builder()
         if (isNullable) {
             builder.beginControlFlow("if(_result != null)")
         }
 
-        builder.addStatement("val _returnValueViolations = %T<%T>(%L)", ArrayList::class.java, VIOLATION_TYPE, method.parameters.size * 2)
+        val failFast = method.annotations
+            .filter { a -> a.annotationType.resolve().declaration.qualifiedName!!.asString() == VALIDATE_TYPE.canonicalName }
+            .flatMap { a ->
+                a.arguments
+                    .filter { arg -> arg.name!!.asString() == "failFast" }
+                    .map { arg -> arg.value ?: false }
+                    .map { it as Boolean }
+            }
+            .firstOrNull() ?: false
+
+        builder
+            .addStatement("val _returnValueViolations = %T<%T>(%L)", ArrayList::class.java, VIOLATION_TYPE, method.parameters.size * 2)
+            .addStatement("val _context = %T.builder().failFast(%L).build()", CONTEXT_TYPE, failFast)
 
         for (validated in validates) {
             val validatorType = validated.validator().asKSType(resolver)
             val validatorField = aspectContext.fieldFactory.constructorParam(validatorType, listOf())
-            builder.addStatement("_returnValueViolations.addAll(%N.validate(_result))", validatorField)
+            builder.addStatement("_returnValueViolations.addAll(%N.validate(_result, _context))", validatorField)
+
+            if (failFast) {
+                builder.beginControlFlow("if (!_returnValueViolations.isEmpty())")
+                    .addStatement("throw %T(_returnValueViolations)", EXCEPTION_TYPE)
+                    .endControlFlow()
+            }
         }
 
         for (constraint in constraints) {
@@ -103,12 +128,20 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
                 .build()
 
             val constraintField = aspectContext.fieldFactory.constructorInitialized(constraintType, createCodeBlock)
-            builder.addStatement("_returnValueViolations.addAll(%N.validate(_result))", constraintField)
+            builder.addStatement("_returnValueViolations.addAll(%N.validate(_result, _context))", constraintField)
+
+            if (failFast) {
+                builder.beginControlFlow("if (!_returnValueViolations.isEmpty())")
+                    .addStatement("throw %T(_returnValueViolations)", EXCEPTION_TYPE)
+                    .endControlFlow()
+            }
         }
 
-        builder.beginControlFlow("if (!_returnValueViolations.isEmpty())")
-            .addStatement("throw %T(_returnValueViolations)", EXCEPTION_TYPE)
-            .endControlFlow()
+        if(!failFast) {
+            builder.beginControlFlow("if (!_returnValueViolations.isEmpty())")
+                .addStatement("throw %T(_returnValueViolations)", EXCEPTION_TYPE)
+                .endControlFlow()
+        }
 
         if (isNullable) {
             builder.endControlFlow()
@@ -125,10 +158,22 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
             return null
         }
 
+        val failFast = method.annotations
+            .filter { a -> a.annotationType.resolve().declaration.qualifiedName!!.asString() == VALIDATE_TYPE.canonicalName }
+            .flatMap { a ->
+                a.arguments
+                    .filter { arg -> arg.name!!.asString() == "failFast" }
+                    .map { arg -> arg.value ?: false }
+                    .map { it as Boolean }
+            }
+            .firstOrNull() ?: false
+
         val builder = CodeBlock.builder()
             .addStatement("val _argumentsViolations = %T<%T>(%L)", ArrayList::class.java, VIOLATION_TYPE, method.parameters.size * 2)
+            .addStatement("val _context = %T.builder().failFast(%L).build()", CONTEXT_TYPE, failFast)
 
         for (parameter in method.parameters.filter { it.isValidatable() }) {
+            val isNullable = parameter.type.resolve().isMarkedNullable
             val constraints = ValidUtils.getConstraints(parameter.type, parameter.annotations)
             for (constraint in constraints) {
                 val factoryType = constraint.factory.type.asKSType(resolver)
@@ -145,12 +190,12 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
                     .build()
 
                 val constraintField = aspectContext.fieldFactory.constructorInitialized(constraintType, createCodeBlock)
-                if (parameter.type.resolve().isMarkedNullable) {
-                    builder.beginControlFlow("if(_result != null)")
-                    builder.addStatement("_argumentsViolations.addAll(%N.validate(_result))", constraintField)
+                if (isNullable) {
+                    builder.beginControlFlow("if(%N != null)", parameter.name!!.asString())
+                    builder.addStatement("_argumentsViolations.addAll(%N.validate(%N, _context))", constraintField, parameter.name!!.asString())
                     builder.endControlFlow()
                 } else {
-                    builder.addStatement("_argumentsViolations.addAll(%N.validate(_result))", constraintField)
+                    builder.addStatement("_argumentsViolations.addAll(%N.validate(%N, _context))", constraintField, parameter.name!!.asString())
                 }
             }
 
@@ -158,15 +203,23 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
             for (validated in validates) {
                 val validatorType = validated.validator().asKSType(resolver)
                 val validatorField = aspectContext.fieldFactory.constructorParam(validatorType, listOf())
-                if (parameter.type.resolve().isMarkedNullable) {
-                    builder.beginControlFlow("if(_result != null)")
-                    builder.addStatement("_argumentsViolations.addAll(%N.validate(_result))", validatorField)
+                if (isNullable) {
+                    builder.beginControlFlow("if(%N != null)", parameter.name!!.asString())
+                    builder.addStatement("_argumentsViolations.addAll(%N.validate(%N, _context))", validatorField, parameter.name!!.asString())
                     builder.endControlFlow()
                 } else {
-                    builder.addStatement("_argumentsViolations.addAll(%N.validate(_result))", validatorField)
+                    builder.addStatement("_argumentsViolations.addAll(%N.validate(%N, _context))", validatorField, parameter.name!!.asString())
                 }
             }
 
+            if (failFast) {
+                builder.beginControlFlow("if (!_argumentsViolations.isEmpty())")
+                    .addStatement("throw %T(_argumentsViolations)", EXCEPTION_TYPE)
+                    .endControlFlow()
+            }
+        }
+
+        if (!failFast) {
             builder.beginControlFlow("if (!_argumentsViolations.isEmpty())")
                 .addStatement("throw %T(_argumentsViolations)", EXCEPTION_TYPE)
                 .endControlFlow()
@@ -177,13 +230,13 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
 
     private fun KSValueParameter.isValidatable(): Boolean {
         for (annotation in this.annotations) {
-            val annotationType = annotation.annotationType
-            if (annotationType.toString() == VALID_TYPE.canonicalName) {
+            val annotationType = annotation.annotationType.resolve()
+            if (annotationType.declaration.qualifiedName!!.asString() == VALID_TYPE.canonicalName) {
                 return true
             }
 
-            for (innerAnnotation in annotationType.resolve().annotations) {
-                if (innerAnnotation.annotationType.toString() == VALIDATED_BY_TYPE.canonicalName) {
+            for (innerAnnotation in annotationType.declaration.annotations) {
+                if (innerAnnotation.annotationType.resolve().declaration.qualifiedName!!.asString() == VALIDATED_BY_TYPE.canonicalName) {
                     return true
                 }
             }
@@ -192,8 +245,8 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
     }
 
     private fun getValidForArguments(parameter: KSValueParameter): List<Validated> {
-        return if (parameter.annotations.any { it.annotationType.toString() == VALID_TYPE.canonicalName }) {
-            listOf(Validated(parameter.type.asType()))
+        return if (parameter.annotations.any { it.annotationType.resolve().declaration.qualifiedName!!.asString() == VALID_TYPE.canonicalName }) {
+            listOf(Validated(parameter.type.resolve().makeNullable().asType()))
         } else
             emptyList()
     }
@@ -207,21 +260,21 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
         val superMethod = buildMethodCall(method, superCall)
         val builder = CodeBlock.builder()
         if (method.isVoid()) {
-            if(validationInput != null) {
+            if (validationInput != null) {
                 builder.add(validationInput).add("\n")
             }
 
-            builder.add("%L\n".trimIndent(), superMethod.toString())
+            builder.add("%L\n\n".trimIndent(), superMethod.toString())
 
             if (validationOutput != null) {
                 builder.add(validationOutput)
             }
         } else {
-            if(validationInput != null) {
+            if (validationInput != null) {
                 builder.add(validationInput).add("\n")
             }
 
-            builder.add("val _result = %L\n".trimIndent(), superMethod.toString())
+            builder.add("val _result = %L\n\n".trimIndent(), superMethod.toString())
 
             if (validationOutput != null) {
                 builder.add(validationOutput)
@@ -248,27 +301,31 @@ class ValidateMethodKoraAspect(private val resolver: Resolver) : KoraAspect {
         validationOutput: CodeBlock?,
         validationInput: CodeBlock?
     ): CodeBlock {
+        val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
+        val mapMember = MemberName("kotlinx.coroutines.flow", "map")
+        val emitAllMember = MemberName("kotlinx.coroutines.flow", "emitAll")
+
         val superMethod = buildMethodCall(method, superCall)
-        return CodeBlock.builder()
-            .add(
-                """
-                return %L
-                    .map(_result -> {
-                    
-                    """.trimIndent(), superMethod.toString()
-            )
-            .indent().indent().indent().indent()
-            .add(validationOutput)
-            .add("return _result")
-            .unindent().unindent().unindent().unindent()
-            .add(
-                """
-                                
-                });
-                                
-                """.trimIndent()
-            )
-            .build()
+        val builder = if (validationInput != null)
+            CodeBlock.builder()
+                .beginControlFlow("return %M", flowMember)
+                .add(validationInput)
+                .add("%M(%L)\n", emitAllMember, superMethod.toString())
+                .endControlFlow()
+        else
+            CodeBlock.builder()
+                .add("return %L\n", superMethod.toString())
+
+        if (validationOutput != null) {
+            builder
+                .beginControlFlow(".%M", mapMember)
+                .add("val _result = it\n")
+                .add(validationOutput)
+                .add("_result\n")
+                .endControlFlow()
+        }
+
+        return builder.build()
     }
 
     private fun buildMethodCall(method: KSFunctionDeclaration, call: String): CodeBlock {
