@@ -218,13 +218,13 @@ class ValidSymbolProcessor(private val environment: SymbolProcessorEnvironment) 
             }
         }
 
-        val source = declaration.qualifiedName!!.asString().asType()
+        val source = declaration.asStarProjectedType().asType()
         return ValidatorMeta(
             source,
             declaration,
             ValidatorType(
                 VALIDATOR_TYPE.canonicalName.asType(listOf(source)),
-                "${source.packageName}\$${source.simpleName}_Validator".asType(listOf(source)),
+                "${source.packageName}.\$${source.simpleName}_Validator".asType(listOf(source)),
             ),
             fields
         )

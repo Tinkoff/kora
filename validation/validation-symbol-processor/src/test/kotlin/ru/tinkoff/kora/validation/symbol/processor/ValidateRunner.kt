@@ -26,8 +26,8 @@ open class ValidateRunner : Assertions(), ValidationModule {
             rangeIntegerConstraintFactory(),
             notEmptyStringConstraintFactory(),
             getTazValidator(),
-            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
-            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java)),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java))
         ) as ValidateSync
     }
 
@@ -38,8 +38,8 @@ open class ValidateRunner : Assertions(), ValidationModule {
             rangeIntegerConstraintFactory(),
             notEmptyStringConstraintFactory(),
             getTazValidator(),
-            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
-            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java)),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java))
         ) as ValidateSuspend
     }
 
@@ -50,8 +50,8 @@ open class ValidateRunner : Assertions(), ValidationModule {
             rangeIntegerConstraintFactory(),
             notEmptyStringConstraintFactory(),
             getTazValidator(),
-            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java)),
-            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java))
+            sizeListConstraintFactory(TypeRef.of(ValidTaz::class.java)),
+            listValidator(getTazValidator(), TypeRef.of(ValidTaz::class.java))
         ) as ValidateFlow
     }
 
