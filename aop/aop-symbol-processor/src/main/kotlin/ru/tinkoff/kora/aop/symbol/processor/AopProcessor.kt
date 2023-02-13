@@ -16,6 +16,7 @@ import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.findMethods
 import ru.tinkoff.kora.ksp.common.makeTagAnnotationSpec
 import ru.tinkoff.kora.ksp.common.parseTags
+import kotlin.reflect.KClass
 
 @KspExperimental
 class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: Resolver) {
@@ -104,10 +105,6 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
         val typeBuilder: TypeSpec.Builder = TypeSpec.classBuilder(aopProxyName(classDeclaration))
             .superclass(classDeclaration.toClassName())
             .addModifiers(KModifier.PUBLIC, KModifier.FINAL)
-            .generated(AopSymbolProcessor::class)
-        if (classDeclaration.isAnnotationPresent(Component::class)) {
-            typeBuilder.addAnnotation(Component::class)
-        }
 
         classDeclaration.parseTags().let { tags ->
             if (tags.isNotEmpty()) {
@@ -118,6 +115,8 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
         val classFunctions = findMethods(classDeclaration) { f ->
             !f.isConstructor() && (f.isPublic() || f.isProtected())
         }
+
+        val methodAspectsApplied = linkedSetOf<KoraAspect>()
         classFunctions.forEach { function ->
             val methodLevelTypeAspects = typeLevelAspects.toMutableList()
             val methodLevelAspects = mutableListOf<KoraAspect>()
@@ -167,7 +166,6 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
                 overridenMethod.addModifiers(KModifier.SUSPEND)
             }
 
-            val methodAspectsApplied = mutableListOf<KoraAspect>()
             aspectsToApply.reverse()
             for (aspect in aspectsToApply) {
                 val result: KoraAspect.ApplyResult = aspect.apply(function, superCall, aopContext)
@@ -220,6 +218,16 @@ class AopProcessor(private val aspects: List<KoraAspect>, private val resolver: 
                 overridenMethod.addCode(b.build())
                 typeBuilder.addFunction(overridenMethod.build())
             }
+        }
+
+        val generatedClasses = mutableListOf<KClass<*>>()
+        generatedClasses.add(AopSymbolProcessor::class)
+        methodAspectsApplied.forEach { generatedClasses.add(it::class) }
+
+        typeBuilder.generated(generatedClasses)
+
+        if (classDeclaration.isAnnotationPresent(Component::class)) {
+            typeBuilder.addAnnotation(Component::class)
         }
 
         val constructorBuilder = FunSpec.constructorBuilder()
