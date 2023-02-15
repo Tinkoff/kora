@@ -10,6 +10,7 @@ public record JdbcDataBaseConfig(
     String password,
     String jdbcUrl,
     String poolName,
+    String schema,
     long connectionTimeout,
     long validationTimeout,
     long idleTimeout,
@@ -25,6 +26,7 @@ public record JdbcDataBaseConfig(
         String password,
         String jdbcUrl,
         String poolName,
+        @Nullable String schema,
         @Nullable Long connectionTimeout,
         @Nullable Long validationTimeout,
         @Nullable Long idleTimeout,
@@ -37,6 +39,7 @@ public record JdbcDataBaseConfig(
             password,
             jdbcUrl,
             poolName,
+            schema,
             connectionTimeout != null ? connectionTimeout : 30000,
             validationTimeout != null ? validationTimeout : 5000,
             idleTimeout != null ? idleTimeout : 10 * 60 * 1000,
@@ -73,7 +76,7 @@ public record JdbcDataBaseConfig(
         config.setPoolName(this.poolName);
         config.setInitializationFailTimeout(-1);
         config.setAutoCommit(true);
-
+        config.setSchema(this.schema);
 
         config.setDataSourceProperties(this.dsProperties);
 
