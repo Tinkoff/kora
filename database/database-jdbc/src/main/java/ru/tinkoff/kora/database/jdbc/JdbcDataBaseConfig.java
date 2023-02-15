@@ -10,6 +10,7 @@ public record JdbcDataBaseConfig(
     String password,
     String jdbcUrl,
     String poolName,
+    @Nullable
     String schema,
     long connectionTimeout,
     long validationTimeout,
