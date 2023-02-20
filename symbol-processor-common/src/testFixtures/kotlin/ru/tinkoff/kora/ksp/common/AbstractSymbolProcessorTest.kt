@@ -4,19 +4,15 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestInstance
 import java.io.File
-import java.io.IOException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.util.*
-import kotlin.math.min
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 abstract class AbstractSymbolProcessorTest {
@@ -29,21 +25,27 @@ abstract class AbstractSymbolProcessorTest {
         val testClass: Class<*> = this.testInfo.getTestClass().get()
         val testMethod: Method = this.testInfo.getTestMethod().get()
         val sources = Paths.get(".", "build", "in-test-generated-ksp", "sources")
-        sources.toFile().deleteRecursively()
+//        sources.toFile().deleteRecursively()
         val path = sources
             .resolve(testClass.getPackage().name.replace('.', '/'))
             .resolve("packageFor" + testClass.simpleName)
             .resolve(testMethod.name)
+        path.toFile().deleteRecursively()
         Files.createDirectories(path)
-        Files.list(path)
-            .filter { path: Path? -> Files.isRegularFile(path) }
-            .forEach { p: Path? ->
-                try {
-                    Files.delete(p)
-                } catch (e: IOException) {
-                    throw RuntimeException(e)
-                }
+    }
+
+    @AfterEach
+    fun afterEach() {
+        val oldRoot = Path.of(".", "build", "in-test-generated-ksp", "ksp", "sources", "kotlin")
+        val newRoot = Path.of(".", "build", "in-test-generated-ksp", "sources")
+        Files.walk(oldRoot).forEach { oldPath ->
+            if (Files.isDirectory(oldPath)) {
+                return@forEach
             }
+            val newPath = newRoot.resolve(oldRoot.relativize(oldPath))
+            Files.createDirectories(newPath.parent)
+            Files.move(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
     protected fun testPackage(): String {
@@ -82,19 +84,20 @@ abstract class AbstractSymbolProcessorTest {
                         }
                     }
                 }
-                val firstSpace = s.indexOf(" ", classStart + 1)
-                val firstBracket = s.indexOf("(", classStart + 1)
-                val firstSquareBracket = s.indexOf("{", classStart + 1)
-                val classEnd = min(if (firstSpace >= 0) firstSpace else Int.MAX_VALUE, min(
-                    if (firstBracket >= 0) firstBracket else Int.MAX_VALUE,
-                    if (firstSquareBracket >= 0) firstSquareBracket else Int.MAX_VALUE
-                ))
+                val classEnd = sequenceOf(
+                    s.indexOf(" ", classStart + 1),
+                    s.indexOf("(", classStart + 1),
+                    s.indexOf("{", classStart + 1),
+                    s.indexOf(":", classStart + 1),
+                )
+                    .filter { it >= 0 }
+                    .min()
                 val className = s.substring(classStart, classEnd)
-                val fileName = "${testPackage.replace('.', '/')}/$className.kt"
+                val fileName = "build/in-test-generated-ksp/sources/${testPackage.replace('.', '/')}/$className.kt"
                 Files.createDirectories(File(fileName).toPath().parent)
                 Files.deleteIfExists(Paths.get(fileName))
                 Files.writeString(Paths.get(fileName), s, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)
-                SourceFile.kotlin(fileName, s)
+                SourceFile.kotlin(fileName.replace("build/in-test-generated-ksp/sources/", ""), s)
             }
             .toList()
         return this.symbolProcessFiles(sourceList, processors)
