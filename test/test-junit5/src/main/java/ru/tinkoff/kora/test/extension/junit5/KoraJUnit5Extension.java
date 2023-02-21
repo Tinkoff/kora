@@ -16,6 +16,7 @@ import ru.tinkoff.kora.application.graph.Lifecycle;
 import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.config.common.ConfigModule;
+import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 
 import javax.annotation.processing.Generated;
 import javax.annotation.processing.Processor;
@@ -27,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
 
@@ -42,7 +44,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         }
     }
 
-    record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraAppTest.CompilationShareMode shareMode) {
+    record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraAppTest.CompilationMode shareMode) {
 
         public Graph get() {
             return switch (shareMode) {
@@ -121,7 +123,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                        Class<?> aggregator,
                        List<Class<?>> classes,
                        List<Class<? extends AbstractKoraProcessor>> processors,
-                       KoraAppTest.CompilationShareMode shareMode) {
+                       KoraAppTest.CompilationMode shareMode) {
 
         record Application(Class<?> real, Class<?> origin) {}
     }
@@ -204,7 +206,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             .sorted(Comparator.comparing(Class::getCanonicalName))
             .toList();
 
-        var processors = Arrays.stream(koraAppTest.processors())
+        var processors = Stream.concat(Stream.of(KoraAppProcessor.class), Arrays.stream(koraAppTest.processors()))
             .distinct()
             .sorted(Comparator.comparing(Class::getCanonicalName))
             .toList();
@@ -220,12 +222,12 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         if (koraAppConfig.isBlank()) {
             logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
-                aggregator, classes, processors, koraAppTest.shareMode());
+                aggregator, classes, processors, koraAppTest.compileMode());
         }
 
         final KoraAppMeta.Application application = generateApplicationClass(koraAppTest, koraAppConfig, context);
         logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.shareMode());
+        return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.compileMode());
     }
 
     private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {
@@ -368,39 +370,47 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         try {
             final long started = System.nanoTime();
 
-            final List<String> classesAsFiles = meta.classes.stream()
+            final List<String> sourceClassFiles = meta.classes.stream()
                 .map(targetClass -> {
-                    var targetPackage = targetClass.getPackageName().replace('.', '/');
-                    var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
-                    var testFile = new File("src/test/java/" + targetFile);
-                    var mainFile = new File("src/main/java/" + targetFile);
-                    if (testFile.isFile()) {
-                        return testFile.toString();
-                    } else if (mainFile.isFile()) {
-                        return mainFile.toString();
-                    } else {
-                        throw new IllegalStateException("Can't find class in main or test directory: " + targetClass);
+                    try {
+                        var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+                        var targetPackage = targetClass.getPackageName().replace('.', '/');
+                        var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
+                        var moduleFile = new File("src/" + moduleName + "/java/" + targetFile);
+                        if (moduleFile.isFile()) {
+                            return moduleFile.toString();
+                        } else {
+                            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module");
+                        }
+                    } catch (IllegalStateException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
                     }
                 })
                 .collect(Collectors.toList());
 
-            final List<String> classesAsGenerated = meta.classes.stream()
+            final List<String> generatedClassFiles = meta.classes.stream()
                 .flatMap(targetClass -> {
-                    var targetPackage = targetClass.getPackageName().replace('.', '/');
-                    var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
-                    var testFile = new File("src/test/java/" + targetFile);
-                    var mainFile = new File("src/main/java/" + targetFile);
-                    if (testFile.isFile()) {
-                        return getGeneratedClassOnPath(targetClass, "build/classes/java/test/" + targetPackage).stream();
-                    } else if (mainFile.isFile()) {
-                        return getGeneratedClassOnPath(targetClass, "build/classes/java/main/" + targetPackage).stream();
-                    } else {
-                        throw new IllegalStateException("Can't find class in main or test directory: " + targetClass);
+                    try {
+                        var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+                        var targetPackage = targetClass.getPackageName().replace('.', '/');
+                        var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
+                        var moduleFile = new File("src/" + moduleName + "/java/" + targetFile);
+                        if (moduleFile.isFile()) {
+                            return getGeneratedClassOnPath(targetClass, "build/classes/java/" + moduleName + "/" + targetPackage).stream();
+                        } else {
+                            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module");
+                        }
+                    } catch (IllegalStateException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
                     }
                 })
                 .toList();
 
-            var classAsParams = new ArrayList<>(classesAsGenerated);
+            var classAsParams = new ArrayList<>(generatedClassFiles);
             classAsParams.add(meta.application.real.getCanonicalName());
             classAsParams.add(meta.aggregator.getCanonicalName());
 
@@ -408,7 +418,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 .map(KoraJUnit5Extension::instantiateProcessor)
                 .toList();
 
-            var classLoader = TestUtils.annotationProcessFiles(classesAsFiles, classAsParams, true,
+            var classLoader = TestUtils.annotationProcessFiles(sourceClassFiles, classAsParams, true,
                 p -> !p.endsWith(meta.application.real.getSimpleName() + ".class") && !p.endsWith(meta.aggregator.getSimpleName() + ".class"),
                 processors);
 
@@ -422,6 +432,17 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.real, e);
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private static File getSourceClassFile(Class<?> targetClass) {
+        try {
+            var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+            var targetPackage = targetClass.getPackageName().replace('.', '/');
+            var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
+            return new File("src/" + moduleName + "/java/" + targetFile);
+        } catch (Exception e) {
+            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
         }
     }
 
