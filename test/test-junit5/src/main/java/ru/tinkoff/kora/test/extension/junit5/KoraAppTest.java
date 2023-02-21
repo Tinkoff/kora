@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface KoraAppTest {
 
-    enum CompilationShareMode {
+    enum CompilationMode {
 
         /**
          * {@link KoraAppTest#components()} instances are create one time only
@@ -34,7 +34,7 @@ public @interface KoraAppTest {
     /**
      * @return class loader share mode between different test executions
      */
-    CompilationShareMode shareMode() default CompilationShareMode.PER_METHOD;
+    CompilationMode compileMode() default CompilationMode.PER_CLASS;
 
     /**
      * @return class annotated with {@link ru.tinkoff.kora.common.KoraApp}
