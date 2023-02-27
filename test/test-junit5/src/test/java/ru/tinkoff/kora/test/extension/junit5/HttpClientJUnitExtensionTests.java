@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
+import com.typesafe.config.Config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
@@ -11,17 +12,21 @@ import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
     application = HttpClientApplication.class,
     components = {HttpClientImpl.class},
     processors = {
-        KoraAppProcessor.class,
         HttpClientAnnotationProcessor.class,
         ConfigRootAnnotationProcessor.class,
-        ConfigSourceAnnotationProcessor.class},
+        ConfigSourceAnnotationProcessor.class
+    },
     config = """
         httpClient.default {
           url = "http://mockserver:1080"
         }
-        """
-)
-class NonComponentJUnitExtensionTests extends Assertions {
+        """)
+class HttpClientJUnitExtensionTests extends Assertions {
+
+    @Test
+    void configGeneratedForApplication(Config config) {
+        assertEquals("Config(SimpleConfigObject({\"httpClient\":{\"default\":{\"url\":\"http://mockserver:1080\"}}}))", config.toString());
+    }
 
     @Test
     void nonWorkingTest(HttpClientImpl httpClient) {

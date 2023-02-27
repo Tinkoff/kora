@@ -4,10 +4,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ApplicationGraphDraw {
     private final List<Node<?>> graphNodes = new ArrayList<>();
@@ -67,6 +64,16 @@ public class ApplicationGraphDraw {
     public Node<?> findNodeByType(Type type) {
         for (var graphNode : this.graphNodes) {
             if (graphNode.type().equals(type) && graphNode.tags().length == 0) {
+                return graphNode;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public Node<?> findNodeByType(Type type, Class<?>... tags) {
+        for (var graphNode : this.graphNodes) {
+            if (graphNode.type().equals(type) && Arrays.equals(graphNode.tags(), tags)) {
                 return graphNode;
             }
         }

@@ -4,6 +4,7 @@ import javassist.*;
 import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.StringMemberValue;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.slf4j.Logger;
@@ -11,13 +12,13 @@ import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
-import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
-import ru.tinkoff.kora.application.graph.Lifecycle;
-import ru.tinkoff.kora.application.graph.RefreshableGraph;
+import ru.tinkoff.kora.application.graph.*;
+import ru.tinkoff.kora.application.graph.Graph.Factory;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.config.common.ConfigModule;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 
+import javax.annotation.Nullable;
 import javax.annotation.processing.Generated;
 import javax.annotation.processing.Processor;
 import java.io.File;
@@ -26,6 +27,7 @@ import java.lang.reflect.Executable;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,13 +46,15 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         }
     }
 
-    record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraAppTest.CompilationMode shareMode) {
+    record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier,
+                         KoraAppTest.CompilationMode shareMode,
+                         @Nullable KoraGraphModifier graphModifier) {
 
         public Graph get() {
             return switch (shareMode) {
-                case PER_RUN -> new PerRunGraph(graphSupplier);
-                case PER_CLASS -> new PerClassGraph(graphSupplier);
-                case PER_METHOD -> new PerMethodGraph(graphSupplier);
+                case PER_RUN -> new PerRunGraph(graphSupplier, graphModifier);
+                case PER_CLASS -> new PerClassGraph(graphSupplier, graphModifier);
+                case PER_METHOD -> new PerMethodGraph(graphSupplier, graphModifier);
             };
         }
     }
@@ -64,19 +68,67 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     static class AbstractGraph implements Graph {
 
+        @Nullable
+        protected final KoraGraphModifier graphModifier;
         protected final Supplier<? extends ApplicationGraphDraw> graphSupplier;
         protected InitializedGraph initializedGraph;
 
-        AbstractGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier) {
+        AbstractGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, @org.jetbrains.annotations.Nullable KoraGraphModifier graphModifier) {
             this.graphSupplier = graphSupplier;
+            this.graphModifier = graphModifier;
         }
 
         @Override
         public void initialize() {
             final long started = System.nanoTime();
             var graphDraw = graphSupplier.get();
+
+            if (graphModifier != null) {
+                for (KoraGraphModifier.NodeAddition addition : graphModifier.getAdditions()) {
+                    final Class<?>[] tags = (addition.tags() == null)
+                        ? new Class[]{}
+                        : addition.tags();
+
+                    graphDraw.addNode0(addition.getClass(), tags, getNodeFactory(addition.function(), graphDraw));
+                }
+
+                for (KoraGraphModifier.NodeReplacement replacement : graphModifier.getReplacements()) {
+                    final Node<Object> nodeToReplace = (replacement.replacement().tags() == null)
+                        ? (Node<Object>) graphDraw.findNodeByType(replacement.replacement().type())
+                        : (Node<Object>) graphDraw.findNodeByType(replacement.replacement().type(), replacement.replacement().tags());
+
+                    if(nodeToReplace == null) {
+                        throw new IllegalStateException("Can't find Node to Replace: " + replacement.replacement());
+                    }
+
+                    graphDraw.replaceNode(nodeToReplace, ((Factory<Object>) getNodeFactory(replacement.function(), graphDraw)));
+                }
+
+                logger.info("@KoraAppTest Graph Modification took: {}", Duration.ofNanos(System.nanoTime() - started));
+            }
+
             this.initializedGraph = new InitializedGraph(graphDraw.init().block(), graphDraw);
             logger.info("@KoraAppTest Graph Initialization took: {}", Duration.ofNanos(System.nanoTime() - started));
+        }
+
+        private <V> Factory<V> getNodeFactory(Function<KoraAppTestGraph, V> graphFunction, ApplicationGraphDraw graphDraw) {
+            return g -> graphFunction.apply(new KoraAppTestGraph() {
+                @Override
+                public <T> T get(@NotNull Class<T> type) {
+                    var node = graphDraw.findNodeByType(type);
+                    return (node == null)
+                        ? null
+                        : (T) g.get(node);
+                }
+
+                @Override
+                public <T> T get(@NotNull Class<T> type, Class<?>... tags) {
+                    var node = graphDraw.findNodeByType(type, tags);
+                    return (node == null)
+                        ? null
+                        : (T) g.get(node);
+                }
+            });
         }
 
         @Override
@@ -91,22 +143,22 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     static class PerMethodGraph extends AbstractGraph {
 
-        PerMethodGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier) {
-            super(graphSupplier);
+        PerMethodGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraGraphModifier graphModifier) {
+            super(graphSupplier, graphModifier);
         }
     }
 
     static class PerClassGraph extends AbstractGraph {
 
-        public PerClassGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier) {
-            super(graphSupplier);
+        public PerClassGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraGraphModifier graphModifier) {
+            super(graphSupplier, graphModifier);
         }
     }
 
     static class PerRunGraph extends AbstractGraph {
 
-        public PerRunGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier) {
-            super(graphSupplier);
+        public PerRunGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraGraphModifier graphModifier) {
+            super(graphSupplier, graphModifier);
         }
 
         @Override
@@ -123,7 +175,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                        Class<?> aggregator,
                        List<Class<?>> classes,
                        List<Class<? extends AbstractKoraProcessor>> processors,
-                       KoraAppTest.CompilationMode shareMode) {
+                       KoraAppTest.CompilationMode shareMode,
+                       @Nullable KoraGraphModifier graphModifier) {
 
         record Application(Class<?> real, Class<?> origin) {}
     }
@@ -213,6 +266,11 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
         var aggregator = generateAggregatorClass(koraAppTest, context);
 
+        final KoraGraphModifier koraGraphModifier = context.getTestInstance()
+            .filter(inst -> inst instanceof KoraAppTestGraphModifier)
+            .map(inst -> ((KoraAppTestGraphModifier) inst).graph())
+            .orElse(null);
+
         final String koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfigProvider)
             .map(inst -> ((KoraAppTestConfigProvider) inst).config())
@@ -222,12 +280,12 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         if (koraAppConfig.isBlank()) {
             logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
-                aggregator, classes, processors, koraAppTest.compileMode());
+                aggregator, classes, processors, koraAppTest.compileMode(), koraGraphModifier);
         }
 
         final KoraAppMeta.Application application = generateApplicationClass(koraAppTest, koraAppConfig, context);
         logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.compileMode());
+        return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.compileMode(), koraGraphModifier);
     }
 
     private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {
@@ -425,9 +483,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             var clazz = classLoader.loadClass(meta.application.real.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphSupplier = constructors[0].newInstance();
-
             logger.info("@KoraAppTest compilation took: {}", Duration.ofNanos(System.nanoTime() - started));
-            return new GraphSupplier(graphSupplier, meta.shareMode);
+            return new GraphSupplier(graphSupplier, meta.shareMode, meta.graphModifier);
         } catch (ClassNotFoundException e) {
             throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.real, e);
         } catch (Exception e) {
