@@ -1,28 +1,31 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
 import com.typesafe.config.Config;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
-import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProcessor;
-import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
+import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 
 @KoraAppTest(
     application = SimpleApplication.class,
-    components = { SimpleFirstComponent.class, SimpleSecondComponent.class },
+    components = {SimpleComponent1.class, SimpleComponent2.class},
     processors = {
-        KoraAppProcessor.class,
-        HttpClientAnnotationProcessor.class,
-        ConfigRootAnnotationProcessor.class
-    },
-    config = """
-        myconfig {
-          myinnerconfig {
-            myproperty = 1
-          }
-        }
-        """)
-public class ComponentJUnitExtensionTests extends Assertions {
+        ConfigRootAnnotationProcessor.class,
+        ConfigSourceAnnotationProcessor.class
+    })
+public class ComponentJUnitExtensionTests extends Assertions implements KoraAppTestConfigProvider {
+
+    @Override
+    public @NotNull String config() {
+        return """
+            myconfig {
+              myinnerconfig {
+                myproperty = 1
+              }
+            }
+            """;
+    }
 
     @Test
     void emptyTest() {
@@ -35,13 +38,13 @@ public class ComponentJUnitExtensionTests extends Assertions {
     }
 
     @Test
-    void singleComponentInjected(SimpleFirstComponent firstComponent) {
+    void singleComponentInjected(SimpleComponent1 firstComponent) {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void twoComponentsInjected(SimpleFirstComponent firstComponent, SimpleSecondComponent secondComponent) {
+    void twoComponentsInjected(SimpleComponent1 firstComponent, SimpleComponent2 secondComponent) {
         assertEquals("1", firstComponent.get());
-        assertEquals("1", secondComponent.get());
+        assertEquals("12", secondComponent.get());
     }
 }
