@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.KoraApp;
+import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 
 import java.lang.annotation.*;
@@ -57,11 +58,26 @@ public @interface KoraAppTest {
     /**
      * @return classes that should be Mocked
      */
-    MockComponent[] mocks() default {};
+    Mock[] mocks() default {};
 
     /**
      * @return annotation processors used to process {@link #components()}
      * @see KoraAppProcessor is included by default
      */
     Class<? extends AbstractKoraProcessor>[] processors() default {};
+
+    @Target({ElementType.TYPE_PARAMETER})
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Mock {
+
+        /**
+         * @return component type to Mock
+         */
+        Class<?> value();
+
+        /**
+         * @return tags {@link Tag}
+         */
+        Class<?>[] tags() default {};
+    }
 }

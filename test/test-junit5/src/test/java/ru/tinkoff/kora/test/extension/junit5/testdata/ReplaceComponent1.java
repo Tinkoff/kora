@@ -1,6 +1,4 @@
-package ru.tinkoff.kora.test.extension.junit5;
-
-import ru.tinkoff.kora.common.Component;
+package ru.tinkoff.kora.test.extension.junit5.testdata;
 
 public class ReplaceComponent1 implements ReplaceComponent {
 

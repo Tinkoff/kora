@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.test.extension.junit5;
+package ru.tinkoff.kora.test.extension.junit5.testdata;
 
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.Lifecycle;

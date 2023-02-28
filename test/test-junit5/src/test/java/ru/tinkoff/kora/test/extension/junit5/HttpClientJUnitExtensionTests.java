@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
 import ru.tinkoff.kora.http.client.annotation.processor.HttpClientAnnotationProcessor;
-import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
+import ru.tinkoff.kora.test.extension.junit5.testdata.HttpClientApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.HttpClientImpl;
 
 @KoraAppTest(
     application = HttpClientApplication.class,
@@ -24,12 +25,12 @@ import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 class HttpClientJUnitExtensionTests extends Assertions {
 
     @Test
-    void configGeneratedForApplication(Config config) {
+    void configGeneratedForApplication(@TestComponent Config config) {
         assertEquals("Config(SimpleConfigObject({\"httpClient\":{\"default\":{\"url\":\"http://mockserver:1080\"}}}))", config.toString());
     }
 
     @Test
-    void nonWorkingTest(HttpClientImpl httpClient) {
+    void nonWorkingTest(@TestComponent HttpClientImpl httpClient) {
         assertNotNull(httpClient);
     }
 }

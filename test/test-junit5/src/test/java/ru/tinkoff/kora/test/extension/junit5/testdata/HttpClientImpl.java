@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.test.extension.junit5;
+package ru.tinkoff.kora.test.extension.junit5.testdata;
 
 import ru.tinkoff.kora.http.client.common.annotation.HttpClient;
 import ru.tinkoff.kora.http.common.HttpMethod;
