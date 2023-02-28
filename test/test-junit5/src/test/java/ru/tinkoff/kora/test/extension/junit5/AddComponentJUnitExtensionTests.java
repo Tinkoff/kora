@@ -12,7 +12,7 @@ public class AddComponentJUnitExtensionTests extends Assertions implements KoraA
     @Override
     public @NotNull KoraGraphModifier graph() {
         return new KoraGraphModifier()
-            .addNode(SimpleComponent3::new);
+            .addComponent(SimpleComponent3::new);
     }
 
     @Test
