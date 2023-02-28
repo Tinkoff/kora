@@ -4,34 +4,30 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent2;
+import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent3;
 import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent1;
 import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleReplaceApplication;
 
 @KoraAppTest(
     application = SimpleReplaceApplication.class,
     components = {SimpleComponent1.class})
-public class ReplaceComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
-
-    @TestComponent
-    private SimpleComponent1 firstComponent;
-    @TestComponent
-    private ReplaceComponent replaceComponent;
+public class ReplaceComponentWithBeanJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return new KoraGraphModification()
-            .replaceComponent(ReplaceComponent2::new, ReplaceComponent.class);
+            .replaceComponent(g -> new ReplaceComponent3(g.get(SimpleComponent1.class)), ReplaceComponent.class);
     }
 
     @Test
-    void singleComponentInjected() {
+    void singleComponentInjected(@TestComponent SimpleComponent1 firstComponent) {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void twoComponentsInjected() {
+    void twoComponentsInjected(@TestComponent SimpleComponent1 firstComponent,
+                               @TestComponent ReplaceComponent replaceComponent) {
         assertEquals("1", firstComponent.get());
-        assertEquals("2", replaceComponent.get());
+        assertEquals("13", replaceComponent.get());
     }
 }
