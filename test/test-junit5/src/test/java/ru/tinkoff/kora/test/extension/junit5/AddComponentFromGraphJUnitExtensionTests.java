@@ -12,7 +12,7 @@ public class AddComponentFromGraphJUnitExtensionTests extends Assertions impleme
     @Override
     public @NotNull KoraGraphModifier graph() {
         return new KoraGraphModifier()
-            .addNode(g -> new SimpleComponent2(g.get(SimpleComponent1.class)));
+            .addComponent(g -> new SimpleComponent2(g.get(SimpleComponent1.class)));
     }
 
     @Test

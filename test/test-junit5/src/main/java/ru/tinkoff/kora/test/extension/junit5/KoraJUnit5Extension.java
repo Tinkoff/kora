@@ -7,6 +7,7 @@ import javassist.bytecode.annotation.StringMemberValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
@@ -47,7 +48,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier,
-                         KoraAppTest.CompilationMode shareMode,
+                         KoraAppTest.InitializeMode shareMode,
                          @Nullable KoraGraphModifier graphModifier) {
 
         public Graph get() {
@@ -73,7 +74,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         protected final Supplier<? extends ApplicationGraphDraw> graphSupplier;
         protected InitializedGraph initializedGraph;
 
-        AbstractGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, @org.jetbrains.annotations.Nullable KoraGraphModifier graphModifier) {
+        AbstractGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, @Nullable KoraGraphModifier graphModifier) {
             this.graphSupplier = graphSupplier;
             this.graphModifier = graphModifier;
         }
@@ -104,10 +105,22 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                     graphDraw.replaceNode(nodeToReplace, ((Factory<Object>) getNodeFactory(replacement.function(), graphDraw)));
                 }
 
+                for (KoraGraphModifier.NodeMock mock : graphModifier.getMocks()) {
+                    final Node<Object> nodeToMock = (mock.tags() == null)
+                        ? (Node<Object>) graphDraw.findNodeByType(mock.type())
+                        : (Node<Object>) graphDraw.findNodeByType(mock.type(), mock.tags());
+
+                    if(nodeToMock == null) {
+                        throw new IllegalStateException("Can't find Node to Mock: " + mock);
+                    }
+
+                    graphDraw.replaceNode(nodeToMock, g -> Mockito.mock(mock.type()));
+                }
+
                 logger.info("@KoraAppTest Graph Modification took: {}", Duration.ofNanos(System.nanoTime() - started));
             }
 
-            this.initializedGraph = new InitializedGraph(graphDraw.init().block(), graphDraw);
+            this.initializedGraph = new InitializedGraph(graphDraw.init().block(Duration.ofMinutes(3)), graphDraw);
             logger.info("@KoraAppTest Graph Initialization took: {}", Duration.ofNanos(System.nanoTime() - started));
         }
 
@@ -172,10 +185,11 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     record InitializedGraph(RefreshableGraph refreshableGraph, ApplicationGraphDraw graphDraw) {}
 
     record KoraAppMeta(Application application,
+                       String configuration,
                        Class<?> aggregator,
                        List<Class<?>> classes,
                        List<Class<? extends AbstractKoraProcessor>> processors,
-                       KoraAppTest.CompilationMode shareMode,
+                       KoraAppTest.InitializeMode shareMode,
                        @Nullable KoraGraphModifier graphModifier) {
 
         record Application(Class<?> real, Class<?> origin) {}
@@ -254,9 +268,11 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     private KoraAppMeta getKoraAppMeta(KoraAppTest koraAppTest, ExtensionContext context) {
         final long started = System.nanoTime();
-        var classes = Arrays.stream(koraAppTest.components())
+
+        var mocks = Arrays.stream(koraAppTest.mocks())
+            .map(m -> new KoraGraphModifier.NodeMock(m.value(), m.tags()))
             .distinct()
-            .sorted(Comparator.comparing(Class::getCanonicalName))
+            .sorted(Comparator.comparing(n -> n.type().getCanonicalName()))
             .toList();
 
         var processors = Stream.concat(Stream.of(KoraAppProcessor.class), Arrays.stream(koraAppTest.processors()))
@@ -269,7 +285,33 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         final KoraGraphModifier koraGraphModifier = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestGraphModifier)
             .map(inst -> ((KoraAppTestGraphModifier) inst).graph())
-            .orElse(null);
+            .map(graph -> {
+                mocks.forEach(m -> graph.mockComponent(m.type(), m.tags()));
+                return graph;
+            })
+            .orElseGet(() -> {
+                if(mocks.isEmpty()) {
+                    return null;
+                } else {
+                    var graph = new KoraGraphModifier();
+                    mocks.forEach(m -> graph.mockComponent(m.type(), m.tags()));
+                    return graph;
+                }
+            });
+
+        Stream<Class<?>> modifierClasses;
+        if(koraGraphModifier == null) {
+            modifierClasses = Stream.empty();
+        } else {
+            modifierClasses = Stream.concat(
+                koraGraphModifier.getMocks().stream().map(KoraGraphModifier.NodeMock::type),
+                koraGraphModifier.getReplacements().stream().map(r -> r.replacement().type()));
+        }
+
+        var classes = Stream.concat(Arrays.stream(koraAppTest.components()), modifierClasses)
+            .distinct()
+            .sorted(Comparator.comparing(Class::getCanonicalName))
+            .toList();
 
         final String koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfigProvider)
@@ -280,12 +322,12 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         if (koraAppConfig.isBlank()) {
             logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
-                aggregator, classes, processors, koraAppTest.compileMode(), koraGraphModifier);
+                koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModifier);
         }
 
         final KoraAppMeta.Application application = generateApplicationClass(koraAppTest, koraAppConfig, context);
         logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(application, aggregator, classes, processors, koraAppTest.compileMode(), koraGraphModifier);
+        return new KoraAppMeta(application, koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModifier);
     }
 
     private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {

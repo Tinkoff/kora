@@ -12,7 +12,7 @@ public class ReplaceComponentJUnitExtensionTests extends Assertions implements K
     @Override
     public @NotNull KoraGraphModifier graph() {
         return new KoraGraphModifier()
-            .replaceNode(ReplaceComponent2::new, ReplaceComponent.class);
+            .replaceComponent(ReplaceComponent2::new, ReplaceComponent.class);
     }
 
     @Test
