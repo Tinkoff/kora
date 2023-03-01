@@ -3,35 +3,29 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent2;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleReplaceApplication;
 
 @KoraAppTest(
-    application = SimpleReplaceApplication.class,
-    components = {SimpleComponent1.class})
+    application = ReplaceApplication.class,
+    components = {ReplaceComponent2.class})
 public class ReplaceComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
-    private SimpleComponent1 firstComponent;
+    private ReplaceComponent replace1;
     @TestComponent
-    private ReplaceComponent replaceComponent;
+    private ReplaceComponent2 replace2;
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return new KoraGraphModification()
-            .replaceComponent(ReplaceComponent2::new, ReplaceComponent.class);
+            .replaceComponent(() -> (ReplaceComponent) () -> "?", ReplaceComponent.class);
     }
 
     @Test
-    void singleComponentInjected() {
-        assertEquals("1", firstComponent.get());
-    }
-
-    @Test
-    void twoComponentsInjected() {
-        assertEquals("1", firstComponent.get());
-        assertEquals("2", replaceComponent.get());
+    void replaced() {
+        assertEquals("?", replace1.get());
+        assertEquals("2", replace2.get());
     }
 }

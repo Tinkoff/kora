@@ -10,25 +10,30 @@ import org.junit.platform.commons.support.AnnotationSupport;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
-import ru.tinkoff.kora.application.graph.*;
+import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.application.graph.Graph.Factory;
+import ru.tinkoff.kora.application.graph.Lifecycle;
+import ru.tinkoff.kora.application.graph.Node;
+import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.config.common.ConfigModule;
 import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeClassCandidate;
-import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeTypeCandidate;
 import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeMock;
 
 import javax.annotation.Nullable;
 import javax.annotation.processing.Generated;
 import javax.annotation.processing.Processor;
 import java.io.File;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,11 +42,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
+final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
-
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KoraJUnit5Extension.class);
+    private static final Class<?>[] TAG_ANY = new Class[]{Tag.Any.class};
 
     private static final Map<KoraAppMeta, GraphSupplier> GRAPH_SUPPLIER_MAP = new ConcurrentHashMap<>();
 
@@ -89,11 +94,14 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
             this.graphModifier = graphModifier;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void initialize() {
             var graphDraw = graphSupplier.get();
+
             if (graphModifier != null) {
                 final long startedModify = System.nanoTime();
+
                 for (KoraGraphModification.NodeAddition addition : graphModifier.getAdditions()) {
                     final Class<?>[] tags = (addition.candidate().tags() == null)
                         ? TAGS_EMPTY
@@ -103,27 +111,34 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 }
 
                 for (KoraGraphModification.NodeReplacement replacement : graphModifier.getReplacements()) {
-                    final Node<Object> nodeToReplace = (replacement.candidate().tags() == null)
-                        ? (Node<Object>) graphDraw.findNodeByType(replacement.candidate().type())
-                        : (Node<Object>) graphDraw.findNodeByType(replacement.candidate().type(), replacement.candidate().tags());
-
-                    if (nodeToReplace == null) {
-                        throw new ExtensionConfigurationException("Can't find Node to Replace: " + replacement.candidate());
+                    final List<Node<Object>> nodesToReplace = GraphUtils.findNodeByType(graphDraw, replacement.candidate().type(), replacement.candidate().tags());
+                    if (nodesToReplace.isEmpty()) {
+                        throw new ExtensionConfigurationException("Can't find Nodes to Replace: " + replacement.candidate());
                     }
 
-                    graphDraw.replaceNode(nodeToReplace, ((Factory<Object>) getNodeFactory(replacement.function(), graphDraw)));
+                    for (Node<Object> nodeToReplace : nodesToReplace) {
+                        graphDraw.replaceNode(nodeToReplace, ((Factory<Object>) getNodeFactory(replacement.function(), graphDraw)));
+                    }
                 }
 
                 for (NodeMock mock : graphModifier.getMocks()) {
-                    final Node<Object> nodeToMock = (mock.candidate().tags() == null)
-                        ? (Node<Object>) graphDraw.findNodeByType(mock.candidate().type())
-                        : (Node<Object>) graphDraw.findNodeByType(mock.candidate().type(), mock.candidate().tags());
-
-                    if (nodeToMock == null) {
-                        throw new ExtensionConfigurationException("Can't find Node to Mock: " + mock);
+                    final List<Node<Object>> nodesToMock = GraphUtils.findNodeByType(graphDraw, mock.candidate().type(), mock.candidate().tags());
+                    if (nodesToMock.isEmpty()) {
+                        throw new ExtensionConfigurationException("Can't find Nodes to Replace: " + mock.candidate());
                     }
 
-                    graphDraw.replaceNode(nodeToMock, g -> Mockito.mock(((Class<?>) mock.candidate().type())));
+                    for (Node<Object> nodeToMock : nodesToMock) {
+                        graphDraw.replaceNode(nodeToMock, g -> {
+                            var replacement = Mockito.mock(mock.candidate().type());
+
+                            if (Lifecycle.class.isAssignableFrom(mock.candidate().type())) {
+                                Mockito.when(((Lifecycle) replacement).init()).thenReturn(Mono.empty());
+                                Mockito.when(((Lifecycle) replacement).release()).thenReturn(Mono.empty());
+                            }
+
+                            return replacement;
+                        });
+                    }
                 }
 
                 logger.info("@KoraAppTest Graph Modification took: {}", Duration.ofNanos(System.nanoTime() - startedModify));
@@ -137,6 +152,9 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
         private <V> Factory<V> getNodeFactory(Function<KoraAppGraph, V> graphFunction, ApplicationGraphDraw graphDraw) {
             return g -> graphFunction.apply(new KoraAppGraph() {
+
+                @SuppressWarnings("unchecked")
+                @Nullable
                 @Override
                 public <T> T get(@NotNull Type type) {
                     var node = graphDraw.findNodeByType(type);
@@ -145,12 +163,42 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                         : (T) g.get(node);
                 }
 
+                @Nullable
+                @Override
+                public <T> T get(@NotNull Class<T> type) {
+                    return get(((Type) type));
+                }
+
+                @SuppressWarnings("unchecked")
+                @Nullable
                 @Override
                 public <T> T get(@NotNull Type type, Class<?>... tags) {
-                    var node = graphDraw.findNodeByType(type, tags);
-                    return (node == null)
-                        ? null
-                        : (T) g.get(node);
+                    var nodes = GraphUtils.findNodeByType(graphDraw, type, tags);
+                    return nodes.stream()
+                        .map(n -> ((T) g.get(n)))
+                        .findFirst()
+                        .orElse(null);
+                }
+
+                @Nullable
+                @Override
+                public <T> T get(@NotNull Class<T> type, Class<?>... tags) {
+                    return get((Type) type, tags);
+                }
+
+                @NotNull
+                @Override
+                public <T> List<T> getAny(@NotNull Type type) {
+                    var nodes = GraphUtils.findNodeByType(graphDraw, type, TAG_ANY);
+                    return nodes.stream()
+                        .map(n -> ((T) g.get(n)))
+                        .toList();
+                }
+
+                @NotNull
+                @Override
+                public <T> List<T> getAny(@NotNull Class<T> type) {
+                    return getAny((Type) type);
                 }
             });
         }
@@ -227,7 +275,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 .map(koraAppTest -> getKoraAppMeta(koraAppTest, context))
                 .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
 
-            var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(meta, KoraJUnit5Extension::instantiateApplicationGraphSupplier);
+            var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(meta, KoraJUnit5Extension::generateGraphSupplier);
             var graph = graphSupplier.get();
             graph.initialize();
             container.graph = graph;
@@ -334,7 +382,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
         final long started = System.nanoTime();
 
         var mocks = Arrays.stream(koraAppTest.mocks())
-            .map(m -> new NodeMock(new NodeClassCandidate(m.value(), m.tags())))
+            .map(m -> new NodeMock(new NodeClassCandidate(m, TAG_ANY)))
             .distinct()
             .sorted(Comparator.comparing(n -> n.candidate().type().getTypeName()))
             .toList();
@@ -398,6 +446,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
 
     private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {
         try {
+            final long started = System.nanoTime();
+
             final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Application_" + context.getRequiredTestClass().getSimpleName();
             CtClass ctclass;
             try {
@@ -434,10 +484,14 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 ctclass.writeFile("build/in-test-generated/classes");
 
                 final Class<?> applicationWithConfig = ctclass.toClass();
+
+                logger.debug("@KoraAppTest application generation took: {}", Duration.ofNanos(System.nanoTime() - started));
                 return new KoraAppMeta.Application(applicationWithConfig, koraAppTest.application());
             } else {
                 configMethod.get().setBody("return com.typesafe.config.ConfigFactory.parseString(\"%s\").resolve();".formatted(config));
                 ctclass.writeFile("build/in-test-generated/classes");
+
+                logger.debug("@KoraAppTest application generation took: {}", Duration.ofNanos(System.nanoTime() - started));
                 return new KoraAppMeta.Application(getClass().getClassLoader().loadClass(className), koraAppTest.application());
             }
         } catch (Exception e) {
@@ -446,6 +500,8 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     private Class<?> generateAggregatorClass(KoraAppTest koraAppTest, ExtensionContext context) {
+        final long started = System.nanoTime();
+
         var classes = Arrays.stream(koraAppTest.components())
             .distinct()
             .sorted(Comparator.comparing(Class::getCanonicalName))
@@ -475,7 +531,10 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 final CtConstructor constructor = CtNewConstructor.make(parameters, null, "", ctclass);
                 ctclass.addConstructor(constructor);
                 ctclass.writeFile("build/in-test-generated/classes");
-                return ctclass.toClass();
+
+                var result = ctclass.toClass();
+                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
+                return result;
             } catch (NotFoundException e) {
                 ctclass = ClassPool.getDefault().makeClass(className);
                 final CtConstructor constructor = CtNewConstructor.make(parameters, null, null, ctclass);
@@ -497,7 +556,9 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                 ctclass.addInterface(lifecycle);
 
                 ctclass.writeFile("build/in-test-generated/classes");
-                return ctclass.toClass();
+                var result = ctclass.toClass();
+                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
+                return result;
             }
         } catch (Exception e) {
             throw new ExtensionConfigurationException("Failed to created aggregator class for: " + koraAppTest.application(), e);
@@ -543,8 +604,9 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
                         .findFirst();
                 });
         } else {
-            return Optional.ofNullable(graph.graphDraw().findNodeByType(candidate.type(), candidate.tags()))
-                .map(v -> ((Object) graph.refreshableGraph().get(v)))
+            return Optional.of(GraphUtils.findNodeByType(graph.graphDraw(), candidate.type(), candidate.tags()))
+                .filter(l -> !l.isEmpty())
+                .map(v -> graph.refreshableGraph().get(v.get(0)))
                 .or(() -> {
                     // Try to find similar
                     return graph.graphDraw().getNodes()
@@ -558,7 +620,7 @@ public class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     @SuppressWarnings("unchecked")
-    private static GraphSupplier instantiateApplicationGraphSupplier(KoraAppMeta meta) {
+    private static GraphSupplier generateGraphSupplier(KoraAppMeta meta) {
         try {
             final long started = System.nanoTime();
 

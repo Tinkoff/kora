@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class ApplicationGraphDraw {
+
     private final List<Node<?>> graphNodes = new ArrayList<>();
     private final Class<?> root;
 
@@ -64,16 +65,6 @@ public class ApplicationGraphDraw {
     public Node<?> findNodeByType(Type type) {
         for (var graphNode : this.graphNodes) {
             if (graphNode.type().equals(type) && graphNode.tags().length == 0) {
-                return graphNode;
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    public Node<?> findNodeByType(Type type, Class<?>... tags) {
-        for (var graphNode : this.graphNodes) {
-            if (graphNode.type().equals(type) && Arrays.equals(graphNode.tags(), tags)) {
                 return graphNode;
             }
         }

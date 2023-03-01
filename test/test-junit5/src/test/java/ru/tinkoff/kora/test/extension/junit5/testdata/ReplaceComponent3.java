@@ -2,14 +2,14 @@ package ru.tinkoff.kora.test.extension.junit5.testdata;
 
 public class ReplaceComponent3 implements ReplaceComponent {
 
-    private final SimpleComponent1 simpleComponent1;
+    private final ReplaceComponent2 replace2;
 
-    public ReplaceComponent3(SimpleComponent1 simpleComponent1) {
-        this.simpleComponent1 = simpleComponent1;
+    public ReplaceComponent3(ReplaceComponent2 replace2) {
+        this.replace2 = replace2;
     }
 
     @Override
     public String get() {
-        return simpleComponent1.get() + "3";
+        return replace2.get() + "3";
     }
 }

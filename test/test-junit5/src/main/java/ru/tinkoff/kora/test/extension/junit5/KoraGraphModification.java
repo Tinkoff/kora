@@ -132,7 +132,7 @@ public final class KoraGraphModification {
     /**
      * Component that should be Mocked with {@link org.mockito.Mockito}
      */
-    public <T> KoraGraphModification mockComponent(@NotNull Class<?> typeToMock) {
+    public KoraGraphModification mockComponent(@NotNull Class<?> typeToMock) {
         mocks.add(new NodeMock(new NodeClassCandidate(typeToMock, null)));
         return this;
     }
@@ -140,8 +140,8 @@ public final class KoraGraphModification {
     /**
      * Component that should be Mocked with {@link org.mockito.Mockito}
      */
-    public <T> KoraGraphModification mockComponent(@NotNull Class<?> typeToMock,
-                                                   Class<?>... tags) {
+    public KoraGraphModification mockComponent(@NotNull Class<?> typeToMock,
+                                               Class<?>... tags) {
         if (tags == null || tags.length == 0) {
             return mockComponent(typeToMock);
         } else {
