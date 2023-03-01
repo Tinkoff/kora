@@ -37,7 +37,7 @@ public @interface KoraAppTest {
     /**
      * @return Context initialization share mode between different test executions
      */
-    InitializeMode initializeMode() default InitializeMode.PER_CLASS;
+    InitializeMode initializeMode() default InitializeMode.PER_METHOD;
 
     /**
      * @return class annotated with {@link KoraApp}
@@ -56,28 +56,13 @@ public @interface KoraAppTest {
     Class<?>[] components();
 
     /**
-     * @return classes that should be Mocked
+     * @return classes that should be Mocked, types are matched with {@link Tag.Any} tag
      */
-    Mock[] mocks() default {};
+    Class<?>[] mocks() default {};
 
     /**
      * @return annotation processors used to process {@link #components()}
      * @see KoraAppProcessor is included by default
      */
     Class<? extends AbstractKoraProcessor>[] processors() default {};
-
-    @Target({ElementType.TYPE_PARAMETER})
-    @Retention(RetentionPolicy.RUNTIME)
-    @interface Mock {
-
-        /**
-         * @return component type to Mock
-         */
-        Class<?> value();
-
-        /**
-         * @return tags {@link Tag}
-         */
-        Class<?>[] tags() default {};
-    }
 }

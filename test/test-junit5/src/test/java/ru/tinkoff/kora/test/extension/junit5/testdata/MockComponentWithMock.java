@@ -3,11 +3,11 @@ package ru.tinkoff.kora.test.extension.junit5.testdata;
 import ru.tinkoff.kora.common.Component;
 
 @Component
-public class SimpleComponentWithMock {
+public class MockComponentWithMock {
 
-    private final SimpleComponentToMock mock;
+    private final MockComponentToMock mock;
 
-    public SimpleComponentWithMock(SimpleComponentToMock mock) {
+    public MockComponentWithMock(MockComponentToMock mock) {
         this.mock = mock;
     }
 

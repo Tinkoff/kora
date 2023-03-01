@@ -1,9 +1,6 @@
 package ru.tinkoff.kora.test.extension.junit5.testdata;
 
-import ru.tinkoff.kora.common.Component;
-
-@Component
-public class ReplaceComponent2 implements ReplaceComponent {
+public class MockComponentWithTag2 implements MockComponent {
 
     @Override
     public String get() {
