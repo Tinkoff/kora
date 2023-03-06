@@ -10,65 +10,57 @@ import java.util.List;
 
 public interface KoraAppGraph {
 
-    /**
-     * Try to find implementation in Graph by type without Tags
-     *
-     * @param type to look for
-     * @param <T>  type parameter
-     * @return type instance from Graph
-     */
     @Nullable
-    <T> T get(@NotNull Type type);
-
-    /**
-     * Try to find implementation in Graph by type without Tags
-     *
-     * @param type to look for
-     * @param <T>  type parameter
-     * @return type instance from Graph
-     */
-    @Nullable
-    <T> T get(@NotNull Class<T> type);
+    Object getFirst(@NotNull Type type);
 
     /**
      * Try to find implementation in Graph by type and tags
      *
-     * @param type to look for
-     * @param tags associated with type
-     * @param <T>  type parameter
+     * @param type of component to search
+     * @param tags associated with component
      * @return type instance from Graph
      */
     @Nullable
-    <T> T get(@NotNull Type type, Class<?>... tags);
+    Object getFirst(@NotNull Type type, Class<?>... tags);
+
+    @Nullable
+    <T> T getFirst(@NotNull Class<T> type);
 
     /**
      * Try to find implementation in Graph by type and tags
      *
-     * @param type to look for
-     * @param tags associated with type
+     * @param type of component to search
+     * @param tags associated with component
      * @param <T>  type parameter
      * @return type instance from Graph
      */
     @Nullable
-    <T> T get(@NotNull Class<T> type, Class<?>... tags);
+    <T> T getFirst(@NotNull Class<T> type, Class<?>... tags);
+
+    @Nonnull
+    List<Object> getAll(@NotNull Type type);
 
     /**
      * Try to find implementation in Graph by type using {@link Tag.Any}
      *
-     * @param type to look for
-     * @param <T>  type parameter
-     * @return type instance from Graph
+     * @param type of component to search
+     * @param tags associated with component
+     * @return component instance from Graph
      */
     @Nonnull
-    <T> List<T> getAny(@NotNull Type type);
+    List<Object> getAll(@NotNull Type type, Class<?>... tags);
+
+    @Nonnull
+    <T> List<T> getAll(@NotNull Class<T> type);
 
     /**
      * Try to find implementation in Graph by type using {@link Tag.Any}
      *
-     * @param type to look for
+     * @param type of component to search
+     * @param tags associated with component
      * @param <T>  type parameter
      * @return type instance from Graph
      */
     @Nonnull
-    <T> List<T> getAny(@NotNull Class<T> type);
+    <T> List<T> getAll(@NotNull Class<T> type, Class<?>... tags);
 }

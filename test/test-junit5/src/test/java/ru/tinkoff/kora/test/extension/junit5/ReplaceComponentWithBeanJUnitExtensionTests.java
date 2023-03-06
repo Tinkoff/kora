@@ -15,13 +15,13 @@ public class ReplaceComponentWithBeanJUnitExtensionTests extends Assertions impl
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
-            .replaceComponent(g -> new ReplaceComponent3(g.get(ReplaceComponent2.class)), ReplaceComponent.class);
+        return KoraGraphModification.of()
+            .replaceComponent(g -> new ReplaceComponent3(g.getFirst(ReplaceComponent2.class)), ReplaceComponent.class);
     }
 
     @Test
-    void replacedWithBeanFromGraph(@TestComponent ReplaceComponent2 replace2,
-                                   @TestComponent ReplaceComponent replace3) {
+    void replacedWithBeanFromGraphInjected(@TestComponent ReplaceComponent2 replace2,
+                                           @TestComponent ReplaceComponent replace3) {
         assertEquals("2", replace2.get());
         assertEquals("23", replace3.get());
     }

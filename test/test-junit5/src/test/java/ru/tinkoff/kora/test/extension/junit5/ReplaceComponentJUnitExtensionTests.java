@@ -19,12 +19,12 @@ public class ReplaceComponentJUnitExtensionTests extends Assertions implements K
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
+        return KoraGraphModification.of()
             .replaceComponent(() -> (ReplaceComponent) () -> "?", ReplaceComponent.class);
     }
 
     @Test
-    void replaced() {
+    void replacedAndOriginalInjected() {
         assertEquals("?", replace1.get());
         assertEquals("2", replace2.get());
     }

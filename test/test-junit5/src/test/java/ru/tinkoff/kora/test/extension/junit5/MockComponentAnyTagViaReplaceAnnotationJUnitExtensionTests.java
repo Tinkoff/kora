@@ -19,7 +19,7 @@ public class MockComponentAnyTagViaReplaceAnnotationJUnitExtensionTests extends 
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
+        return KoraGraphModification.of()
             .replaceComponent(() -> {
                 var mock = Mockito.mock(MockComponent.class);
                 Mockito.when(mock.get()).thenReturn("?");

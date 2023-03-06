@@ -25,16 +25,10 @@ public final class KoraGraphModification {
     private final List<NodeReplacement> replacements = new ArrayList<>();
     private final List<NodeMock> mocks = new ArrayList<>();
 
-    List<NodeAddition> getAdditions() {
-        return additions;
-    }
+    private KoraGraphModification() {}
 
-    List<NodeReplacement> getReplacements() {
-        return replacements;
-    }
-
-    List<NodeMock> getMocks() {
-        return mocks;
+    public static KoraGraphModification of() {
+        return new KoraGraphModification();
     }
 
     /**
@@ -148,6 +142,18 @@ public final class KoraGraphModification {
             mocks.add(new NodeMock(new NodeClassCandidate(typeToMock, tags)));
             return this;
         }
+    }
+
+    List<NodeAddition> getAdditions() {
+        return additions;
+    }
+
+    List<NodeReplacement> getReplacements() {
+        return replacements;
+    }
+
+    List<NodeMock> getMocks() {
+        return mocks;
     }
 
     @Override

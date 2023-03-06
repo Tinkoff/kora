@@ -12,6 +12,7 @@ dependencies {
 
     testImplementation project(":annotation-processors")
     testImplementation project(":http:http-client-jdk")
+    testImplementation project(":http:http-server-undertow")
 }
 
 apply from: '../../in-test-generated.gradle'

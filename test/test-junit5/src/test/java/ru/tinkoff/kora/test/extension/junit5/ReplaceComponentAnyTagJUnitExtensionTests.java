@@ -23,18 +23,18 @@ public class ReplaceComponentAnyTagJUnitExtensionTests extends Assertions implem
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
+        return KoraGraphModification.of()
             .replaceComponent(() -> (ReplaceComponent) () -> "?", ReplaceComponent.class, Tag.Any.class);
     }
 
     @Test
-    void injectReplaced() {
+    void replacedInjected() {
         assertEquals("?", replace1.get());
         assertEquals("?", replace2.get());
     }
 
     @Test
-    void injectComponentsWithReplacements() {
+    void componentWithReplacementInjected() {
         assertEquals("??3", replace3.get());
     }
 }

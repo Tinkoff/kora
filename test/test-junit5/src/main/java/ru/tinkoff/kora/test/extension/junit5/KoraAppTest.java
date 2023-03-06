@@ -35,7 +35,7 @@ public @interface KoraAppTest {
     }
 
     /**
-     * @return Context initialization share mode between different test executions
+     * @return Context Initialization mode between different test executions
      */
     InitializeMode initializeMode() default InitializeMode.PER_METHOD;
 
@@ -45,6 +45,21 @@ public @interface KoraAppTest {
     Class<?> application();
 
     /**
+     * Order configs are merged:
+     * 1) {@link KoraConfigModification}
+     * 2) {@link KoraAppTest#configFiles()}
+     * 3) {@link KoraAppTest#config()}
+     *
+     * @return application configuration files relative to resources directory
+     */
+    String[] configFiles() default {};
+
+    /**
+     * Order configs are merged:
+     * 1) {@link KoraConfigModification}
+     * 2) {@link KoraAppTest#configFiles()}
+     * 3) {@link KoraAppTest#config()}
+     *
      * @return application configuration in HOCON format
      */
     @Language("HOCON")

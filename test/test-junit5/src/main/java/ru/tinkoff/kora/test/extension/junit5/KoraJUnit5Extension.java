@@ -80,6 +80,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         GraphInitialized initialized();
     }
 
+    @SuppressWarnings("unchecked")
     static class AbstractGraph implements Graph {
 
         private static final Class<?>[] TAGS_EMPTY = new Class[]{};
@@ -94,7 +95,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             this.graphModifier = graphModifier;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void initialize() {
             var graphDraw = graphSupplier.get();
@@ -153,52 +153,62 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         private <V> Factory<V> getNodeFactory(Function<KoraAppGraph, V> graphFunction, ApplicationGraphDraw graphDraw) {
             return g -> graphFunction.apply(new KoraAppGraph() {
 
-                @SuppressWarnings("unchecked")
                 @Nullable
                 @Override
-                public <T> T get(@NotNull Type type) {
+                public Object getFirst(@NotNull Type type) {
                     var node = graphDraw.findNodeByType(type);
                     return (node == null)
                         ? null
-                        : (T) g.get(node);
+                        : g.get(node);
                 }
 
                 @Nullable
                 @Override
-                public <T> T get(@NotNull Class<T> type) {
-                    return get(((Type) type));
+                public <T> T getFirst(@NotNull Class<T> type) {
+                    return (T) getFirst(((Type) type));
                 }
 
-                @SuppressWarnings("unchecked")
                 @Nullable
                 @Override
-                public <T> T get(@NotNull Type type, Class<?>... tags) {
+                public Object getFirst(@NotNull Type type, Class<?>... tags) {
                     var nodes = GraphUtils.findNodeByType(graphDraw, type, tags);
                     return nodes.stream()
-                        .map(n -> ((T) g.get(n)))
+                        .map(g::get)
                         .findFirst()
                         .orElse(null);
                 }
 
                 @Nullable
                 @Override
-                public <T> T get(@NotNull Class<T> type, Class<?>... tags) {
-                    return get((Type) type, tags);
+                public <T> T getFirst(@NotNull Class<T> type, Class<?>... tags) {
+                    return (T) getFirst((Type) type, tags);
                 }
 
                 @NotNull
                 @Override
-                public <T> List<T> getAny(@NotNull Type type) {
-                    var nodes = GraphUtils.findNodeByType(graphDraw, type, TAG_ANY);
+                public List<Object> getAll(@NotNull Type type) {
+                    return getAll(type, TAG_ANY);
+                }
+
+                @NotNull
+                @Override
+                public List<Object> getAll(@NotNull Type type, Class<?>... tags) {
+                    var nodes = GraphUtils.findNodeByType(graphDraw, type, tags);
                     return nodes.stream()
-                        .map(n -> ((T) g.get(n)))
+                        .map(g::get)
                         .toList();
                 }
 
                 @NotNull
                 @Override
-                public <T> List<T> getAny(@NotNull Class<T> type) {
-                    return getAny((Type) type);
+                public <T> List<T> getAll(@NotNull Class<T> type) {
+                    return getAll(type, TAG_ANY);
+                }
+
+                @NotNull
+                @Override
+                public <T> List<T> getAll(@NotNull Class<T> type, Class<?>... tags) {
+                    return (List<T>) getAll(((Type) type), tags);
                 }
             });
         }
@@ -390,7 +400,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         var processors = Stream.concat(Stream.of(KoraAppProcessor.class), Arrays.stream(koraAppTest.processors()))
             .distinct()
             .sorted(Comparator.comparing(Class::getCanonicalName))
-            .toList();
+            .collect(Collectors.toList());
 
         var aggregator = generateAggregatorClass(koraAppTest, context);
 
@@ -405,7 +415,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 if (mocks.isEmpty()) {
                     return null;
                 } else {
-                    var graph = new KoraGraphModification();
+                    var graph = KoraGraphModification.of();
                     mocks.forEach(m -> graph.mockComponent(m.candidate().type(), m.candidate().tags()));
                     return graph;
                 }
@@ -429,9 +439,36 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         final String koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfig)
-            .map(inst -> ((KoraAppTestConfig) inst).config())
-            .map(String::trim)
-            .orElse(koraAppTest.config().trim());
+            .map(inst -> {
+                KoraConfigModification configModification = ((KoraAppTestConfig) inst).config();
+                for (String configFile : koraAppTest.configFiles()) {
+                    configModification = configModification.mergeWithConfigFile(configFile);
+                }
+
+                if (!koraAppTest.config().isBlank()) {
+                    configModification = configModification.mergeWithConfig(koraAppTest.config());
+                }
+
+                return configModification.getConfig();
+            })
+            .orElseGet(() -> {
+                if (koraAppTest.configFiles().length > 0) {
+                    KoraConfigModification configModification = null;
+                    for (String configFile : koraAppTest.configFiles()) {
+                        configModification = (configModification == null)
+                            ? KoraConfigModification.ofConfigFile(configFile)
+                            : configModification.mergeWithConfigFile(configFile);
+                    }
+
+                    if (!koraAppTest.config().isBlank()) {
+                        configModification = configModification.mergeWithConfig(koraAppTest.config());
+                    }
+
+                    return configModification.getConfig();
+                } else {
+                    return koraAppTest.config().trim();
+                }
+            });
 
         if (koraAppConfig.isBlank()) {
             logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
@@ -444,6 +481,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         return new KoraAppMeta(application, koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModification);
     }
 
+    //TODO replace config in graph
     private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {
         try {
             final long started = System.nanoTime();

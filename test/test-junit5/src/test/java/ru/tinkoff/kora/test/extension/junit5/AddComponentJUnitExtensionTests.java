@@ -19,17 +19,17 @@ public class AddComponentJUnitExtensionTests extends Assertions implements KoraA
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
+        return KoraGraphModification.of()
             .addComponent(SimpleComponent3::new, SimpleComponent3.class);
     }
 
     @Test
-    void singleComponentInjected() {
+    void fieldOriginalInjected() {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void twoComponentsInjected() {
+    void fieldAddedAndOriginalInjected() {
         assertEquals("1", firstComponent.get());
         assertEquals("3", thirdComponent.get());
     }
