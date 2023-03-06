@@ -12,7 +12,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
     application = SimpleApplication.class,
     components = {MockComponentWithMock.class},
     initializeMode = KoraAppTest.InitializeMode.PER_METHOD)
-public class MockComponentGraphJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+public class MockComponentMethodJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
     private MockComponentToMock mock;
@@ -21,19 +21,19 @@ public class MockComponentGraphJUnitExtensionTests extends Assertions implements
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
+        return KoraGraphModification.of()
             .mockComponent(MockComponentToMock.class);
     }
 
     @Test
-    void singleComponentInjected() {
+    void mockInjected() {
         assertNull(mock.get());
         Mockito.when(mock.get()).thenReturn("1");
         assertEquals("1", mock.get());
     }
 
     @Test
-    void twoComponentsInjected() {
+    void mockAndComponentWithMockInjected() {
         assertNull(mock.get());
         Mockito.when(mock.get()).thenReturn("1");
         assertEquals("1", mock.get());

@@ -1,14 +1,15 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
+/**
+ * Is useful when some part of configuration is dynamically configured (like TestContainer container port)
+ */
 public interface KoraAppTestConfig {
 
     /**
-     * @return analog to {@link KoraAppTest#config()}, but is useful when some part of configuration is dynamic (like TestContainer container port)
+     * @return Kora Config modification for {@link KoraAppTest} tests
      */
-    @Language("HOCON")
-    @NotNull
-    String config();
+    @Nonnull
+    KoraConfigModification config();
 }

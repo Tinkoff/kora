@@ -14,18 +14,18 @@ public class AddComponentWithBeanJUnitExtensionTests extends Assertions implemen
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return new KoraGraphModification()
-            .addComponent(g -> new SimpleComponent2(g.get(SimpleComponent1.class)), SimpleComponent2.class);
+        return KoraGraphModification.of()
+            .addComponent(g -> new SimpleComponent2(g.getFirst(SimpleComponent1.class)), SimpleComponent2.class);
     }
 
     @Test
-    void singleComponentInjected(@TestComponent SimpleComponent1 firstComponent) {
+    void parameterOriginalInjected(@TestComponent SimpleComponent1 firstComponent) {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void twoComponentsInjected(@TestComponent SimpleComponent1 firstComponent,
-                               @TestComponent SimpleComponent2 secondComponent) {
+    void parameterAddedWIthBeanFromGraphAndOriginalInjected(@TestComponent SimpleComponent1 firstComponent,
+                                                            @TestComponent SimpleComponent2 secondComponent) {
         assertEquals("1", firstComponent.get());
         assertEquals("12", secondComponent.get());
     }
