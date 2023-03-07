@@ -12,8 +12,8 @@ Kora предоставляет небольшую обёртку над `KafkaC
 Конструктор контейнера выглядит следующим образом:
 
 ```java
-public KafkaConsumerContainer(KafkaConsumerConfig config,
-                              Deserializer<K> keyDeserializer,
+public KafkaSubscribeConsumerContainer(KafkaConsumerConfig config,
+    Deserializer<K> keyDeserializer,
                               Deserializer<V> valueDeserializer,
                               BaseKafkaRecordsHandler<K, V> handler) {
     this.factory = new KafkaConsumerFactory<>(config);
@@ -27,7 +27,7 @@ public KafkaConsumerContainer(KafkaConsumerConfig config,
 `BaseKafkaRecordsHandler<K,V>` это базовый функциональный интерфейс обработчика:
 
 ```java
-package ru.tinkoff.kora.kafka.common.containers.handlers;
+package ru.tinkoff.kora.kafka.common.consumer.containers.handlers;
 
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -45,7 +45,6 @@ public record KafkaConsumerConfig(
     Properties driverProperties,
     @Nullable List<String> topics,
     @Nullable Pattern topicsPattern,
-    @Nullable List<String> partitions,
     Either<Duration, String> offset,
     Duration pollTimeout,
     int threads
@@ -56,7 +55,6 @@ public record KafkaConsumerConfig(
 * driverProperties - `Properties` из официального клиента кафки, документацию по ним можно посмотреть по ссылке: [https://kafka.apache.org/documentation/#consumerconfigs](https://kafka.apache.org/documentation/#consumerconfigs)
 * topics - список топиков на которые нужно подписаться, через запятую
 * topicsPattern - регулярка, по которой можно подписаться на топики.
-* partitions - список партиций к которым нужно подключиться через assign, в формате `{topic}:{partition_number}`, например `books:1,books:2,books:5`
 * offset - стратегия, которую нужно применить при подключении через assign.  
   Допустимые значение `earliest` - перейти на самый ранний доступный offset, `latest` - перейти на последний доступный offset, строка в формате `Duration`, например `5m` - сдвиг на определённое время назад  
 * pollTimeout - таймаут для poll(), значение по умолчанию - 5 секунд
@@ -113,7 +111,7 @@ public interface ConsumersModule {
         Consumers _controller,
         KafkaConsumerConfig _consumerConfig,
         Deserializer<String> keyDeserializer, Deserializer<String> valueDeserializer) {
-        return new KafkaConsumerContainer<>(
+        return new KafkaSubscribeConsumerContainer<>(
             _consumerConfig,
             keyDeserializer,
             valueDeserializer,
@@ -200,7 +198,8 @@ void processKeyValue(String key, CustomEvent value) {}
 
 Из этих исключений можно получить сырой `ConsumerRecord<byte[], byte[]>`
 
-Если вы используете сигнатуру с распакованными `key`/`value`, то можно добавить последним аргументом `Exception`
+Если вы используете сигнатуру с распакованными `key`/`value`, то можно добавить последним аргументом `Exception`, `Throwable`, `RecordKeyDeserializationException`
+или `RecordValueDeserializationException`.
 
 ```java
 @KafkaIncoming("kafka.first")

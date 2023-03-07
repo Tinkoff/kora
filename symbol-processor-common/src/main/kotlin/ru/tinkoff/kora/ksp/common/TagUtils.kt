@@ -2,6 +2,8 @@ package ru.tinkoff.kora.ksp.common
 
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSType
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.CodeBlock
 
 object TagUtils {
     val ignoreList = setOf("Component", "DefaultComponent")
@@ -27,5 +29,17 @@ object TagUtils {
             }
         }
         return setOf()
+    }
+
+    fun Collection<String>.toTagAnnotation(): AnnotationSpec {
+        val codeBlock = CodeBlock.builder().add("value = [")
+        forEachIndexed { i, type ->
+            if (i > 0) {
+                codeBlock.add(", ")
+            }
+            codeBlock.add("%L::class", type)
+        }
+        val value = codeBlock.add("]").build()
+        return AnnotationSpec.builder(CommonClassNames.tag).addMember(value).build()
     }
 }
