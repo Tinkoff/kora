@@ -1,5 +1,7 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import javassist.*;
 import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.annotation.Annotation;
@@ -261,7 +263,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                        KoraAppTest.InitializeMode shareMode,
                        @Nullable KoraGraphModification graphModifier) {
 
-        record Application(Class<?> real, Class<?> origin) {}
+        record Application(Class<?> generated, Class<?> original) {}
     }
 
     record TestComponentCandidate(Class<?> type, Class<?>[] tags) {
@@ -442,11 +444,11 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .map(inst -> {
                 KoraConfigModification configModification = ((KoraAppTestConfig) inst).config();
                 for (String configFile : koraAppTest.configFiles()) {
-                    configModification = configModification.mergeWithConfigFile(configFile);
+                    configModification.mergeWithConfigFile(configFile);
                 }
 
                 if (!koraAppTest.config().isBlank()) {
-                    configModification = configModification.mergeWithConfig(koraAppTest.config());
+                    configModification.mergeWithConfig(koraAppTest.config());
                 }
 
                 return configModification.getConfig();
@@ -461,7 +463,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                     }
 
                     if (!koraAppTest.config().isBlank()) {
-                        configModification = configModification.mergeWithConfig(koraAppTest.config());
+                        configModification.mergeWithConfig(koraAppTest.config());
                     }
 
                     return configModification.getConfig();
@@ -476,67 +478,22 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModification);
         }
 
-        final KoraAppMeta.Application application = generateApplicationClass(koraAppTest, koraAppConfig, context);
-        logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(application, koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModification);
-    }
+        final KoraGraphModification graphModificationWithConfig = (koraGraphModification == null)
+            ? KoraGraphModification.of()
+            : koraGraphModification;
 
-    //TODO replace config in graph
-    private KoraAppMeta.Application generateApplicationClass(KoraAppTest koraAppTest, String koraAppConfig, ExtensionContext context) {
-        try {
-            final long started = System.nanoTime();
-
-            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Application_" + context.getRequiredTestClass().getSimpleName();
-            CtClass ctclass;
-            try {
-                ctclass = ClassPool.getDefault().getCtClass(className);
-            } catch (NotFoundException e) {
-                ctclass = ClassPool.getDefault().getCtClass(koraAppTest.application().getCanonicalName());
-            }
-
-            final Optional<CtMethod> configMethod = Arrays.stream(ctclass.getDeclaredMethods()).filter(m -> m.getName().equals("config")).findFirst();
-            final String config = escape(koraAppConfig);
-
-            ctclass.defrost();
-            if (configMethod.isEmpty()) {
-                if (Arrays.stream(koraAppTest.application().getInterfaces()).noneMatch(i -> i.equals(ConfigModule.class))) {
-                    ctclass.addInterface(ClassPool.getDefault().get(ConfigModule.class.getCanonicalName()));
-                }
-
-                final CtMethod method = CtNewMethod.make("public com.typesafe.config.Config config() { return com.typesafe.config.ConfigFactory.parseString(\"%s\").resolve(); }".formatted(config), ctclass);
-                var methodConstPool = method.getMethodInfo().getConstPool();
-                var methodAnnotationsAttribute = new AnnotationsAttribute(methodConstPool, AnnotationsAttribute.visibleTag);
-                var methodAnnotation = new Annotation(Override.class.getCanonicalName(), methodConstPool);
-                methodAnnotationsAttribute.setAnnotation(methodAnnotation);
-                method.getMethodInfo().addAttribute(methodAnnotationsAttribute);
-
-                ctclass.addMethod(method);
-                ctclass.setName(className);
-
-                var classFile = ctclass.getClassFile();
-                var annotationsAttribute = new AnnotationsAttribute(classFile.getConstPool(), AnnotationsAttribute.visibleTag);
-                var annotation = new Annotation(Generated.class.getCanonicalName(), classFile.getConstPool());
-                annotation.addMemberValue("value", new StringMemberValue(KoraJUnit5Extension.class.getCanonicalName(), classFile.getConstPool()));
-                annotationsAttribute.setAnnotation(annotation);
-                classFile.addAttribute(annotationsAttribute);
-                ctclass.writeFile("build/in-test-generated/classes");
-
-                final Class<?> applicationWithConfig = ctclass.toClass();
-
-                logger.debug("@KoraAppTest application generation took: {}", Duration.ofNanos(System.nanoTime() - started));
-                return new KoraAppMeta.Application(applicationWithConfig, koraAppTest.application());
-            } else {
-                configMethod.get().setBody("return com.typesafe.config.ConfigFactory.parseString(\"%s\").resolve();".formatted(config));
-                ctclass.writeFile("build/in-test-generated/classes");
-
-                logger.debug("@KoraAppTest application generation took: {}", Duration.ofNanos(System.nanoTime() - started));
-                return new KoraAppMeta.Application(getClass().getClassLoader().loadClass(className), koraAppTest.application());
-            }
-        } catch (Exception e) {
-            throw new ExtensionConfigurationException("Can't modify @KoraApp class configuration: " + koraAppTest.application(), e);
+        if (ConfigModule.class.isAssignableFrom(koraAppTest.application())) {
+            graphModificationWithConfig.replaceComponent(() -> ConfigFactory.parseString(koraAppConfig), Config.class);
+        } else {
+            graphModificationWithConfig.addComponent(() -> ConfigFactory.parseString(koraAppConfig), Config.class);
         }
+
+        logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
+        return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
+            koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), graphModificationWithConfig);
     }
 
+    // Is used as aggregator for all components, so they will be constructed in graph and accessiable no matter what
     private Class<?> generateAggregatorClass(KoraAppTest koraAppTest, ExtensionContext context) {
         final long started = System.nanoTime();
 
@@ -703,7 +660,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 .toList();
 
             var classAsParams = new ArrayList<>(generatedClassFiles);
-            classAsParams.add(meta.application.real.getCanonicalName());
+            classAsParams.add(meta.application.generated.getCanonicalName());
             classAsParams.add(meta.aggregator.getCanonicalName());
 
             final List<Processor> processors = meta.processors.stream()
@@ -711,29 +668,18 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 .toList();
 
             var classLoader = TestUtils.annotationProcessFiles(sourceClassFiles, classAsParams, true,
-                p -> !p.endsWith(meta.application.real.getSimpleName() + ".class") && !p.endsWith(meta.aggregator.getSimpleName() + ".class"),
+                p -> !p.endsWith(meta.application.generated.getSimpleName() + ".class") && !p.endsWith(meta.aggregator.getSimpleName() + ".class"),
                 processors);
 
-            var clazz = classLoader.loadClass(meta.application.real.getName() + "Graph");
+            var clazz = classLoader.loadClass(meta.application.generated.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphSupplier = constructors[0].newInstance();
             logger.info("@KoraAppTest compilation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new GraphSupplier(graphSupplier, meta.shareMode, meta.graphModifier);
         } catch (ClassNotFoundException e) {
-            throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.real, e);
+            throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.generated, e);
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    private static File getSourceClassFile(Class<?> targetClass) {
-        try {
-            var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
-            var targetPackage = targetClass.getPackageName().replace('.', '/');
-            var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
-            return new File("src/" + moduleName + "/java/" + targetFile);
-        } catch (Exception e) {
-            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
         }
     }
 
@@ -761,15 +707,5 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
             })
             .orElseThrow(() -> new ExtensionConfigurationException("KoraAppTest can't instantiate processor with NoZeroArgument constructor: " + processor));
-    }
-
-    private static String escape(String s) {
-        return s.replace("\\", "\\\\")
-            .replace("\t", "\\t")
-            .replace("\b", "\\b")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\f", "\\f")
-            .replace("\"", "\\\"");
     }
 }
