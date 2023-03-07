@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigRootAnnotationProcessor;
 import ru.tinkoff.kora.config.annotation.processor.processor.ConfigSourceAnnotationProcessor;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.ConfigApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent1;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
+    application = ConfigApplication.class,
     components = {SimpleComponent1.class},
     processors = {
         ConfigRootAnnotationProcessor.class,
