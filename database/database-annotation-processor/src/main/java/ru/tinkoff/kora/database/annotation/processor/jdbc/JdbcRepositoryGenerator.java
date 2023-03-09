@@ -3,6 +3,7 @@ package ru.tinkoff.kora.database.annotation.processor.jdbc;
 import com.squareup.javapoet.*;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
+import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Tag;
