@@ -12,6 +12,7 @@ import ru.tinkoff.kora.test.postgres.PostgresTestContainer;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,7 +35,7 @@ class R2dbcDatabaseTest {
             3,
             2,
             0,
-            null
+            Collections.emptyMap()
         );
         var db = new R2dbcDatabase(config, List.of(), new DefaultDataBaseTelemetryFactory(null, null, null));
         db.init();
