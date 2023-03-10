@@ -30,6 +30,7 @@ class R2dbcDatabaseTest {
             Duration.ofMillis(1000L),
             Duration.ofMillis(1000L),
             Duration.ofMillis(10000L),
+            Duration.ofMillis(10000L),
             3,
             2,
             0,
