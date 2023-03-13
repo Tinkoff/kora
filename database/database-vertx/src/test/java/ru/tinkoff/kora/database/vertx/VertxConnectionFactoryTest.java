@@ -47,7 +47,8 @@ class VertxConnectionFactoryTest {
             Duration.ofMillis(1000),
             Duration.ofMillis(1000),
             Duration.ofMillis(1000),
-            1
+            1,
+            true
         );
         var db = new VertxDatabase(config, eventLoopGroup, new DefaultDataBaseTelemetryFactory(null, null, null));
         db.init().block();
