@@ -16,7 +16,8 @@ public record VertxDatabaseConfig(
     Duration connectionTimeout,
     Duration idleTimeout,
     Duration acquireTimeout,
-    int maxPoolSize) {
+    int maxPoolSize,
+    boolean cachePreparedStatements) {
 
     public VertxDatabaseConfig(
         String username,
@@ -28,7 +29,8 @@ public record VertxDatabaseConfig(
         @Nullable Duration connectionTimeout,
         @Nullable Duration idleTimeout,
         @Nullable Duration acquireTimeout,
-        @Nullable Integer maxPoolSize) {
+        @Nullable Integer maxPoolSize,
+        @Nullable Boolean cachePreparedStatements) {
         this(
             username,
             password,
@@ -39,7 +41,8 @@ public record VertxDatabaseConfig(
             defaultConnectionTimeout(connectionTimeout),
             idleTimeout != null ? idleTimeout : Duration.ofMinutes(10),
             acquireTimeout != null ? acquireTimeout : defaultConnectionTimeout(connectionTimeout),
-            maxPoolSize != null ? maxPoolSize : 10
+            maxPoolSize != null ? maxPoolSize : 10,
+            cachePreparedStatements != null ? cachePreparedStatements : true
         );
     }
 
@@ -57,7 +60,7 @@ public record VertxDatabaseConfig(
             .setPassword(this.password)
             .setConnectTimeout(Math.toIntExact(this.connectionTimeout.toMillis()))
             .setIdleTimeout(Math.toIntExact(this.idleTimeout.toMillis()))
-            .setCachePreparedStatements(true);
+            .setCachePreparedStatements(this.cachePreparedStatements);
     }
 
     public PoolOptions toPgPoolOptions() {
