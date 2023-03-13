@@ -55,7 +55,7 @@ open class ValidateFlow {
     @Valid
     @Validate(failFast = true)
     open fun validatedInputAndOutputAndFailFast(
-        @Range(from = 1.0, to = 5.0) c1: Int,
+        @Range(from = Double.MAX_VALUE.toDouble(), to = 5.0) c1: Int,
         @NotEmpty c2: String,
         @Valid c3: ValidTaz,
         c4: ValidTaz?
