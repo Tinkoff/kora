@@ -307,8 +307,8 @@ cache {
 
 Описание конфигурации Redis Cache:
 
-- expireAfterWrite - При записи устанавливает время expiration (см. https://redis.io/commands/psetex/)
-- expireAfterAccess - При чтении устанавливает время expiration (см. https://redis.io/commands/getex/)
+- expireAfterWrite - При записи устанавливает время [expiration](https://redis.io/commands/psetex/)
+- expireAfterAccess - При чтении устанавливает время [expiration](https://redis.io/commands/getex/)
 
 Предоставляет модули *DefaultRedisCacheModule* для использования Redis как дефолт реализацию кеша для приложения,
 также *RedisCacheModule* для использования Redis кеша только где указаны соответсвующее теги в аннотации.
