@@ -50,7 +50,7 @@ implementation "ru.tinkoff.kora:resilient-circuitbreaker"
 
 ```java
 @KoraApp
-public interface AppWithConfig extends CircuitBreakerModule { }
+public interface ApplicationModules extends CircuitBreakerModule { }
 ```
 
 #### Example
@@ -164,7 +164,7 @@ implementation "ru.tinkoff.kora:resilient-retry"
 
 ```java
 @KoraApp
-public interface AppWithConfig extends RetryableModule { }
+public interface ApplicationModules extends RetryableModule { }
 ```
 
 #### Example
@@ -262,7 +262,7 @@ implementation "ru.tinkoff.kora:resilient-timeout"
 
 ```java
 @KoraApp
-public interface AppWithConfig extends TimeoutModule { }
+public interface ApplicationModules extends TimeoutModule { }
 ```
 
 #### Example
@@ -329,7 +329,7 @@ implementation "ru.tinkoff.kora:resilient-fallback"
 
 ```java
 @KoraApp
-public interface AppWithConfig extends FallbackModule { }
+public interface ApplicationModules extends FallbackModule { }
 ```
 
 #### Example

@@ -2,6 +2,11 @@
 
 Модуль предоставляет AOP реализацию Cache'ей.
 
+## Implementations
+
+- [Caffeine](#caffeine)
+- [Redis](#redis)
+
 ## Examples
 
 Допустим имеется класс:
@@ -214,7 +219,7 @@ public class CacheableTargetMono {
 Конфигурация будет выглядеть следующим образом:
 ```java
 @KoraApp
-public interface AppWithConfig
+public interface ApplicationModules
     extends RedisCacheModule,     // Только размеченные в аннотации
     DefaultCaffeineCacheModule {  // Дефолтый кэш
 }
@@ -293,6 +298,32 @@ cache {
 }
 ```
 
+### Dependencies
+
+**Java**:
+```groovy
+annotationProcessor "ru.tinkoff.kora:annotation-processors"
+implementation "ru.tinkoff.kora:cache-caffeine"
+```
+
+**Kotlin**:
+```groovy
+ksp "ru.tinkoff.kora:annotation-processors"
+implementation "ru.tinkoff.kora:cache-caffeine"
+```
+
+[Default Module](#несколько-кешей):
+```java
+@KoraApp
+public interface ApplicationModules extends DefaultCaffeineCacheModule { }
+```
+
+Module для кеша с тэгом:
+```java
+@KoraApp
+public interface ApplicationModules extends CaffeineCacheModule { }
+```
+
 ### Redis
 
 Описание конфигурации подключения к Redis (Lettuce клиент):
@@ -335,6 +366,32 @@ cache {
     }
   }
 }
+```
+
+#### Dependencies
+
+**Java**:
+```groovy
+annotationProcessor "ru.tinkoff.kora:annotation-processors"
+implementation "ru.tinkoff.kora:cache-redis"
+```
+
+**Kotlin**:
+```groovy
+ksp "ru.tinkoff.kora:annotation-processors"
+implementation "ru.tinkoff.kora:cache-redis"
+```
+
+[Default Module](#несколько-кешей):
+```java
+@KoraApp
+public interface ApplicationModules extends DefaultRedisCacheModule { }
+```
+
+Module для кеша с тэгом:
+```java
+@KoraApp
+public interface ApplicationModules extends RedisCacheModule { }
 ```
 
 ### Loadable cache

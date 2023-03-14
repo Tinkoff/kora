@@ -18,6 +18,12 @@ ksp "ru.tinkoff.kora:symbol-processors"
 implementation "ru.tinkoff.kora:validation:validation-common"
 ```
 
+Module:
+```java
+@KoraApp
+public interface ApplicationModules extends ValidatorModule { }
+```
+
 ## Validation
 
 Для валидации используются предоставленные фреймворком аннотации, также есть возможность создавать на базе этого свои собственные [аннотации валидации](#create-custom-annotation).
