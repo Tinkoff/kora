@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.database.common.annotation.processor.jdbc;
 
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.database.common.UpdateCount;
 
 import java.sql.SQLException;
@@ -9,7 +8,8 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class JdbcMonoResultsTest extends AbstractJdbcRepositoryTest {
     @Test
@@ -22,11 +22,9 @@ public class JdbcMonoResultsTest extends AbstractJdbcRepositoryTest {
             }
             """);
 
-        @SuppressWarnings("unchecked")
-        var result = (Mono<Void>) repository.invoke("returnVoid");
-        verify(executor.preparedStatement, never()).execute();
+        var result = repository.invoke("returnVoid");
 
-        result.block();
+        assertThat(result).isNull();
         verify(executor.preparedStatement).execute();
     }
 
@@ -41,12 +39,9 @@ public class JdbcMonoResultsTest extends AbstractJdbcRepositoryTest {
             """);
         when(executor.preparedStatement.executeLargeUpdate()).thenReturn(42L);
 
-        @SuppressWarnings("unchecked")
-        var updateCount = (Mono<UpdateCount>) repository.invoke("returnUpdateCount");
+        var updateCount = repository.<UpdateCount>invoke("returnUpdateCount");
 
-        verify(executor.preparedStatement, never()).executeLargeUpdate();
-
-        assertThat(updateCount.block().value()).isEqualTo(42);
+        assertThat(updateCount.value()).isEqualTo(42);
         verify(executor.preparedStatement).executeLargeUpdate();
     }
 

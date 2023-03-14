@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.database.annotation.processor.r2dbc;
 
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
@@ -67,7 +68,7 @@ public class R2dbcStatementSetterGenerator {
 
             if (parameter instanceof QueryParameter.EntityParameter entityParameter) {
                 for (var field : entityParameter.entity().columns()) {
-                    var fieldAccessor = field.accessor();
+                    var fieldAccessor = CodeBlock.of("$N.$L()", parameterName, field.accessor());
 
                     var sqlParameter = sqlWithParameters.find(field.queryParameterName(entityParameter.name()));
                     if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
@@ -97,7 +98,7 @@ public class R2dbcStatementSetterGenerator {
                     } else {
                         var mapper = parameterMappers.get(R2dbcTypes.PARAMETER_COLUMN_MAPPER, field.type(), field.element());
                         for (var index : sqlParameter.sqlIndexes()) {
-                            b.addCode("$L.apply(_stmt, $L, $N.$N());\n", mapper, index, parameterName, fieldAccessor);
+                            b.addCode("$L.apply(_stmt, $L, $L);\n", mapper, index, fieldAccessor);
                         }
                     }
                 }

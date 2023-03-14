@@ -5,7 +5,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
-import ru.tinkoff.kora.database.annotation.processor.DbUtils;
 import ru.tinkoff.kora.database.annotation.processor.QueryWithParameters;
 import ru.tinkoff.kora.database.annotation.processor.model.QueryParameter;
 
@@ -48,20 +47,20 @@ public class ParametersToTupleBuilder {
                         var mapperName = parameterMappers.get(VertxTypes.PARAMETER_COLUMN_MAPPER, simpleParameter.type(), simpleParameter.variable());
                         sink.accept(new Param(
                             sqlParameter.sqlIndexes(),
-                            simpleParameter.variable().getSimpleName().toString(),
+                            e.getKey(),
                             CodeBlock.of("$N.apply($L)", mapperName, e.getKey())
                         ));
                     } else if (mapping != null) {
                         var mapperName = parameterMappers.get(mapping.mapperClass(), mapping.mapperTags());
                         sink.accept(new Param(
                             sqlParameter.sqlIndexes(),
-                            simpleParameter.variable().getSimpleName().toString(),
+                            e.getKey(),
                             CodeBlock.of("$N.apply($L)", mapperName, e.getKey())
                         ));
                     } else {
                         sink.accept(new Param(
                             sqlParameter.sqlIndexes(),
-                            simpleParameter.variable().getSimpleName().toString(),
+                            e.getKey(),
                             CodeBlock.of("$L", e.getKey())
                         ));
                     }
@@ -72,7 +71,7 @@ public class ParametersToTupleBuilder {
                         if (sqlParameter == null || sqlParameter.sqlIndexes().isEmpty()) {
                             continue;
                         }
-                        var variableName = field.variableName();
+                        var variableName = e.getKey() + "_" + field.variableName();
                         var fieldAccessor = CodeBlock.of("$N.$N()", e.getKey(), field.accessor());
                         var nativeType = VertxNativeTypes.find(TypeName.get(field.type()));
                         var mapping = CommonUtils.parseMapping(field.element()).getMapping(VertxTypes.PARAMETER_COLUMN_MAPPER);
@@ -90,7 +89,7 @@ public class ParametersToTupleBuilder {
                                 CodeBlock.of("$L.apply($L)", mapperName, fieldAccessor)
                             ));
                         } else {
-                            var mapperName = parameterMappers.get(VertxTypes.PARAMETER_COLUMN_MAPPER, field.typeMirror(), field.element());
+                            var mapperName = parameterMappers.get(VertxTypes.PARAMETER_COLUMN_MAPPER, field.type(), field.element());
                             sink.accept(new Param(
                                 sqlParameter.sqlIndexes(),
                                 variableName,

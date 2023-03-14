@@ -43,7 +43,7 @@ public class JdbcEmbeddedEntityTest extends AbstractExtensionTest {
         );
 
         var row = rowMapper.apply(rs);
-        assertThat(row).isEqualTo(newRecord("TestRecord", newRecord("EmbeddedRecord", 10, 20)));
+        assertThat(row).isEqualTo(newObject("TestRecord", newObject("EmbeddedRecord", 10, 20)));
     }
 
     @Test
@@ -62,13 +62,13 @@ public class JdbcEmbeddedEntityTest extends AbstractExtensionTest {
             of("f1_f1", "test"),
             of("f1_f2", 20)
         )))
-            .isEqualTo(newRecord("TestRecord", newRecord("EmbeddedRecord", "test", 20)));
+            .isEqualTo(newObject("TestRecord", newObject("EmbeddedRecord", "test", 20)));
 
         assertThat(rowMapper.apply(mockResultSet(
             of("f1_f1", (String) null),
             of("f1_f2", 20)
         )))
-            .isEqualTo(newRecord("TestRecord", newRecord("EmbeddedRecord", null, 20)));
+            .isEqualTo(newObject("TestRecord", newObject("EmbeddedRecord", null, 20)));
 
         assertThatThrownBy(() -> rowMapper.apply(mockResultSet(
             of("f1_f1", "test"),
@@ -95,12 +95,12 @@ public class JdbcEmbeddedEntityTest extends AbstractExtensionTest {
         assertThat(rowMapper.apply(mockResultSet(
             of("f1_f1", 10),
             of("f1_f2", 20)
-        ))).isEqualTo(newRecord("TestRecord", newRecord("EmbeddedRecord", 10, 20)));
+        ))).isEqualTo(newObject("TestRecord", newObject("EmbeddedRecord", 10, 20)));
 
         assertThat(rowMapper.apply(mockResultSet(
             of("f1_f1", (Integer) null),
             of("f1_f2", (Integer) null)
-        ))).isEqualTo(newRecord("TestRecord", new Object[]{null}));
+        ))).isEqualTo(newObject("TestRecord", new Object[]{null}));
 
         assertThatThrownBy(() -> rowMapper.apply(mockResultSet(
             of("f1_f1", 10),
