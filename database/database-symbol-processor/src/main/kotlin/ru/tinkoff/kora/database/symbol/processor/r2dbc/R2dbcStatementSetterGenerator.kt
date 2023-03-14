@@ -70,7 +70,7 @@ object R2dbcStatementSetterGenerator {
                         if (parameter.type.isMarkedNullable || field.type.isMarkedNullable) {
                             b.beginControlFlow("if (%L != null)", accessor)
                         }
-                        b.addCode(nativeType.bind("_stmt", fieldValue, sqlIndex)).addCode("\n")
+                        b.addCode(nativeType.bind("_stmt", accessor, sqlIndex)).addCode("\n")
                         if (parameter.type.isMarkedNullable || field.type.isMarkedNullable) {
                             b.nextControlFlow("else")
                             b.addCode(nativeType.bindNull("_stmt", sqlIndex)).addCode("\n")
