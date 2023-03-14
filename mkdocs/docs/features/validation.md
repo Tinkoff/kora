@@ -342,10 +342,12 @@ public record Foo(@MyValid String number) { }
 Поддерживаемые типы возвращаемых методов для AOP:
 
 Java:
-* Обычный метод
-* Project Reactor (Mono & Flux)
+
+- Обычный метод
+- Project Reactor (Mono & Flux)
 
 Kotlin:
-* Обычный метод
-* Suspend
-* Flow
+
+- Обычный метод
+- Suspend
+- Flow
