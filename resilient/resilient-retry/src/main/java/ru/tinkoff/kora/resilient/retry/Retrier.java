@@ -3,6 +3,7 @@ package ru.tinkoff.kora.resilient.retry;
 import reactor.util.retry.Retry;
 
 import javax.annotation.Nonnull;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 /**
@@ -17,7 +18,7 @@ public interface Retrier {
 
         boolean canRetry(@Nonnull Throwable throwable);
 
-        void checkRetry(@Nonnull Throwable throwable) throws RetryException;
+        void checkRetry(@Nonnull Throwable throwable) ;
 
         long getDelayNanos();
 
@@ -36,9 +37,9 @@ public interface Retrier {
     @Nonnull
     Retry asReactor();
 
-    void retry(@Nonnull Runnable runnable) throws RetryException;
+    void retry(@Nonnull Runnable runnable);
 
-    <T> T retry(@Nonnull Supplier<T> supplier) throws RetryException;
+    <T> T retry(@Nonnull Supplier<T> supplier);
 
-    <T> T retry(@Nonnull Supplier<T> supplier, Supplier<T> fallback) throws RetryException;
+    <T> T retry(@Nonnull Supplier<T> supplier, Supplier<T> fallback);
 }

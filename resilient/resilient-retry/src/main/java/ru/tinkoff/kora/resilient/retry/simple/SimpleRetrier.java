@@ -4,14 +4,11 @@ import reactor.util.retry.Retry;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
-import ru.tinkoff.kora.resilient.retry.RetryException;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -41,28 +38,30 @@ record SimpleRetrier(String name,
     }
 
     @Override
-    public void retry(@Nonnull Runnable runnable) throws RetryException {
+    public void retry(@Nonnull Runnable runnable) {
         internalRetry(e -> e.submit(runnable), null);
     }
 
     @Override
-    public <T> T retry(@Nonnull Supplier<T> supplier) throws RetryException {
+    public <T> T retry(@Nonnull Supplier<T> supplier) {
         return internalRetry(e -> e.submit(supplier::get), null);
     }
 
     @Override
-    public <T> T retry(@Nonnull Supplier<T> supplier, @Nonnull Supplier<T> fallback) throws RetryException {
+    public <T> T retry(@Nonnull Supplier<T> supplier, @Nonnull Supplier<T> fallback) {
         return internalRetry(e -> e.submit(supplier::get), fallback);
     }
 
-    private <T> T internalRetry(Function<ExecutorService, Future<T>> consumer, @Nullable Supplier<T> fallback) throws RetryException {
+    private <T> T internalRetry(Function<ExecutorService, Future<T>> consumer, @Nullable Supplier<T> fallback) {
         var retryState = asState();
         for (int i = 0; i < attempts; i++) {
             try {
                 return consumer.apply(executor).get(24, TimeUnit.HOURS);
-            } catch (Throwable e) {
-                retryState.checkRetry(e);
+            } catch (ExecutionException e) {
+                retryState.checkRetry(e.getCause());
                 retryState.doDelay();
+            } catch (InterruptedException | TimeoutException e) {
+                throw new IllegalStateException(e);
             }
         }
 

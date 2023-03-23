@@ -34,9 +34,16 @@ record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, 
     private <T> T internalExecute(Function<ExecutorService, Future<T>> consumer) throws TimeoutException {
         try {
             return consumer.apply(executor).get(delayMaxNanos, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+        } catch (ExecutionException e) {
+            SimpleTimeouterUtils.doThrow(e.getCause());
+        } catch (java.util.concurrent.TimeoutException e) {
             metrics.recordTimeout(name, delayMaxNanos);
-            throw new TimeoutException(e.getMessage());
+            throw new TimeoutException("Timeout exceeded " + timeout());
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
         }
+
+        // is not executed
+        throw new IllegalStateException("Should not happen");
     }
 }

@@ -15,7 +15,15 @@ public interface Timeouter {
     @Nonnull
     Duration timeout();
 
+    /**
+     * @param runnable to execute
+     * @throws TimeoutException when timed out
+     */
     void execute(@Nonnull Runnable runnable) throws TimeoutException;
 
+    /**
+     * @param supplier to execute
+     * @throws TimeoutException when timed out
+     */
     <T> T execute(@Nonnull Supplier<T> supplier) throws TimeoutException;
 }

@@ -3,7 +3,6 @@ package ru.tinkoff.kora.resilient.retry.simple;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
-import ru.tinkoff.kora.resilient.retry.RetryException;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
@@ -36,11 +35,9 @@ record SimpleRetrierRetryState(
     }
 
     @Override
-    public void checkRetry(@Nonnull Throwable throwable) throws RetryException {
+    public void checkRetry(@Nonnull Throwable throwable) {
         if (!failurePredicate.test(throwable)) {
-            throw (throwable instanceof RuntimeException re)
-                ? re
-                : new RetryException(throwable);
+            SimpleRetrierUtils.doThrow(throwable);
         }
 
         if (attempts.incrementAndGet() > attemptsMax) {

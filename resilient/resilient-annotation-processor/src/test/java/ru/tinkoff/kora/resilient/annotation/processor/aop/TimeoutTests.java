@@ -32,7 +32,7 @@ class TimeoutTests extends AppRunner {
         var service = getService();
 
         // then
-        assertThrows(RuntimeException.class, () -> service.getValueMono().block());
+        assertThrows(TimeoutException.class, () -> service.getValueMono().block());
     }
 
     @Test
@@ -41,6 +41,6 @@ class TimeoutTests extends AppRunner {
         var service = getService();
 
         // when
-        assertThrows(RuntimeException.class, () -> service.getValueFlux().blockFirst());
+        assertThrows(TimeoutException.class, () -> service.getValueFlux().blockFirst());
     }
 }
