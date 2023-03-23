@@ -206,6 +206,7 @@ public final class ValidAnnotationProcessor extends AbstractKoraProcessor {
             .filter(e -> e.getKind() == ElementKind.FIELD)
             .filter(e -> e instanceof VariableElement)
             .map(e -> ((VariableElement) e))
+            .filter(e -> !e.getModifiers().contains(Modifier.STATIC))
             .toList();
     }
 

@@ -10,6 +10,8 @@ import java.util.List;
 @Component
 public class ValidateMono {
 
+    public static final String IGNORED = "ops";
+
     @Validate
     public Mono<Integer> validatedInput(@Range(from = 1, to = 5) int c1,
                                         @NotEmpty String c2,

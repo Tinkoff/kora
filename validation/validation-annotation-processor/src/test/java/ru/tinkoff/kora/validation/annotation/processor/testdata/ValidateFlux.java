@@ -11,6 +11,8 @@ import java.util.List;
 @Component
 public class ValidateFlux {
 
+    public static final String IGNORED = "ops";
+
     @Validate
     public Flux<Void> validatedInput(@Range(from = 1, to = 5) int c1,
                                      @NotEmpty String c2,

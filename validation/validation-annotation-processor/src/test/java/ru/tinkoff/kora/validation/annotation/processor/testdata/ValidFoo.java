@@ -9,4 +9,7 @@ import java.time.OffsetDateTime;
 public record ValidFoo(@NotEmpty @Pattern("\\d+") String number,
                        @Range(from = 1, to = 10, boundary = Range.Boundary.INCLUSIVE_EXCLUSIVE) long code,
                        @Nullable OffsetDateTime timestamp,
-                       @Valid @Nullable ValidBar bar) {}
+                       @Valid @Nullable ValidBar bar) {
+
+    public static final String IGNORED = "ops";
+}

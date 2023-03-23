@@ -7,6 +7,9 @@ import java.util.List;
 
 @Valid
 public class ValidBar {
+
+    public static final String IGNORED = "ops";
+
     @Nullable
     private String id;
     @Size(min = 1, max = 5)
