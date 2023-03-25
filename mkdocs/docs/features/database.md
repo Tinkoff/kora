@@ -136,7 +136,9 @@ interface ComplexRepository extends JdbcRepository {
 ```
 ### Vert.x
 
-При подключении через `Vert.x` следует добавить `VertxDatabaseModule`. Внутри `VertxDatabaseModule` создаются экземпляры классов `VertxDatabaseConfig` и `VertxDatabase`.
+При подключении через `Vert.x` следует добавить либо `VertxDatabaseModule` из `database-vertx`, либо `VertxDatabaseModule` из `database-vertx-coroutines`. 
+Последний нужен только для Kotlin проектов, в которых используются корутины.  
+Внутри `VertxDatabaseModule` создаются экземпляры классов `VertxDatabaseConfig` и `VertxDatabase`.
 
 Параметры, описанные в классе `VertxDatabaseConfig`:
 
@@ -170,14 +172,30 @@ db {
 @Repository
 public interface WithExecutorAccessorRepository extends VertxRepository {
     default Mono<Integer> selectTwo() {
-        return this.getVertxConnectionFactory().inTx(connection -> {
-            return getVertxConnectionFactory().query(connection, new QueryContext("SELECT 2", "SELECT 2"), Tuple::tuple, rs -> {
+        var vertxConnectionFactory = getVertxConnectionFactory();
+        return vertxConnectionFactory.inTx(connection ->
+            VertxRepositoryHelper.mono(connection, vertxConnectionFactory.telemetry(), new QueryContext("SELECT 2", "SELECT 2"), Tuple.tuple(), rs -> {
                 for (var row : rs) {
                     return row.getInteger(1);
                 }
                 return null;
-            });
-        });
+            })
+        );
+    }
+}
+```
+
+Для Kotlin проектов с корутинами `VertxConnectionFactory` и `VertxRepository` используются следующим способом:
+
+```kotlin
+@Repository
+interface WithExecutorAccessorRepository : VertxRepository {
+    suspend fun selectTwo(): Int {
+        return this.vertxConnectionFactory.inTx { connection ->
+            VertxRepositoryHelper.awaitSingleOrNull(connection, vertxConnectionFactory.telemetry(), QueryContext("SELECT 2", "SELECT 2"), Tuple.tuple()) { rs ->
+                rs.first().getInteger(1)
+            }!!
+        }
     }
 }
 ```

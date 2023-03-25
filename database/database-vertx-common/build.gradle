@@ -1,7 +1,7 @@
 apply from: "${project.rootDir}/kotlin-plugin.gradle"
 
 dependencies {
-    api project(":database:database-vertx-common")
+    api project(":database:database-common")
     api project(":vertx-common")
     api project(":common")
 

@@ -17,4 +17,10 @@ object VertxTypes {
     val rowMapper = ClassName("ru.tinkoff.kora.database.vertx.mapper.result", "VertxRowMapper")
     val resultColumnMapper = ClassName("ru.tinkoff.kora.database.vertx.mapper.result", "VertxResultColumnMapper")
     val parameterColumnMapper = ClassName("ru.tinkoff.kora.database.vertx.mapper.parameter", "VertxParameterColumnMapper")
+
+    object Coroutines {
+        val connectionFactory = ClassName("ru.tinkoff.kora.database.vertx.coroutines", "VertxConnectionFactory")
+        val repository = ClassName("ru.tinkoff.kora.database.vertx.coroutines", "VertxRepository")
+        val repositoryHelper = ClassName("ru.tinkoff.kora.database.vertx.coroutines", "VertxRepositoryHelper")
+    }
 }
