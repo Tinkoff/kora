@@ -94,31 +94,31 @@ class VertxCoroutineBasedRepositoryGenerator(private val resolver: Resolver, pri
 
         if (batchParam != null) {
             if (connectionParameter == null) {
-                b.addCode("%T.awaitBatch(this.vertxConnectionFactory, _query, _batchParams)", VertxTypes.Coroutines.repositoryHelper)
+                b.addCode("%T.awaitBatch(vertxConnectionFactory, _query, _batchParams)", VertxTypes.Coroutines.repositoryHelper)
             } else {
-                b.addCode("%T.awaitBatch(%N, this.vertxConnectionFactory.telemetry(), _query, _batchParams)", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
+                b.addCode("%T.awaitBatch(%N, vertxConnectionFactory.telemetry(), _query, _batchParams)", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
             }
             if (function.returnType == resolver.builtIns.unitType) {
                 b.addCode("  \n.let {}")
             }
         } else if (isFlow) {
             if (connectionParameter == null) {
-                b.addCode("%T.flow(this.vertxConnectionFactory, _query, _tuple, %N)", VertxTypes.Coroutines.repositoryHelper, resultMapperName)
+                b.addCode("%T.flow(vertxConnectionFactory, _query, _tuple, %N)", VertxTypes.Coroutines.repositoryHelper, resultMapperName)
             } else {
-                b.addCode("%T.flow(%N, this.vertxConnectionFactory.telemetry(), _query, _tuple, %N)", VertxTypes.Coroutines.repositoryHelper, connectionParameter, resultMapperName)
+                b.addCode("%T.flow(%N, vertxConnectionFactory.telemetry(), _query, _tuple, %N)", VertxTypes.Coroutines.repositoryHelper, connectionParameter, resultMapperName)
             }
         } else {
             if (function.returnType == resolver.builtIns.unitType) {
                 if (connectionParameter == null) {
-                    b.addCode("%T.await(this.vertxConnectionFactory, _query, _tuple)", VertxTypes.Coroutines.repositoryHelper)
+                    b.addCode("%T.await(vertxConnectionFactory, _query, _tuple)", VertxTypes.Coroutines.repositoryHelper)
                 } else {
-                    b.addCode("%T.await(%N, this.vertxConnectionFactory.telemetry(), _query, _tuple)", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
+                    b.addCode("%T.await(%N, vertxConnectionFactory.telemetry(), _query, _tuple)", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
                 }
             } else {
                 if (connectionParameter == null) {
-                    b.addCode("%T.awaitSingleOrNull(this.vertxConnectionFactory, _query, _tuple", VertxTypes.Coroutines.repositoryHelper)
+                    b.addCode("%T.awaitSingleOrNull(vertxConnectionFactory, _query, _tuple", VertxTypes.Coroutines.repositoryHelper)
                 } else {
-                    b.addCode("%T.awaitSingleOrNull(%N, this.vertxConnectionFactory.telemetry(), _query, _tuple", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
+                    b.addCode("%T.awaitSingleOrNull(%N, vertxConnectionFactory.telemetry(), _query, _tuple", VertxTypes.Coroutines.repositoryHelper, connectionParameter)
                 }
                 if (function.returnType?.toTypeName() == updateCount) {
                     b.addCode(") { %T.extractUpdateCount(it) }", VertxTypes.rowSetMapper)

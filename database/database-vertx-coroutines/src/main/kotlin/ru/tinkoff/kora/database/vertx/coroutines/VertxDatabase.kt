@@ -57,7 +57,7 @@ class VertxDatabase(
 
     override fun telemetry(): DataBaseTelemetry = this.telemetry
 
-    override suspend fun <T> withConnection(callback: suspend (SqlConnection) -> T): T {
+    override suspend fun <T: Any?> withConnection(callback: suspend (SqlConnection) -> T): T {
         val ctx = Context.Kotlin.current(coroutineContext)
         val currentConnection = ctx[connectionKey]
         if (currentConnection != null) {
@@ -76,7 +76,7 @@ class VertxDatabase(
         }
     }
 
-    override suspend fun <T> inTx(callback: suspend (SqlConnection) -> T): T {
+    override suspend fun <T: Any?> inTx(callback: suspend (SqlConnection) -> T): T {
         return withConnection { connection ->
             val ctx = Context.Kotlin.current(coroutineContext)
             val currentTransaction = ctx[this.transactionKey]

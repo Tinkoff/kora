@@ -16,7 +16,7 @@ interface VertxConnectionFactory {
 
     fun telemetry(): DataBaseTelemetry
 
-    suspend fun <T> withConnection(callback: suspend (SqlConnection) -> T): T
+    suspend fun <T: Any?> withConnection(callback: suspend (SqlConnection) -> T): T
 
-    suspend fun <T> inTx(callback: suspend (SqlConnection) -> T): T
+    suspend fun <T: Any?> inTx(callback: suspend (SqlConnection) -> T): T
 }
