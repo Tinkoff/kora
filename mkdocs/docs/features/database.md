@@ -190,11 +190,11 @@ public interface WithExecutorAccessorRepository extends VertxRepository {
 ```kotlin
 @Repository
 interface WithExecutorAccessorRepository : VertxRepository {
-    suspend fun selectTwo(): Int {
+    suspend fun selectTwo(): Int? {
         return this.vertxConnectionFactory.inTx { connection ->
             VertxRepositoryHelper.awaitSingleOrNull(connection, vertxConnectionFactory.telemetry(), QueryContext("SELECT 2", "SELECT 2"), Tuple.tuple()) { rs ->
-                rs.first().getInteger(1)
-            }!!
+                rs.firstOrNull()?.getInteger(1)
+            }
         }
     }
 }
