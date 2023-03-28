@@ -1,10 +1,7 @@
 package ru.tinkoff.kora.http.common;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
     HttpHeaders EMPTY = new HttpHeadersImpl();
@@ -30,15 +27,12 @@ public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
     }
 
     default HttpHeaders with(String key, String value) {
-        @SuppressWarnings({"unchecked"})
-        Map.Entry<String, List<String>>[] entries = new Map.Entry[this.size() + 1];
-        var i = 0;
-        for (var stringListEntry : this) {
-            entries[i++] = stringListEntry;
+        Map<String, List<String>> newValues = new HashMap<>(this.size());
+        for (var entry : this) {
+            newValues.put(entry.getKey().toLowerCase(), entry.getValue());
         }
-        entries[entries.length - 1] = Map.entry(key.toLowerCase(), List.of(value));
-
-        return new HttpHeadersImpl(entries);
+        newValues.put(key.toLowerCase(), List.of(value));
+        return new HttpHeadersImpl(newValues);
     }
 
     default HttpHeaders without(String key) {
