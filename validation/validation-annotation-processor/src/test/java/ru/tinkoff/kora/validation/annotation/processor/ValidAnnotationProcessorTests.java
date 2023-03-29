@@ -2,11 +2,11 @@ package ru.tinkoff.kora.validation.annotation.processor;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import ru.tinkoff.kora.validation.common.ValidationContext;
-import ru.tinkoff.kora.validation.common.Violation;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.ValidBar;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.ValidFoo;
 import ru.tinkoff.kora.validation.annotation.processor.testdata.ValidTaz;
+import ru.tinkoff.kora.validation.common.ValidationContext;
+import ru.tinkoff.kora.validation.common.Violation;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -55,6 +55,34 @@ class ValidAnnotationProcessorTests extends ValidRunner {
         // then
         final List<Violation> violations = service.validate(value);
         assertEquals(1, violations.size());
+    }
+
+    @Test
+    void validateInnerValidatorForBlank() {
+        // given
+        var service = getBarValidator();
+        var value = new ValidBar()
+            .setId("   ")
+            .setCodes(List.of(1))
+            .setTazs(List.of());
+
+        // then
+        final List<Violation> violations = service.validate(value);
+        assertEquals(1, violations.size());
+    }
+
+    @Test
+    void validateInnerValidatorForNullId() {
+        // given
+        var service = getBarValidator();
+        var value = new ValidBar()
+            .setId(null)
+            .setCodes(List.of(1))
+            .setTazs(List.of());
+
+        // then
+        final List<Violation> violations = service.validate(value);
+        assertEquals(0, violations.size());
     }
 
     @Test

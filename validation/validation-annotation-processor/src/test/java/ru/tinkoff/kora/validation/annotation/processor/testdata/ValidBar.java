@@ -1,6 +1,8 @@
 package ru.tinkoff.kora.validation.annotation.processor.testdata;
 
-import ru.tinkoff.kora.validation.common.annotation.*;
+import ru.tinkoff.kora.validation.common.annotation.NotBlank;
+import ru.tinkoff.kora.validation.common.annotation.Size;
+import ru.tinkoff.kora.validation.common.annotation.Valid;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -11,14 +13,13 @@ public class ValidBar {
     public static final String IGNORED = "ops";
 
     @Nullable
+    @NotBlank
     private String id;
     @Size(min = 1, max = 5)
     private List<Integer> codes;
     @Valid
-    @Nullable
     private List<ValidTaz> tazs;
 
-    @Nullable
     public String getId() {
         return id;
     }
