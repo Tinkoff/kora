@@ -4,9 +4,11 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ksp.toClassName
+import com.squareup.kotlinpoet.ksp.toTypeName
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
@@ -15,17 +17,24 @@ import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlux
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isFuture
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isMono
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
-import ru.tinkoff.kora.ksp.common.exception.ProcessingError
+import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.controlFlow
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import java.util.concurrent.Future
-import javax.tools.Diagnostic
 
 @KspExperimental
 class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
     companion object {
         const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.retry.annotation.Retryable"
+        private val CanRetryResult = ClassName("ru.tinkoff.kora.resilient.retry", "Retrier", "RetryState", "CanRetryResult")
+        private val CanRetry = CanRetryResult.nestedClass("CanRetry")
+        private val CantRetry = CanRetryResult.nestedClass("CantRetry")
+        private val RetryExhausted = CanRetryResult.nestedClass("RetryExhausted")
+        private val delayMember = MemberName("kotlinx.coroutines", "delay")
+        private val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
+        private val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
+        private val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
+        private val retryMember = MemberName("kotlinx.coroutines.flow", "retryWhen")
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
@@ -59,90 +68,81 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         } else if (method.isSuspend()) {
             val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics")!!.asType(listOf()).makeNullable()
             val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
-            buildBodySuspend(method, superCall, retryableName, fieldRetrier, fieldMetric)
+            buildBodySync(method, superCall, retryableName, fieldRetrier, fieldMetric)
         } else {
-            buildBodySync(method, superCall, fieldRetrier)
+            buildBodySync(method, superCall, retryableName, fieldRetrier, null)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
-    private fun buildBodySync(
-        method: KSFunctionDeclaration, superCall: String, fieldRetrier: String
-    ): CodeBlock {
-        return if (method.isVoid()) {
-            CodeBlock.of(
-                """
-                %L.retry { %L }
-                """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall)
-            )
-        } else {
-            CodeBlock.of(
-                """
-                return %L.retry(%L)
-                """.trimIndent(), fieldRetrier, buildMethodSupplier(method, superCall)
-            )
-        }
-    }
-
-    private fun buildBodySuspend(
-        method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String
-    ): CodeBlock {
-        val delayMember = MemberName("kotlinx.coroutines", "delay")
-        val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
-        val prefix = if (method.isVoid()) "" else "return "
-
-        return CodeBlock.of(
-            """
-            val _state = %L.asState()
-            while (true) {
-                try {
-                    $prefix%L
-                } catch (e: Exception) {
-                    _state.checkRetry(e)
-                    val _delay = _state.delayNanos
-                    %L?.recordAttempt(%S, _delay)
-                    %M(_delay.%M)
+    private fun buildBodySync(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String?) = CodeBlock.builder()
+        .add("return %L.asState()", fieldRetrier).indent().add("\n")
+        .controlFlow(".use { _retryState ->", fieldRetrier) {
+            addStatement("var _cause: Exception? = null")
+            addStatement("lateinit var _result: %T", method.returnType?.resolve()?.toTypeName())
+            controlFlow("while (true)") {
+                controlFlow("try") {
+                    add("_result = ").add(buildMethodCall(method, superCall)).add("\n")
+                    addStatement("break")
+                    nextControlFlow("catch (_e: Exception)")
+                    addStatement("val _retry = _retryState.canRetry(_e)")
+                    controlFlow("if (_retry is %T)", CantRetry) {
+                        addStatement("if (_cause != null) _e.addSuppressed(_cause)")
+                        addStatement("throw _e")
+                    }
+                    controlFlow("if (_retry is %T)", RetryExhausted) {
+                        addStatement("val _exhaustedException = _retry.toException()")
+                        addStatement("if (_cause != null) _exhaustedException.addSuppressed(_cause)")
+                        addStatement("throw _exhaustedException")
+                    }
+                    controlFlow("if (_retry is %T)", CanRetry) {
+                        controlFlow("if (_cause == null)") {
+                            addStatement("_cause = _e")
+                            nextControlFlow("else")
+                            addStatement("_cause.addSuppressed(_e)")
+                        }
+                        if (method.isSuspend()) {
+                            addStatement("val _delay = _retryState.delayNanos")
+                            addStatement("%L?.recordAttempt(%S, _delay)", fieldMetric, retryName)
+                            addStatement("%M(_delay.%M)", delayMember, timeMember)
+                        } else {
+                            addStatement("_retryState.doDelay()")
+                        }
+                    }
                 }
             }
-            """.trimIndent(), fieldRetrier, buildMethodCall(method, superCall), fieldMetric, retryName, delayMember, timeMember
-        )
-    }
+            addStatement("return@use _result")
+        }
+        .unindent()
+        .add("\n")
+        .build()
 
-    private fun buildBodyFlow(
-        method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String
-    ): CodeBlock {
-        val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
-        val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
-        val retryMember = MemberName("kotlinx.coroutines.flow", "retryWhen")
-        val delayMember = MemberName("kotlinx.coroutines", "delay")
-        val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
 
-        return CodeBlock.builder().add(
-            """
-            return %M {
-                val _state = %L.asState()
-                %M(
-                    %L.%M{ cause, attempt ->
-                        _state.checkRetry(cause)
-                        val _delay = _state.delayNanos
-                        %L?.recordAttempt(%S, _delay)
-                        %M(_delay.%M)
-                        true
+    private fun buildBodyFlow(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String) =
+        CodeBlock.builder().controlFlow("return %M", flowMember) {
+            controlFlow("return@flow %L.asState().use { _retryState ->", fieldRetrier) {
+                add("%M (", emitMember).indent()
+                add(buildMethodCall(method, superCall)).add(".").controlFlow("%M { _cause, _ ->", retryMember) {
+                    addStatement("val _retry = _retryState.canRetry(_cause)")
+                    controlFlow("if (_retry is %T)", RetryExhausted) {
+                        addStatement("throw _retry.toException()")
                     }
-                )
+                    controlFlow("if (_retry is %T)", CanRetry) {
+                        addStatement("val _delay = _retryState.delayNanos")
+                        addStatement("%L?.recordAttempt(%S, _delay)", fieldMetric, retryName)
+                        addStatement("%M(_delay.%M)", delayMember, timeMember)
+                        addStatement("true")
+                        nextControlFlow("else")
+                        addStatement("false")
+                    }
+                }
+                unindent().add("\n").add(")\n")
             }
-            """.trimIndent(), flowMember, fieldRetrier, emitMember, buildMethodCall(method, superCall),
-            retryMember, fieldMetric, retryName, delayMember, timeMember
-        ).build()
-    }
+        }
+            .build()
 
     private fun buildMethodCall(method: KSFunctionDeclaration, call: String): CodeBlock {
         return CodeBlock.of(method.parameters.asSequence().map { p -> CodeBlock.of("%L", p) }.joinToString(", ", "$call(", ")"))
-    }
-
-    private fun buildMethodSupplier(method: KSFunctionDeclaration, call: String): CodeBlock {
-        val supplierMember = MemberName("java.util.function", "Supplier")
-        return CodeBlock.of("%M{ %L }", supplierMember, buildMethodCall(method, call))
     }
 }

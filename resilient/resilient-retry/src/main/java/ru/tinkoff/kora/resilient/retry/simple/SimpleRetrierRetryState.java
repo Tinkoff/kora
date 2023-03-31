@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.retry.simple;
 
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
-import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
@@ -26,23 +25,16 @@ record SimpleRetrierRetryState(
     }
 
     @Override
-    public boolean canRetry(@Nonnull Throwable throwable) {
+    public Retrier.RetryState.CanRetryResult canRetry(@Nonnull Throwable throwable) {
         if (!failurePredicate.test(throwable)) {
-            return false;
+            return CanRetryResult.CantRetry.INSTANCE;
         }
 
-        return attempts.incrementAndGet() <= attemptsMax;
-    }
-
-    @Override
-    public void checkRetry(@Nonnull Throwable throwable) {
-        if (!failurePredicate.test(throwable)) {
-            SimpleRetrierUtils.doThrow(throwable);
-        }
-
-        if (attempts.incrementAndGet() > attemptsMax) {
-            metrics.recordExhaustedAttempts(name, attemptsMax);
-            throw new RetryAttemptException("All '" + attemptsMax + "' attempts elapsed during retry");
+        var attempts = this.attempts.incrementAndGet();
+        if (attempts <= attemptsMax) {
+            return CanRetryResult.CanRetry.INSTANCE;
+        } else {
+            return new CanRetryResult.RetryExhausted(attempts);
         }
     }
 
@@ -51,6 +43,13 @@ record SimpleRetrierRetryState(
         long nextDelayNanos = getDelayNanos();
         metrics.recordAttempt(name, nextDelayNanos);
         sleepUninterruptibly(nextDelayNanos);
+    }
+
+    @Override
+    public void close() {
+        if (attempts.get() > attemptsMax) {
+            metrics.recordExhaustedAttempts(name, attemptsMax);
+        }
     }
 
     private static void sleepUninterruptibly(final long sleepForNanos) {

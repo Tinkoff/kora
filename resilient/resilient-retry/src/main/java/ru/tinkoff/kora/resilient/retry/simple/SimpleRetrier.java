@@ -3,26 +3,37 @@ package ru.tinkoff.kora.resilient.retry.simple;
 import reactor.util.retry.Retry;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
-import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-record SimpleRetrier(String name,
-                     long delayNanos,
-                     long delayStepNanos,
-                     int attempts,
-                     RetrierFailurePredicate failurePredicate,
-                     RetryMetrics metrics,
-                     ExecutorService executor) implements Retrier {
+final class SimpleRetrier implements Retrier {
+    private final String name;
+    private final long delayNanos;
+    private final long delayStepNanos;
+    private final int attempts;
+    private final RetrierFailurePredicate failurePredicate;
+    private final RetryMetrics metrics;
 
-    public SimpleRetrier(String name, SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, RetryMetrics metrics, ExecutorService executors) {
-        this(name, config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, metrics, executors);
+    SimpleRetrier(String name,
+                  long delayNanos,
+                  long delayStepNanos,
+                  int attempts,
+                  RetrierFailurePredicate failurePredicate,
+                  RetryMetrics metrics) {
+        this.name = name;
+        this.delayNanos = delayNanos;
+        this.delayStepNanos = delayStepNanos;
+        this.attempts = attempts;
+        this.failurePredicate = failurePredicate;
+        this.metrics = metrics;
+    }
+
+    public SimpleRetrier(String name, SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, RetryMetrics metric) {
+        this(name, config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, metric);
     }
 
     @Nonnull
@@ -39,36 +50,60 @@ record SimpleRetrier(String name,
 
     @Override
     public void retry(@Nonnull Runnable runnable) {
-        internalRetry(e -> e.submit(runnable), null);
+        internalRetry(() -> {
+            runnable.run();
+            return null;
+        }, null);
     }
 
     @Override
     public <T> T retry(@Nonnull Supplier<T> supplier) {
-        return internalRetry(e -> e.submit(supplier::get), null);
+        return internalRetry(supplier, null);
     }
 
     @Override
     public <T> T retry(@Nonnull Supplier<T> supplier, @Nonnull Supplier<T> fallback) {
-        return internalRetry(e -> e.submit(supplier::get), fallback);
+        return internalRetry(supplier, fallback);
     }
 
-    private <T> T internalRetry(Function<ExecutorService, Future<T>> consumer, @Nullable Supplier<T> fallback) {
-        var retryState = asState();
-        for (int i = 0; i < attempts; i++) {
-            try {
-                return consumer.apply(executor).get(24, TimeUnit.HOURS);
-            } catch (ExecutionException e) {
-                retryState.checkRetry(e.getCause());
-                retryState.doDelay();
-            } catch (InterruptedException | TimeoutException e) {
-                throw new IllegalStateException(e);
-            }
+    private <T> T internalRetry(Supplier<T> consumer, @Nullable Supplier<T> fallback) {
+        var cause = (Exception) null;
+        try (var retryState = asState()) {
+            while (true)
+                try {
+                    return consumer.get();
+                } catch (Exception e) {
+                    var retry = retryState.canRetry(e);
+                    if (retry instanceof RetryState.CanRetryResult.CantRetry) {
+                        throw e;
+                    }
+                    if (retry instanceof RetryState.CanRetryResult.RetryExhausted exhausted) {
+                        if (fallback != null) {
+                            try {
+                                return fallback.get();
+                            } catch (Exception ex) {
+                                if (cause != null) {
+                                    ex.addSuppressed(cause);
+                                }
+                                throw ex;
+                            }
+                        }
+                        var exhaustedException = exhausted.toException();
+                        if (cause != null) {
+                            exhaustedException.addSuppressed(cause);
+                        }
+                        throw exhaustedException;
+                    }
+                    if (retry instanceof RetryState.CanRetryResult.CanRetry) {
+                        if (cause == null) {
+                            cause = e;
+                        } else {
+                            cause.addSuppressed(e);
+                        }
+                        retryState.doDelay();
+                    }
+                }
         }
 
-        if (fallback != null) {
-            return fallback.get();
-        }
-
-        throw new RetryAttemptException("All '" + attempts + "' attempts elapsed during retry");
     }
 }
