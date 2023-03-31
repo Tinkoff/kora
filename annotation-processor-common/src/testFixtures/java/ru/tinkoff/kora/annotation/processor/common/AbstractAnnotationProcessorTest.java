@@ -82,11 +82,14 @@ public abstract class AbstractAnnotationProcessorTest {
                         if (classStart < 19) {
                             classStart = s.indexOf("public interface ") + 17;
                             if (classStart < 17) {
-                                classStart = s.indexOf("public record ") + 14;
-                                if (classStart < 14) {
-                                    classStart = s.indexOf("public enum ") + 12;
-                                    if (classStart < 12) {
-                                        throw new IllegalArgumentException();
+                                classStart = s.indexOf("public @interface ") + 18;
+                                if (classStart < 18) {
+                                    classStart = s.indexOf("public record ") + 14;
+                                    if (classStart < 14) {
+                                        classStart = s.indexOf("public enum ") + 12;
+                                        if (classStart < 12) {
+                                            throw new IllegalArgumentException();
+                                        }
                                     }
                                 }
                             }
@@ -127,6 +130,22 @@ public abstract class AbstractAnnotationProcessorTest {
         try {
             var clazz = this.compileResult.loadClass(className);
             return clazz.getConstructors()[0].newInstance(params);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Object enumConstant(String className, String name) {
+        try {
+            var clazz = this.compileResult.loadClass(className);
+            assert clazz.isEnum();
+            for (var enumConstant : clazz.getEnumConstants()) {
+                var e = (Enum<?>) enumConstant;
+                if (e.name().equals(name)) {
+                    return e;
+                }
+            }
+            throw new RuntimeException("Invalid enum constant: " + name);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

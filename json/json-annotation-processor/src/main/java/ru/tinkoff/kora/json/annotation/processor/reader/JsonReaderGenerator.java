@@ -5,30 +5,23 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.squareup.javapoet.*;
+import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
-import ru.tinkoff.kora.common.annotation.Generated;
+import ru.tinkoff.kora.json.annotation.processor.JsonTypes;
 import ru.tinkoff.kora.json.annotation.processor.JsonUtils;
 import ru.tinkoff.kora.json.annotation.processor.KnownType;
 import ru.tinkoff.kora.json.annotation.processor.reader.JsonClassReaderMeta.FieldMeta;
 import ru.tinkoff.kora.json.annotation.processor.reader.ReaderFieldType.KnownTypeReaderMeta;
-import ru.tinkoff.kora.json.common.EnumJsonReader;
-import ru.tinkoff.kora.json.common.JsonReader;
 
 import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.UUID;
@@ -37,20 +30,9 @@ import static com.fasterxml.jackson.core.JsonToken.*;
 
 public class JsonReaderGenerator {
     private final Types types;
-    private final Elements elements;
-    private final TypeElement readerErasure;
-    private final DeclaredType enumType;
 
     public JsonReaderGenerator(ProcessingEnvironment processingEnvironment) {
         this.types = processingEnvironment.getTypeUtils();
-        this.elements = processingEnvironment.getElementUtils();
-        this.readerErasure = (TypeElement) this.types.asElement(
-            this.types.erasure(this.elements.getTypeElement(JsonReader.class.getCanonicalName()).asType())
-        );
-        this.enumType = this.types.getDeclaredType(
-            this.elements.getTypeElement(Enum.class.getCanonicalName()),
-            this.types.getWildcardType(null, null)
-        );
     }
 
     @Nullable
@@ -67,19 +49,13 @@ public class JsonReaderGenerator {
     }
 
     private TypeSpec generateForClass(JsonClassReaderMeta meta) {
-        var readerInterface = this.types.getDeclaredType(this.readerErasure, meta.typeMirror());
-
         var typeBuilder = TypeSpec.classBuilder(JsonUtils.jsonReaderName(meta.typeElement()))
-            .addAnnotation(AnnotationSpec.builder(Generated.class)
+            .addAnnotation(AnnotationSpec.builder(CommonClassNames.koraGenerated)
                 .addMember("value", CodeBlock.of("$S", JsonReaderGenerator.class.getCanonicalName()))
                 .build())
-            .addSuperinterface(readerInterface)
+            .addSuperinterface(ParameterizedTypeName.get(JsonTypes.jsonReader, TypeName.get(meta.typeMirror())))
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addOriginatingElement(meta.typeElement());
-        if (this.types.isAssignable(meta.typeMirror(), this.enumType)) {
-            return this.generateForEnum(meta, typeBuilder);
-        }
-
 
         for (TypeParameterElement typeParameter : meta.typeElement().getTypeParameters()) {
             typeBuilder.addTypeVariable(TypeVariableName.get(typeParameter));
@@ -95,7 +71,7 @@ public class JsonReaderGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addException(IOException.class)
             .addParameter(TypeName.get(JsonParser.class), "_parser")
-            .returns(ClassName.get(meta.typeElement()))
+            .returns(TypeName.get(meta.typeElement().asType()))
             .addAnnotation(Override.class)
             .addAnnotation(Nullable.class);
         method.addStatement("var _token = _parser.currentToken()");
@@ -182,27 +158,6 @@ public class JsonReaderGenerator {
 
         typeBuilder.addMethod(method.build());
 
-        return typeBuilder.build();
-    }
-
-    private TypeSpec generateForEnum(JsonClassReaderMeta meta, TypeSpec.Builder typeBuilder) {
-        var delegateType = ParameterizedTypeName.get(ClassName.get(EnumJsonReader.class), TypeName.get(meta.typeMirror()));
-
-        typeBuilder.addField(delegateType, "delegate", Modifier.PRIVATE, Modifier.FINAL);
-        typeBuilder.addMethod(MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addCode("this.delegate = new $T<>($T.values(), v -> v.toString());\n", EnumJsonReader.class, meta.typeMirror())
-            .build());
-        typeBuilder.addMethod(MethodSpec.methodBuilder("read")
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addException(IOException.class)
-            .addParameter(TypeName.get(JsonParser.class), "_parser")
-            .returns(ClassName.get(meta.typeElement()))
-            .addAnnotation(Override.class)
-            .addAnnotation(Nullable.class)
-            .addCode("return this.delegate.read(_parser);\n")
-            .build()
-        );
         return typeBuilder.build();
     }
 
@@ -325,23 +280,18 @@ public class JsonReaderGenerator {
                 var fieldType = TypeName.get(field.reader());
                 var readerField = FieldSpec.builder(fieldType, fieldName, Modifier.PRIVATE, Modifier.FINAL);
                 var readerElement = (TypeElement) this.types.asElement(field.reader());
-                if (readerElement.getModifiers().contains(Modifier.FINAL)) {
-                    var constructors = readerElement.getEnclosedElements().stream()
-                        .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
-                        .toList();
-                    if (constructors.size() == 1) {
-                        readerField.addModifiers(Modifier.STATIC);
-                        readerField.initializer("new $T()", field.reader());
-                        typeBuilder.addField(readerField.build());
-                        continue;
-                    }
+                if (CommonUtils.hasDefaultConstructorAndFinal(readerElement)) {
+                    readerField.addModifiers(Modifier.STATIC);
+                    readerField.initializer("new $T()", field.reader());
+                    typeBuilder.addField(readerField.build());
+                    continue;
                 }
                 typeBuilder.addField(readerField.build());
                 constructor.addParameter(fieldType, fieldName);
                 constructor.addStatement("this.$L = $L", fieldName, fieldName);
             } else if (field.typeMeta() instanceof ReaderFieldType.UnknownTypeReaderMeta) {
                 var fieldName = this.readerFieldName(field);
-                var fieldType = ParameterizedTypeName.get(ClassName.get(JsonReader.class), TypeName.get(field.typeMirror()));
+                var fieldType = ParameterizedTypeName.get(JsonTypes.jsonReader, field.typeName());
                 var readerField = FieldSpec.builder(fieldType, fieldName, Modifier.PRIVATE, Modifier.FINAL);
                 constructor.addParameter(fieldType, fieldName);
                 constructor.addStatement("this.$L = $L", fieldName, fieldName);
@@ -361,7 +311,7 @@ public class JsonReaderGenerator {
             .addParameter(JsonParser.class, "_parser")
             .addException(IOException.class)
             .addParameter(size > 32 ? TypeName.get(BitSet.class) : ArrayTypeName.of(TypeName.INT), "_receivedFields")
-            .returns(TypeName.get(field.typeMirror()));
+            .returns(field.typeName());
         if (field.reader() != null) {
             method.addCode("var _token = _parser.nextToken();\n");
             if (!isNullable(field)) {
@@ -388,7 +338,7 @@ public class JsonReaderGenerator {
                 block.add("_receivedFields[0] = _receivedFields[0] | (1 << $L);\n", index);
             }
 
-            block.add(readKnownType(field.jsonName(), CodeBlock.of("return "), meta.knownType(), isNullable(field), field.typeMirror()));
+            block.add(readKnownType(field.jsonName(), CodeBlock.of("return "), meta.knownType(), isNullable(field), meta.typeMirror()));
             method.addCode(block.build());
             return method.build();
         }
