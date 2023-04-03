@@ -2,14 +2,14 @@ package ru.tinkoff.kora.test.extension.junit5;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent2;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent2.class, SimpleComponent12.class, Component1.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent2.class, LifecycleComponent12.class, Component1.class})
 public class ComponentJUnitExtensionTests extends Assertions {
 
     @Test
@@ -24,7 +24,7 @@ public class ComponentJUnitExtensionTests extends Assertions {
 
     @Test
     void parameterBothInjected(@TestComponent Component1 firstComponent,
-                               @TestComponent SimpleComponent12 secondComponent) {
+                               @TestComponent LifecycleComponent12 secondComponent) {
         assertEquals("1", firstComponent.get());
         assertEquals("12", secondComponent.get());
     }

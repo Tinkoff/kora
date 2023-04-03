@@ -3,34 +3,34 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent2;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent2.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent2.class})
 public class AddComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
-    private SimpleComponent2 simpleComponent2;
+    private LifecycleComponent2 lifecycleComponent2;
     @TestComponent
-    private SimpleComponent simpleComponent;
+    private LifecycleComponent added;
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .addComponent(SimpleComponent.class, () -> (SimpleComponent) () -> "?");
+            .addComponent(LifecycleComponent.class, () -> () -> "?");
     }
 
     @Test
     void fieldOriginalInjected() {
-        assertEquals("2", simpleComponent2.get());
+        assertEquals("2", lifecycleComponent2.get());
     }
 
     @Test
     void fieldAddedAndOriginalInjected() {
-        assertEquals("2", simpleComponent2.get());
-        assertEquals("?", simpleComponent.get());
+        assertEquals("2", lifecycleComponent2.get());
+        assertEquals("?", added.get());
     }
 }

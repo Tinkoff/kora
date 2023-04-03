@@ -4,11 +4,11 @@ import com.typesafe.config.Config;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
+    application = LifecycleApplication.class,
     components = {Component1.class})
 public class ConfigMethodFileWithRawWithFileAnnotationWithRawAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestConfig {
 
@@ -27,6 +27,6 @@ public class ConfigMethodFileWithRawWithFileAnnotationWithRawAnnotationJUnitExte
 
     @Test
     void parameterConfigFromMethodInjected(@TestComponent Config config) {
-        assertEquals("Config(SimpleConfigObject({\"myconfig\":{\"myinnerconfig\":{\"fourth\":4,\"myproperty\":1,\"second\":2,\"third\":3}}}))", config.toString());
+        assertEquals("Config(SimpleConfigObject({\"myconfig\":{\"myinnerconfig\":{\"fourth\":4,\"myproperty\":1,\"third\":3}}}))", config.toString());
     }
 }

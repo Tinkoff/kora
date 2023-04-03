@@ -6,23 +6,22 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
 
 import java.util.List;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent12.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent12.class})
 public class MockComponentAnyTagViaAdditionJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .addComponent(SimpleComponent.class, List.of(SimpleComponent.class), () -> {
-                var mock = Mockito.mock(SimpleComponent.class);
+            .addComponent(LifecycleComponent.class, List.of(LifecycleComponent.class), () -> {
+                var mock = Mockito.mock(LifecycleComponent.class);
                 Mockito.when(mock.get()).thenReturn("?");
                 Mockito.when(mock.init()).thenReturn(Mono.empty());
                 Mockito.when(mock.release()).thenReturn(Mono.empty());
@@ -31,7 +30,7 @@ public class MockComponentAnyTagViaAdditionJUnitExtensionTests extends Assertion
     }
 
     @Test
-    void mockWithTag2(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component) {
+    void mockWithTag2(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component) {
         assertEquals("?", component.get());
     }
 }

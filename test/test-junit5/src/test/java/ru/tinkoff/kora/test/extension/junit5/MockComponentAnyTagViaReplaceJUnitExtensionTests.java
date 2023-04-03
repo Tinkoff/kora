@@ -6,23 +6,23 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent2;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent23;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent23;
 
 import java.util.List;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent23.class, SimpleComponent2.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent23.class, LifecycleComponent2.class})
 public class MockComponentAnyTagViaReplaceJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(SimpleComponent2.class, List.of(SimpleComponent.class), () -> {
-                var mock = Mockito.mock(SimpleComponent2.class);
+            .replaceComponent(LifecycleComponent2.class, List.of(LifecycleComponent.class), () -> {
+                var mock = Mockito.mock(LifecycleComponent2.class);
                 Mockito.when(mock.get()).thenReturn("?");
                 Mockito.when(mock.init()).thenReturn(Mono.empty());
                 Mockito.when(mock.release()).thenReturn(Mono.empty());
@@ -31,12 +31,12 @@ public class MockComponentAnyTagViaReplaceJUnitExtensionTests extends Assertions
     }
 
     @Test
-    void mockWithTag2(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component) {
+    void mockWithTag2(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component) {
         assertEquals("?", component.get());
     }
 
     @Test
-    void beanWithMocks(@TestComponent SimpleComponent23 simpleComponent23) {
+    void beanWithMocks(@TestComponent LifecycleComponent23 simpleComponent23) {
         assertEquals("?3", simpleComponent23.get());
     }
 }

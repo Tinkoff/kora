@@ -3,13 +3,13 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent12.class},
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent12.class},
     mocks = {Component1.class},
     initializeMode = KoraAppTest.InitializeMode.PER_METHOD)
 public class MockComponentAnnotationJUnitExtensionTests extends Assertions {
@@ -23,7 +23,7 @@ public class MockComponentAnnotationJUnitExtensionTests extends Assertions {
 
     @Test
     void twoComponentsInjected(@TestComponent Component1 component1,
-                               @TestComponent SimpleComponent12 component12) {
+                               @TestComponent LifecycleComponent12 component12) {
         assertNull(component1.get());
         Mockito.when(component1.get()).thenReturn("?");
         assertEquals("?", component1.get());

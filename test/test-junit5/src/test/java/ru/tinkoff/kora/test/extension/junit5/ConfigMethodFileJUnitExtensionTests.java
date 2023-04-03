@@ -4,11 +4,11 @@ import com.typesafe.config.Config;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
+    application = LifecycleApplication.class,
     components = {Component1.class})
 public class ConfigMethodFileJUnitExtensionTests extends Assertions implements KoraAppTestConfig {
 

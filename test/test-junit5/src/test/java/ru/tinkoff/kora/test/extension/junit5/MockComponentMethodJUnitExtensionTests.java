@@ -4,19 +4,19 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent12.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent12.class})
 public class MockComponentMethodJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
-    private Component1 component1;
+    private Component1 mocked;
     @TestComponent
-    private SimpleComponent12 component12;
+    private LifecycleComponent12 lifecycleComponent12;
 
     @Override
     public @NotNull KoraGraphModification graph() {
@@ -26,16 +26,16 @@ public class MockComponentMethodJUnitExtensionTests extends Assertions implement
 
     @Test
     void mockInjected() {
-        assertNull(component1.get());
-        Mockito.when(component1.get()).thenReturn("1");
-        assertEquals("1", component1.get());
+        assertNull(mocked.get());
+        Mockito.when(mocked.get()).thenReturn("1");
+        assertEquals("1", mocked.get());
     }
 
     @Test
     void mockAndComponentWithMockInjected() {
-        assertNull(component1.get());
-        Mockito.when(component1.get()).thenReturn("1");
-        assertEquals("1", component1.get());
-        assertEquals("12", component12.get());
+        assertNull(mocked.get());
+        Mockito.when(mocked.get()).thenReturn("1");
+        assertEquals("1", mocked.get());
+        assertEquals("12", lifecycleComponent12.get());
     }
 }

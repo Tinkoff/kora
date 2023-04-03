@@ -3,26 +3,25 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {Component1.class})
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent.class})
 public class ReplaceComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
-    private Component1 replace1;
+    private LifecycleComponent replaced;
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(SimpleComponent.class, () -> (SimpleComponent) () -> "?");
+            .replaceComponent(LifecycleComponent.class, () -> () -> "?");
     }
 
     @Test
     void replacedAndOriginalInjected() {
-        assertEquals("?", replace1.get());
+        assertEquals("?", replaced.get());
     }
 }

@@ -5,20 +5,23 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.*;
+import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent23;
 
 import java.util.List;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
-    components = {SimpleComponent23.class},
+    application = LifecycleApplication.class,
+    components = {LifecycleComponent23.class},
     mocks = {Component1.class})
 public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .mockComponent(SimpleComponent.class, List.of(SimpleComponent.class));
+            .mockComponent(LifecycleComponent.class, List.of(LifecycleComponent.class));
     }
 
     @Test
@@ -29,15 +32,15 @@ public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions
     }
 
     @Test
-    void mockWithTag2(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component) {
+    void mockWithTag2(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
         assertEquals("?", component.get());
     }
 
     @Test
-    void beanWithMocks(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component,
-                       @TestComponent SimpleComponent23 component23) {
+    void beanWithMocks(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component,
+                       @TestComponent LifecycleComponent23 component23) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
         assertEquals("?", component.get());

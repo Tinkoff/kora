@@ -3,26 +3,28 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
 
 @KoraAppTest(
-    application = SimpleApplication.class,
+    application = LifecycleApplication.class,
     components = {Component1.class})
 public class ReplaceComponentWithBeanJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(SimpleComponent.class, g -> new SimpleComponent12(g.getFirst(Component1.class)));
+            .replaceComponent(LifecycleComponent.class, g -> {
+                final Component1 first = g.getFirst(Component1.class);
+                return () -> "?" + first.get();
+            });
     }
 
     @Test
     void replacedWithBeanFromGraphInjected(@TestComponent Component1 component1,
-                                           @TestComponent SimpleComponent replace12) {
+                                           @TestComponent LifecycleComponent replace12) {
         assertEquals("1", component1.get());
-        assertEquals("?2", replace12.get());
+        assertEquals("?1", replace12.get());
     }
 }
