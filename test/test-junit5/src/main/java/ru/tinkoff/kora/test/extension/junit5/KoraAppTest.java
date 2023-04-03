@@ -1,12 +1,9 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.extension.ExtendWith;
-import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.KoraApp;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 
 import java.lang.annotation.*;
 

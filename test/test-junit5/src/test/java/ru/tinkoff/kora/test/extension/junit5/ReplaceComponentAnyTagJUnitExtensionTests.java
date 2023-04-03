@@ -22,7 +22,7 @@ public class ReplaceComponentAnyTagJUnitExtensionTests extends Assertions implem
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(LifecycleComponent.class, List.of(Tag.Any.class), () -> () -> "?");
+            .replaceComponent(LifecycleComponent.class, List.of(Tag.Any.class), () -> (LifecycleComponent) () -> "?");
     }
 
     @Test

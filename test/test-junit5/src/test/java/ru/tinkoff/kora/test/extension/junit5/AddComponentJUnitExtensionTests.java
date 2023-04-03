@@ -20,7 +20,7 @@ public class AddComponentJUnitExtensionTests extends Assertions implements KoraA
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .addComponent(LifecycleComponent.class, () -> () -> "?");
+            .addComponent(LifecycleComponent.class, () -> (LifecycleComponent) () -> "?");
     }
 
     @Test

@@ -23,7 +23,7 @@ public class AddComponentWithBeanJUnitExtensionTests extends Assertions implemen
                 LifecycleComponent.class, List.of(LifecycleComponent23.class),
                 g -> {
                     final LifecycleComponent2 simpleComponent2 = g.getFirst(LifecycleComponent2.class, LifecycleComponent.class);
-                    return () -> "?" + simpleComponent2.get();
+                    return (LifecycleComponent) () -> "?" + simpleComponent2.get();
                 });
     }
 

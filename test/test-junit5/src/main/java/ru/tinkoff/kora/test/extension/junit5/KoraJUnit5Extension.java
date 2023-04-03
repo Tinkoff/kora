@@ -144,13 +144,13 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                     }
                 }
 
-                logger.info("@KoraAppTest Graph Modification took: {}", Duration.ofNanos(System.nanoTime() - startedModify));
+                logger.debug("@KoraAppTest modification took: {}", Duration.ofNanos(System.nanoTime() - startedModify));
             }
 
             final long startedInit = System.nanoTime();
             final RefreshableGraph initGraph = graphDraw.init().block(Duration.ofMinutes(3));
             this.graphInitialized = new GraphInitialized(initGraph, graphDraw);
-            logger.info("@KoraAppTest Graph Initialization took: {}", Duration.ofNanos(System.nanoTime() - startedInit));
+            logger.info("@KoraAppTest initialization took: {}", Duration.ofNanos(System.nanoTime() - startedInit));
         }
 
         private <V> Factory<V> getNodeFactory(Function<KoraAppGraph, V> graphFunction, ApplicationGraphDraw graphDraw) {
@@ -437,7 +437,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .orElse("");
 
         if (koraAppConfig.isBlank()) {
-            logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
+            logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
                 classes, koraAppTest.initializeMode(), koraGraphModification);
         }
@@ -452,7 +452,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             graphModificationWithConfig.addComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
         }
 
-        logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
+        logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
         return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
             classes, koraAppTest.initializeMode(), graphModificationWithConfig);
     }
@@ -530,7 +530,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(meta.application.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphSupplier = constructors[0].newInstance();
-            logger.info("@KoraAppTest loading took: {}", Duration.ofNanos(System.nanoTime() - startedLoading));
+            logger.debug("@KoraAppTest loading took: {}", Duration.ofNanos(System.nanoTime() - startedLoading));
 
             final long startedSubgraph = System.nanoTime();
             final ApplicationGraphDraw graphDraw = graphSupplier.get();
@@ -547,7 +547,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 .toArray(Node[]::new);
 
             final ApplicationGraphDraw subGraph = graphDraw.subgraph(nodesForSubGraph);
-            logger.info("@KoraAppTest subgraph took: {}", Duration.ofNanos(System.nanoTime() - startedSubgraph));
+            logger.debug("@KoraAppTest subgraph took: {}", Duration.ofNanos(System.nanoTime() - startedSubgraph));
 
             return new GraphSupplier(() -> subGraph, meta);
         } catch (ClassNotFoundException e) {

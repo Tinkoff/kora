@@ -17,7 +17,7 @@ public class ReplaceComponentWithBeanJUnitExtensionTests extends Assertions impl
         return KoraGraphModification.of()
             .replaceComponent(LifecycleComponent.class, g -> {
                 final Component1 first = g.getFirst(Component1.class);
-                return () -> "?" + first.get();
+                return (LifecycleComponent) () -> "?" + first.get();
             });
     }
 

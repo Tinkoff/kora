@@ -72,14 +72,6 @@ public final class KoraGraphModification {
     /**
      * Component that should be added to Graph Context
      */
-    public <T> KoraGraphModification addComponent(@NotNull Class<T> typeToAdd,
-                                                  @NotNull Supplier<T> instanceSupplier) {
-        return addComponent((Type) typeToAdd, instanceSupplier);
-    }
-
-    /**
-     * Component that should be added to Graph Context
-     */
     public <T> KoraGraphModification addComponent(@NotNull Type typeToAdd,
                                                   @NotNull List<Class<?>> tags,
                                                   @NotNull Supplier<T> instanceSupplier) {
@@ -94,27 +86,10 @@ public final class KoraGraphModification {
     /**
      * Component that should be added to Graph Context
      */
-    public <T> KoraGraphModification addComponent(@NotNull Class<T> typeToAdd,
-                                                  @NotNull List<Class<?>> tags,
-                                                  @NotNull Supplier<T> instanceSupplier) {
-        return addComponent((Type) typeToAdd, tags, instanceSupplier);
-    }
-
-    /**
-     * Component that should be added to Graph Context
-     */
     public <T> KoraGraphModification addComponent(@NotNull Type typeToAdd,
                                                   @NotNull Function<KoraAppGraph, T> instanceSupplier) {
         additions.add(new NodeAddition(instanceSupplier, new NodeTypeCandidate(typeToAdd)));
         return this;
-    }
-
-    /**
-     * Component that should be added to Graph Context
-     */
-    public <T> KoraGraphModification addComponent(@NotNull Class<T> typeToAdd,
-                                                  @NotNull Function<KoraAppGraph, T> instanceSupplier) {
-        return addComponent((Type) typeToAdd, instanceSupplier);
     }
 
     /**
@@ -132,29 +107,12 @@ public final class KoraGraphModification {
     }
 
     /**
-     * Component that should be added to Graph Context
-     */
-    public <T> KoraGraphModification addComponent(@NotNull Class<T> typeToAdd,
-                                                  @NotNull List<Class<?>> tags,
-                                                  @NotNull Function<KoraAppGraph, T> instanceSupplier) {
-        return addComponent((Type) typeToAdd, tags, instanceSupplier);
-    }
-
-    /**
      * Component that should replace existing one with new one
      */
     public <T> KoraGraphModification replaceComponent(@NotNull Type typeToReplace,
                                                       @NotNull Supplier<? extends T> replacementSupplier) {
         replacements.add(new NodeReplacement(g -> replacementSupplier.get(), new NodeTypeCandidate(typeToReplace)));
         return this;
-    }
-
-    /**
-     * Component that should replace existing one with new one
-     */
-    public <T> KoraGraphModification replaceComponent(@NotNull Class<T> typeToReplace,
-                                                      @NotNull Supplier<? extends T> replacementSupplier) {
-        return replaceComponent((Type) typeToReplace, replacementSupplier);
     }
 
     /**
@@ -174,27 +132,10 @@ public final class KoraGraphModification {
     /**
      * Component that should replace existing one with new one
      */
-    public <T> KoraGraphModification replaceComponent(@NotNull Class<T> typeToReplace,
-                                                      @NotNull List<Class<?>> tags,
-                                                      @NotNull Supplier<? extends T> replacementSupplier) {
-        return replaceComponent((Type) typeToReplace, tags, replacementSupplier);
-    }
-
-    /**
-     * Component that should replace existing one with new one
-     */
     public <T> KoraGraphModification replaceComponent(@NotNull Type typeToReplace,
                                                       @NotNull Function<KoraAppGraph, ? extends T> replacementSupplier) {
         replacements.add(new NodeReplacement(replacementSupplier, new NodeTypeCandidate(typeToReplace)));
         return this;
-    }
-
-    /**
-     * Component that should replace existing one with new one
-     */
-    public <T> KoraGraphModification replaceComponent(@NotNull Class<T> typeToReplace,
-                                                      @NotNull Function<KoraAppGraph, ? extends T> replacementSupplier) {
-        return replaceComponent((Type) typeToReplace, replacementSupplier);
     }
 
     /**
@@ -209,15 +150,6 @@ public final class KoraGraphModification {
             replacements.add(new NodeReplacement(replacementSupplier, new NodeTypeCandidate(typeToReplace, tags)));
             return this;
         }
-    }
-
-    /**
-     * Component that should replace existing one with new one
-     */
-    public <T> KoraGraphModification replaceComponent(@NotNull Class<T> typeToReplace,
-                                                      @NotNull List<Class<?>> tags,
-                                                      @NotNull Function<KoraAppGraph, ? extends T> replacementSupplier) {
-        return replaceComponent((Type) typeToReplace, tags, replacementSupplier);
     }
 
     /**

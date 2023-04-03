@@ -17,7 +17,7 @@ public class ReplaceComponentJUnitExtensionTests extends Assertions implements K
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(LifecycleComponent.class, () -> () -> "?");
+            .replaceComponent(LifecycleComponent.class, () -> (LifecycleComponent) () -> "?");
     }
 
     @Test
