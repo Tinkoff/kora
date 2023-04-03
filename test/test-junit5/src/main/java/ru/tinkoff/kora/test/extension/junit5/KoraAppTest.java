@@ -45,27 +45,6 @@ public @interface KoraAppTest {
     Class<?> application();
 
     /**
-     * Order configs are merged:
-     * 1) {@link KoraConfigModification}
-     * 2) {@link KoraAppTest#configFiles()}
-     * 3) {@link KoraAppTest#config()}
-     *
-     * @return application configuration files relative to resources directory
-     */
-    String[] configFiles() default {};
-
-    /**
-     * Order configs are merged:
-     * 1) {@link KoraConfigModification}
-     * 2) {@link KoraAppTest#configFiles()}
-     * 3) {@link KoraAppTest#config()}
-     *
-     * @return application configuration in HOCON format
-     */
-    @Language("HOCON")
-    String config() default "";
-
-    /**
      * @return classes that are {@link Component} and applicable for Annotation Processing and will be included in Context initialization
      */
     Class<?>[] components();
@@ -74,10 +53,4 @@ public @interface KoraAppTest {
      * @return classes that should be Mocked, types are matched with {@link Tag.Any} tag
      */
     Class<?>[] mocks() default {};
-
-    /**
-     * @return annotation processors used to process {@link #components()}
-     * @see KoraAppProcessor is included by default
-     */
-    Class<? extends AbstractKoraProcessor>[] processors() default {};
 }

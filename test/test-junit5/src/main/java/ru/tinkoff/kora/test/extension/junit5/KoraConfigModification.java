@@ -9,11 +9,6 @@ import org.intellij.lang.annotations.Language;
 import javax.annotation.Nonnull;
 
 /**
- * Order configs are merged:
- * 1) {@link KoraConfigModification}
- * 2) {@link KoraAppTest#configFiles()}
- * 3) {@link KoraAppTest#config()}
- * <p>
  * Configs inside {@link KoraConfigModification} are merged in user specified method order
  * <p>
  * All configs specified for test are merged into single config, each next config replaces values from previous configs

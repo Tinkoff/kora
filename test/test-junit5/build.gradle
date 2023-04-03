@@ -6,10 +6,9 @@ dependencies {
     implementation project(":common")
     implementation project(":config:config-common")
     implementation project(":kora-app-annotation-processor")
-
-    implementation "org.javassist:javassist:3.29.2-GA"
     implementation libs.jetbrains.annotations
 
+    testAnnotationProcessor project(":annotation-processors")
     testImplementation project(":annotation-processors")
     testImplementation project(":http:http-client-jdk")
     testImplementation project(":http:http-server-undertow")

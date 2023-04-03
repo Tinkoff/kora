@@ -3,7 +3,7 @@ package ru.tinkoff.kora.test.extension.junit5.testdata;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.Lifecycle;
 
-public interface ReplaceComponent extends Lifecycle {
+public interface SimpleComponent extends Lifecycle {
 
     String get();
 

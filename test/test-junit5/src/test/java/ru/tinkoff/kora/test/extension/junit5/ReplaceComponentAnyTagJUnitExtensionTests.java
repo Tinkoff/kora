@@ -4,37 +4,40 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceApplicationWithTag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.ReplaceComponentWithTag3;
+import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent2;
+
+import java.util.List;
 
 @KoraAppTest(
-    application = ReplaceApplicationWithTag.class,
-    components = {ReplaceComponent.class, ReplaceComponentWithTag3.class})
+    application = SimpleApplication.class,
+    components = {SimpleComponent12.class, SimpleComponent2.class})
 public class ReplaceComponentAnyTagJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
     @TestComponent
-    private ReplaceComponent replace1;
-    @Tag(ReplaceComponent.class)
+    private SimpleComponent replace1;
+    @Tag(SimpleComponent.class)
     @TestComponent
-    private ReplaceComponent replace2;
+    private SimpleComponent component2;
     @TestComponent
-    private ReplaceComponentWithTag3 replace3;
+    private SimpleComponent12 component12;
 
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.of()
-            .replaceComponent(() -> (ReplaceComponent) () -> "?", ReplaceComponent.class, Tag.Any.class);
+            .replaceComponent(SimpleComponent.class, List.of(Tag.Any.class), () -> (SimpleComponent) () -> "?");
     }
 
     @Test
     void replacedInjected() {
         assertEquals("?", replace1.get());
-        assertEquals("?", replace2.get());
+        assertEquals("2", component2.get());
     }
 
     @Test
     void componentWithReplacementInjected() {
-        assertEquals("??3", replace3.get());
+        assertEquals("?2", component12.get());
     }
 }

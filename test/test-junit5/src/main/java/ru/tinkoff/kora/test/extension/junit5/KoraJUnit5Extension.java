@@ -2,10 +2,10 @@ package ru.tinkoff.kora.test.extension.junit5;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import javassist.*;
-import javassist.bytecode.AnnotationsAttribute;
-import javassist.bytecode.annotation.Annotation;
-import javassist.bytecode.annotation.StringMemberValue;
+//import javassist.*;
+//import javassist.bytecode.AnnotationsAttribute;
+//import javassist.bytecode.annotation.Annotation;
+//import javassist.bytecode.annotation.StringMemberValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
@@ -13,9 +13,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
-import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.application.graph.Graph.Factory;
 import ru.tinkoff.kora.application.graph.Lifecycle;
@@ -24,14 +22,11 @@ import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.config.common.ConfigModule;
-import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeClassCandidate;
 import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeMock;
 
 import javax.annotation.Nullable;
 import javax.annotation.processing.Generated;
-import javax.annotation.processing.Processor;
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -113,7 +108,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
 
                 for (KoraGraphModification.NodeReplacement replacement : graphModifier.getReplacements()) {
-                    final List<Node<Object>> nodesToReplace = GraphUtils.findNodeByType(graphDraw, replacement.candidate().type(), replacement.candidate().tags());
+                    final Set<Node<Object>> nodesToReplace = GraphUtils.findNodeByType(graphDraw, replacement.candidate().type(), replacement.candidate().tags());
                     if (nodesToReplace.isEmpty()) {
                         throw new ExtensionConfigurationException("Can't find Nodes to Replace: " + replacement.candidate());
                     }
@@ -124,22 +119,35 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
 
                 for (NodeMock mock : graphModifier.getMocks()) {
-                    final List<Node<Object>> nodesToMock = GraphUtils.findNodeByType(graphDraw, mock.candidate().type(), mock.candidate().tags());
+                    final Set<Node<Object>> nodesToMock = GraphUtils.findNodeByTypeOrAssignable(graphDraw, mock.candidate().type(), mock.candidate().tags());
                     if (nodesToMock.isEmpty()) {
-                        throw new ExtensionConfigurationException("Can't find Nodes to Replace: " + mock.candidate());
-                    }
+                        final Class<?>[] tags = (mock.candidate().tags() == null)
+                            ? TAGS_EMPTY
+                            : mock.candidate().tags();
 
-                    for (Node<Object> nodeToMock : nodesToMock) {
-                        graphDraw.replaceNode(nodeToMock, g -> {
-                            var replacement = Mockito.mock(mock.candidate().type());
+                        graphDraw.addNode0(mock.candidate().type(), tags, getNodeFactory(g -> {
+                            var addition = Mockito.mock(mock.candidate().type());
 
                             if (Lifecycle.class.isAssignableFrom(mock.candidate().type())) {
-                                Mockito.when(((Lifecycle) replacement).init()).thenReturn(Mono.empty());
-                                Mockito.when(((Lifecycle) replacement).release()).thenReturn(Mono.empty());
+                                Mockito.when(((Lifecycle) addition).init()).thenReturn(Mono.empty());
+                                Mockito.when(((Lifecycle) addition).release()).thenReturn(Mono.empty());
                             }
 
-                            return replacement;
-                        });
+                            return addition;
+                        }, graphDraw));
+                    } else {
+                        for (Node<Object> nodeToMock : nodesToMock) {
+                            graphDraw.replaceNode(nodeToMock, g -> {
+                                var replacement = Mockito.mock(mock.candidate().type());
+
+                                if (Lifecycle.class.isAssignableFrom(mock.candidate().type())) {
+                                    Mockito.when(((Lifecycle) replacement).init()).thenReturn(Mono.empty());
+                                    Mockito.when(((Lifecycle) replacement).release()).thenReturn(Mono.empty());
+                                }
+
+                                return replacement;
+                            });
+                        }
                     }
                 }
 
@@ -255,22 +263,17 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
     record GraphInitialized(RefreshableGraph refreshableGraph, ApplicationGraphDraw graphDraw) {}
 
-    record KoraAppMeta(Application application,
+    record KoraAppMeta(Class<?> application,
                        String configuration,
-                       Class<?> aggregator,
                        List<Class<?>> classes,
-                       List<Class<? extends AbstractKoraProcessor>> processors,
                        KoraAppTest.InitializeMode shareMode,
-                       @Nullable KoraGraphModification graphModifier) {
+                       @Nullable KoraGraphModification graphModifier) {}
 
-        record Application(Class<?> generated, Class<?> original) {}
-    }
-
-    record TestComponentCandidate(Class<?> type, Class<?>[] tags) {
+    record TestComponentCandidate(Type type, Class<?>[] tags) {
 
         @Override
         public String toString() {
-            return "[type=" + type.getCanonicalName() + ", tags=" + Arrays.toString(tags) + ']';
+            return "[type=" + type + ", tags=" + Arrays.toString(tags) + ']';
         }
     }
 
@@ -399,18 +402,11 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .sorted(Comparator.comparing(n -> n.candidate().type().getTypeName()))
             .toList();
 
-        var processors = Stream.concat(Stream.of(KoraAppProcessor.class), Arrays.stream(koraAppTest.processors()))
-            .distinct()
-            .sorted(Comparator.comparing(Class::getCanonicalName))
-            .collect(Collectors.toList());
-
-        var aggregator = generateAggregatorClass(koraAppTest, context);
-
         final KoraGraphModification koraGraphModification = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestGraph)
             .map(inst -> ((KoraAppTestGraph) inst).graph())
             .map(graph -> {
-                mocks.forEach(m -> graph.mockComponent(m.candidate().type(), m.candidate().tags()));
+                mocks.forEach(m -> graph.mockComponent(m.candidate().type(), List.of(m.candidate().tags())));
                 return graph;
             })
             .orElseGet(() -> {
@@ -418,7 +414,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                     return null;
                 } else {
                     var graph = KoraGraphModification.of();
-                    mocks.forEach(m -> graph.mockComponent(m.candidate().type(), m.candidate().tags()));
+                    mocks.forEach(m -> graph.mockComponent(m.candidate().type(), List.of(m.candidate().tags())));
                     return graph;
                 }
             });
@@ -442,40 +438,15 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         final String koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfig)
             .map(inst -> {
-                KoraConfigModification configModification = ((KoraAppTestConfig) inst).config();
-                for (String configFile : koraAppTest.configFiles()) {
-                    configModification.mergeWithConfigFile(configFile);
-                }
-
-                if (!koraAppTest.config().isBlank()) {
-                    configModification.mergeWithConfig(koraAppTest.config());
-                }
-
+                final KoraConfigModification configModification = ((KoraAppTestConfig) inst).config();
                 return configModification.getConfig();
             })
-            .orElseGet(() -> {
-                if (koraAppTest.configFiles().length > 0) {
-                    KoraConfigModification configModification = null;
-                    for (String configFile : koraAppTest.configFiles()) {
-                        configModification = (configModification == null)
-                            ? KoraConfigModification.ofConfigFile(configFile)
-                            : configModification.mergeWithConfigFile(configFile);
-                    }
-
-                    if (!koraAppTest.config().isBlank()) {
-                        configModification.mergeWithConfig(koraAppTest.config());
-                    }
-
-                    return configModification.getConfig();
-                } else {
-                    return koraAppTest.config().trim();
-                }
-            });
+            .orElse("");
 
         if (koraAppConfig.isBlank()) {
             logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-            return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
-                koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), koraGraphModification);
+            return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
+                classes, koraAppTest.initializeMode(), koraGraphModification);
         }
 
         final KoraGraphModification graphModificationWithConfig = (koraGraphModification == null)
@@ -483,85 +454,86 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             : koraGraphModification;
 
         if (ConfigModule.class.isAssignableFrom(koraAppTest.application())) {
-            graphModificationWithConfig.replaceComponent(() -> ConfigFactory.parseString(koraAppConfig), Config.class);
+            graphModificationWithConfig.replaceComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
         } else {
-            graphModificationWithConfig.addComponent(() -> ConfigFactory.parseString(koraAppConfig), Config.class);
+            graphModificationWithConfig.addComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
         }
 
         logger.info("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(new KoraAppMeta.Application(koraAppTest.application(), koraAppTest.application()),
-            koraAppConfig, aggregator, classes, processors, koraAppTest.initializeMode(), graphModificationWithConfig);
+        return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
+            classes, koraAppTest.initializeMode(), graphModificationWithConfig);
     }
 
-    // Is used as aggregator for all components, so they will be constructed in graph and accessiable no matter what
-    private Class<?> generateAggregatorClass(KoraAppTest koraAppTest, ExtensionContext context) {
-        final long started = System.nanoTime();
-
-        var classes = Arrays.stream(koraAppTest.components())
-            .distinct()
-            .sorted(Comparator.comparing(Class::getCanonicalName))
-            .toList();
-
-        final CtClass[] parameters = classes.stream()
-            .map(c -> {
-                try {
-                    return ClassPool.getDefault().getCtClass(c.getCanonicalName());
-                } catch (NotFoundException e) {
-                    throw new ExtensionConfigurationException("Failed to created aggregator class, parameter class not loaded: " + c, e);
-                }
-            })
-            .toArray(CtClass[]::new);
-
-        try {
-            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Aggregator_" + context.getRequiredTestClass().getSimpleName();
-            CtClass ctclass;
-            try {
-                ctclass = ClassPool.getDefault().getCtClass(className);
-                ctclass.defrost();
-
-                for (CtConstructor constructor : ctclass.getConstructors()) {
-                    ctclass.removeConstructor(constructor);
-                }
-
-                final CtConstructor constructor = CtNewConstructor.make(parameters, null, "", ctclass);
-                ctclass.addConstructor(constructor);
-                ctclass.writeFile("build/in-test-generated/classes");
-
-                var result = ctclass.toClass();
-                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
-                return result;
-            } catch (NotFoundException e) {
-                ctclass = ClassPool.getDefault().makeClass(className);
-                final CtConstructor constructor = CtNewConstructor.make(parameters, null, null, ctclass);
-                ctclass.addConstructor(constructor);
-
-                var classFile = ctclass.getClassFile();
-                var annotationsAttribute = new AnnotationsAttribute(classFile.getConstPool(), AnnotationsAttribute.visibleTag);
-                var annotation = new Annotation(Generated.class.getCanonicalName(), classFile.getConstPool());
-                annotation.addMemberValue("value", new StringMemberValue(KoraJUnit5Extension.class.getCanonicalName(), classFile.getConstPool()));
-                annotationsAttribute.setAnnotation(annotation);
-                classFile.addAttribute(annotationsAttribute);
-
-                var componentAttribute = new AnnotationsAttribute(classFile.getConstPool(), AnnotationsAttribute.visibleTag);
-                var component = new Annotation(Component.class.getCanonicalName(), classFile.getConstPool());
-                componentAttribute.setAnnotation(component);
-                classFile.addAttribute(componentAttribute);
-
-                final CtClass lifecycle = ClassPool.getDefault().getCtClass(MockLifecycle.class.getCanonicalName());
-                ctclass.addInterface(lifecycle);
-
-                ctclass.writeFile("build/in-test-generated/classes");
-                var result = ctclass.toClass();
-                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
-                return result;
-            }
-        } catch (Exception e) {
-            throw new ExtensionConfigurationException("Failed to created aggregator class for: " + koraAppTest.application(), e);
-        }
-    }
+//    // Is used as aggregator for all components, so they will be constructed in graph and accessiable no matter what
+//    @Deprecated
+//    private Class<?> generateAggregatorClass(KoraAppTest koraAppTest, ExtensionContext context) {
+//        final long started = System.nanoTime();
+//
+//        var classes = Arrays.stream(koraAppTest.components())
+//            .distinct()
+//            .sorted(Comparator.comparing(Class::getCanonicalName))
+//            .toList();
+//
+//        final CtClass[] parameters = classes.stream()
+//            .map(c -> {
+//                try {
+//                    return ClassPool.getDefault().getCtClass(c.getCanonicalName());
+//                } catch (NotFoundException e) {
+//                    throw new ExtensionConfigurationException("Failed to created aggregator class, parameter class not loaded: " + c, e);
+//                }
+//            })
+//            .toArray(CtClass[]::new);
+//
+//        try {
+//            final String className = koraAppTest.application().getPackageName() + ".$KoraAppTest_Aggregator_" + context.getRequiredTestClass().getSimpleName();
+//            CtClass ctclass;
+//            try {
+//                ctclass = ClassPool.getDefault().getCtClass(className);
+//                ctclass.defrost();
+//
+//                for (CtConstructor constructor : ctclass.getConstructors()) {
+//                    ctclass.removeConstructor(constructor);
+//                }
+//
+//                final CtConstructor constructor = CtNewConstructor.make(parameters, null, "", ctclass);
+//                ctclass.addConstructor(constructor);
+//                ctclass.writeFile("build/in-test-generated/classes");
+//
+//                var result = ctclass.toClass();
+//                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
+//                return result;
+//            } catch (NotFoundException e) {
+//                ctclass = ClassPool.getDefault().makeClass(className);
+//                final CtConstructor constructor = CtNewConstructor.make(parameters, null, null, ctclass);
+//                ctclass.addConstructor(constructor);
+//
+//                var classFile = ctclass.getClassFile();
+//                var annotationsAttribute = new AnnotationsAttribute(classFile.getConstPool(), AnnotationsAttribute.visibleTag);
+//                var annotation = new Annotation(Generated.class.getCanonicalName(), classFile.getConstPool());
+//                annotation.addMemberValue("value", new StringMemberValue(KoraJUnit5Extension.class.getCanonicalName(), classFile.getConstPool()));
+//                annotationsAttribute.setAnnotation(annotation);
+//                classFile.addAttribute(annotationsAttribute);
+//
+//                var componentAttribute = new AnnotationsAttribute(classFile.getConstPool(), AnnotationsAttribute.visibleTag);
+//                var component = new Annotation(Component.class.getCanonicalName(), classFile.getConstPool());
+//                componentAttribute.setAnnotation(component);
+//                classFile.addAttribute(componentAttribute);
+//
+//                final CtClass lifecycle = ClassPool.getDefault().getCtClass(MockLifecycle.class.getCanonicalName());
+//                ctclass.addInterface(lifecycle);
+//
+//                ctclass.writeFile("build/in-test-generated/classes");
+//                var result = ctclass.toClass();
+//                logger.debug("@KoraAppTest aggregator generation took: {}", Duration.ofNanos(System.nanoTime() - started));
+//                return result;
+//            }
+//        } catch (Exception e) {
+//            throw new ExtensionConfigurationException("Failed to created aggregator class for: " + koraAppTest.application(), e);
+//        }
+//    }
 
     private TestComponentCandidate getTestComponentCandidate(ParameterContext parameterContext) {
-        final Class<?> parameterType = parameterContext.getParameter().getType();
+        final Type parameterType = parameterContext.getParameter().getParameterizedType();
         final Class<?>[] tags = Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
             .filter(a -> a.annotationType().equals(Tag.class))
             .map(a -> ((Tag) a).value())
@@ -595,20 +567,32 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                     return graph.graphDraw().getNodes()
                         .stream()
                         .map(graph.refreshableGraph()::get)
-                        .filter(v -> candidate.type().isAssignableFrom(v.getClass()))
+                        .filter(v -> {
+                            if (candidate.type() instanceof Class<?> tc) {
+                                return tc.isAssignableFrom(v.getClass());
+                            } else {
+                                return false;
+                            }
+                        })
                         .findFirst();
                 });
         } else {
             return Optional.of(GraphUtils.findNodeByType(graph.graphDraw(), candidate.type(), candidate.tags()))
                 .filter(l -> !l.isEmpty())
-                .map(v -> graph.refreshableGraph().get(v.get(0)))
+                .map(v -> graph.refreshableGraph().get(v.iterator().next()))
                 .or(() -> {
                     // Try to find similar
                     return graph.graphDraw().getNodes()
                         .stream()
                         .filter(n -> Arrays.equals(n.tags(), candidate.tags()))
                         .map(graph.refreshableGraph()::get)
-                        .filter(v -> candidate.type().isAssignableFrom(v.getClass()))
+                        .filter(v -> {
+                            if (candidate.type() instanceof Class<?> tc) {
+                                return tc.isAssignableFrom(v.getClass());
+                            } else {
+                                return false;
+                            }
+                        })
                         .findFirst();
                 });
         }
@@ -618,94 +602,15 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static GraphSupplier generateGraphSupplier(KoraAppMeta meta) {
         try {
             final long started = System.nanoTime();
-
-            final List<String> sourceClassFiles = meta.classes.stream()
-                .map(targetClass -> {
-                    try {
-                        var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
-                        var targetPackage = targetClass.getPackageName().replace('.', '/');
-                        var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
-                        var moduleFile = new File("src/" + moduleName + "/java/" + targetFile);
-                        if (moduleFile.isFile()) {
-                            return moduleFile.toString();
-                        } else {
-                            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module");
-                        }
-                    } catch (IllegalStateException e) {
-                        throw e;
-                    } catch (Exception e) {
-                        throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
-                    }
-                })
-                .collect(Collectors.toList());
-
-            final List<String> generatedClassFiles = meta.classes.stream()
-                .flatMap(targetClass -> {
-                    try {
-                        var moduleName = new File(targetClass.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
-                        var targetPackage = targetClass.getPackageName().replace('.', '/');
-                        var targetFile = targetPackage + "/" + targetClass.getSimpleName() + ".java";
-                        var moduleFile = new File("src/" + moduleName + "/java/" + targetFile);
-                        if (moduleFile.isFile()) {
-                            return getGeneratedClassOnPath(targetClass, "build/classes/java/" + moduleName + "/" + targetPackage).stream();
-                        } else {
-                            throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module");
-                        }
-                    } catch (IllegalStateException e) {
-                        throw e;
-                    } catch (Exception e) {
-                        throw new IllegalStateException("Couldn't find '" + targetClass + "' class Source Module and failed with: " + e.getMessage());
-                    }
-                })
-                .toList();
-
-            var classAsParams = new ArrayList<>(generatedClassFiles);
-            classAsParams.add(meta.application.generated.getCanonicalName());
-            classAsParams.add(meta.aggregator.getCanonicalName());
-
-            final List<Processor> processors = meta.processors.stream()
-                .map(KoraJUnit5Extension::instantiateProcessor)
-                .toList();
-
-            var classLoader = TestUtils.annotationProcessFiles(sourceClassFiles, classAsParams, true,
-                p -> !p.endsWith(meta.application.generated.getSimpleName() + ".class") && !p.endsWith(meta.aggregator.getSimpleName() + ".class"),
-                processors);
-
-            var clazz = classLoader.loadClass(meta.application.generated.getName() + "Graph");
+            var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(meta.application.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             var graphSupplier = constructors[0].newInstance();
-            logger.info("@KoraAppTest compilation took: {}", Duration.ofNanos(System.nanoTime() - started));
+            logger.info("@KoraAppTest loading took: {}", Duration.ofNanos(System.nanoTime() - started));
             return new GraphSupplier(graphSupplier, meta.shareMode, meta.graphModifier);
         } catch (ClassNotFoundException e) {
-            throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application.generated, e);
+            throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application, e);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private static List<String> getGeneratedClassOnPath(Class<?> targetClass, String path) {
-        var files = new File(path).listFiles();
-        if (files == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(files)
-            .filter(file -> file.getName().startsWith("$" + targetClass.getSimpleName()))
-            .map(file -> targetClass.getPackageName() + "." + file.getName().replace(".class", ""))
-            .toList();
-    }
-
-    private static Processor instantiateProcessor(Class<? extends AbstractKoraProcessor> processor) {
-        return Arrays.stream(processor.getDeclaredConstructors())
-            .filter(c -> c.getParameterCount() == 0)
-            .findFirst()
-            .map(c -> {
-                try {
-                    return ((Processor) c.newInstance());
-                } catch (Exception e) {
-                    throw new ExtensionConfigurationException("KoraAppTest can't instantiate processor: " + processor);
-                }
-            })
-            .orElseThrow(() -> new ExtensionConfigurationException("KoraAppTest can't instantiate processor with NoZeroArgument constructor: " + processor));
     }
 }

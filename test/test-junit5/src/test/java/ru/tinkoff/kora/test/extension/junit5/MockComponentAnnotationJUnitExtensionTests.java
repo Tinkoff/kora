@@ -3,30 +3,30 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockComponentToMock;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockComponentWithMock;
 import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.SimpleComponent12;
 
 @KoraAppTest(
     application = SimpleApplication.class,
-    components = {MockComponentWithMock.class},
-    mocks = {MockComponentToMock.class},
+    components = {SimpleComponent12.class},
+    mocks = {Component1.class},
     initializeMode = KoraAppTest.InitializeMode.PER_METHOD)
 public class MockComponentAnnotationJUnitExtensionTests extends Assertions {
 
     @Test
-    void singleComponentInjected(@TestComponent MockComponentToMock mock) {
-        assertNull(mock.get());
-        Mockito.when(mock.get()).thenReturn("1");
-        assertEquals("1", mock.get());
+    void singleComponentInjected(@TestComponent Component1 component1) {
+        assertNull(component1.get());
+        Mockito.when(component1.get()).thenReturn("?");
+        assertEquals("?", component1.get());
     }
 
     @Test
-    void twoComponentsInjected(@TestComponent MockComponentToMock mock,
-                               @TestComponent MockComponentWithMock withMock) {
-        assertNull(mock.get());
-        Mockito.when(mock.get()).thenReturn("1");
-        assertEquals("1", mock.get());
-        assertEquals("12", withMock.get());
+    void twoComponentsInjected(@TestComponent Component1 component1,
+                               @TestComponent SimpleComponent12 component12) {
+        assertNull(component1.get());
+        Mockito.when(component1.get()).thenReturn("?");
+        assertEquals("?", component1.get());
+        assertEquals("?2", component12.get());
     }
 }

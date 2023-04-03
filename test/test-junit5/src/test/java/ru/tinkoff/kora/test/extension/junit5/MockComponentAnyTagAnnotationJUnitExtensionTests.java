@@ -1,47 +1,47 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockApplicationWithTag;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockComponentWithTag2;
-import ru.tinkoff.kora.test.extension.junit5.testdata.MockComponentWithTag3;
+import ru.tinkoff.kora.test.extension.junit5.testdata.*;
+
+import java.util.List;
 
 @KoraAppTest(
-    application = MockApplicationWithTag.class,
-    components = {MockComponentWithTag3.class},
-    mocks = {MockComponent.class},
-    initializeMode = KoraAppTest.InitializeMode.PER_METHOD)
-public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions {
+    application = SimpleApplication.class,
+    components = {SimpleComponent23.class},
+    mocks = {Component1.class})
+public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
 
-    @Test
-    void mockWithTag1(@TestComponent MockComponent mockWithTag1) {
-        assertNull(mockWithTag1.get());
-        Mockito.when(mockWithTag1.get()).thenReturn("?");
-        assertEquals("?", mockWithTag1.get());
+    @Override
+    public @NotNull KoraGraphModification graph() {
+        return KoraGraphModification.of()
+            .mockComponent(SimpleComponent.class, List.of(SimpleComponent.class));
     }
 
     @Test
-    void mockWithTag2(@Tag(MockComponentWithTag2.class) @TestComponent MockComponent mockWithTag2) {
-        assertNull(mockWithTag2.get());
-        Mockito.when(mockWithTag2.get()).thenReturn("?");
-        assertEquals("?", mockWithTag2.get());
+    void mockWithTag1(@TestComponent Component1 component1) {
+        assertNull(component1.get());
+        Mockito.when(component1.get()).thenReturn("?");
+        assertEquals("?", component1.get());
     }
 
     @Test
-    void beanWithMocks(@TestComponent MockComponent mock1,
-                       @Tag(MockComponentWithTag2.class) @TestComponent MockComponent mock2,
-                       @TestComponent MockComponentWithTag3 mock3) {
-        assertNull(mock1.get());
-        Mockito.when(mock1.get()).thenReturn("?");
-        assertEquals("?", mock1.get());
+    void mockWithTag2(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component) {
+        assertNull(component.get());
+        Mockito.when(component.get()).thenReturn("?");
+        assertEquals("?", component.get());
+    }
 
-        assertNull(mock2.get());
-        Mockito.when(mock2.get()).thenReturn("?");
-        assertEquals("?", mock2.get());
+    @Test
+    void beanWithMocks(@Tag(SimpleComponent.class) @TestComponent SimpleComponent component,
+                       @TestComponent SimpleComponent23 component23) {
+        assertNull(component.get());
+        Mockito.when(component.get()).thenReturn("?");
+        assertEquals("?", component.get());
 
-        assertEquals("??3", mock3.get());
+        assertEquals("?3", component23.get());
     }
 }
