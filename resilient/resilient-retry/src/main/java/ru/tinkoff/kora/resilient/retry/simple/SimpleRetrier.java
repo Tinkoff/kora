@@ -3,6 +3,7 @@ package ru.tinkoff.kora.resilient.retry.simple;
 import reactor.util.retry.Retry;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
+import ru.tinkoff.kora.resilient.retry.RetryAttemptException;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
@@ -32,14 +33,14 @@ final class SimpleRetrier implements Retrier {
         this.metrics = metrics;
     }
 
-    public SimpleRetrier(String name, SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, RetryMetrics metric) {
+    SimpleRetrier(String name, SimpleRetrierConfig.NamedConfig config, RetrierFailurePredicate failurePredicate, RetryMetrics metric) {
         this(name, config.delay().toNanos(), config.delayStep().toNanos(), config.attempts(), failurePredicate, metric);
     }
 
     @Nonnull
     @Override
     public RetryState asState() {
-        return new SimpleRetrierRetryState(name, System.nanoTime(), delayNanos, delayStepNanos, attempts, failurePredicate, metrics, new AtomicInteger(0));
+        return new SimpleRetryState(name, System.nanoTime(), delayNanos, delayStepNanos, attempts, failurePredicate, metrics, new AtomicInteger(0));
     }
 
     @Nonnull
@@ -68,42 +69,43 @@ final class SimpleRetrier implements Retrier {
 
     private <T> T internalRetry(Supplier<T> consumer, @Nullable Supplier<T> fallback) {
         var cause = (Exception) null;
-        try (var retryState = asState()) {
-            while (true)
+        try (var state = asState()) {
+            while (true) {
                 try {
                     return consumer.get();
                 } catch (Exception e) {
-                    var retry = retryState.canRetry(e);
-                    if (retry instanceof RetryState.CanRetryResult.CantRetry) {
-                        throw e;
-                    }
-                    if (retry instanceof RetryState.CanRetryResult.RetryExhausted exhausted) {
-                        if (fallback != null) {
-                            try {
-                                return fallback.get();
-                            } catch (Exception ex) {
-                                if (cause != null) {
-                                    ex.addSuppressed(cause);
-                                }
-                                throw ex;
+                    var status = state.onException(e);
+                    switch (status) {
+                        case REJECTED -> throw e;
+                        case ACCEPTED -> {
+                            if (cause == null) {
+                                cause = e;
+                            } else {
+                                cause.addSuppressed(e);
                             }
+                            state.doDelay();
                         }
-                        var exhaustedException = exhausted.toException();
-                        if (cause != null) {
-                            exhaustedException.addSuppressed(cause);
+                        case EXHAUSTED -> {
+                            if (fallback != null) {
+                                try {
+                                    return fallback.get();
+                                } catch (Exception ex) {
+                                    if (cause != null) {
+                                        ex.addSuppressed(cause);
+                                    }
+                                    throw ex;
+                                }
+                            }
+
+                            var exhaustedException = new RetryAttemptException(state.getAttempts());
+                            if (cause != null) {
+                                exhaustedException.addSuppressed(cause);
+                            }
+                            throw exhaustedException;
                         }
-                        throw exhaustedException;
-                    }
-                    if (retry instanceof RetryState.CanRetryResult.CanRetry) {
-                        if (cause == null) {
-                            cause = e;
-                        } else {
-                            cause.addSuppressed(e);
-                        }
-                        retryState.doDelay();
                     }
                 }
+            }
         }
-
     }
 }

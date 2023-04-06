@@ -26,15 +26,13 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
     companion object {
         const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.retry.annotation.Retryable"
-        private val CanRetryResult = ClassName("ru.tinkoff.kora.resilient.retry", "Retrier", "RetryState", "CanRetryResult")
-        private val CanRetry = CanRetryResult.nestedClass("CanRetry")
-        private val CantRetry = CanRetryResult.nestedClass("CantRetry")
-        private val RetryExhausted = CanRetryResult.nestedClass("RetryExhausted")
-        private val delayMember = MemberName("kotlinx.coroutines", "delay")
-        private val timeMember = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
-        private val flowMember = MemberName("kotlinx.coroutines.flow", "flow")
-        private val emitMember = MemberName("kotlinx.coroutines.flow", "emitAll")
-        private val retryMember = MemberName("kotlinx.coroutines.flow", "retryWhen")
+        private val MEMBER_RETRY_STATUS = ClassName("ru.tinkoff.kora.resilient.retry", "Retrier", "RetryState", "RetryStatus")
+        private val MEMBER_RETRY_EXCEPTION = MemberName("ru.tinkoff.kora.resilient.retry", "RetryAttemptException")
+        private val MEMBER_DELAY = MemberName("kotlinx.coroutines", "delay")
+        private val MEMBER_TIME = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
+        private val MEMBER_FLOW = MemberName("kotlinx.coroutines.flow", "flow")
+        private val MEMBER_FLOW_EMIT = MemberName("kotlinx.coroutines.flow", "emitAll")
+        private val MEMBER_FLOW_RETRY = MemberName("kotlinx.coroutines.flow", "retryWhen")
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
@@ -62,85 +60,90 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
         )
 
         val body = if (method.isFlow()) {
-            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics")!!.asType(listOf()).makeNullable()
-            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
-            buildBodyFlow(method, superCall, retryableName, fieldRetrier, fieldMetric)
+            buildBodyFlow(method, superCall, retryableName, fieldRetrier)
         } else if (method.isSuspend()) {
-            val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics")!!.asType(listOf()).makeNullable()
-            val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
-            buildBodySync(method, superCall, retryableName, fieldRetrier, fieldMetric)
+            buildBodySync(method, superCall, retryableName, fieldRetrier)
         } else {
-            buildBodySync(method, superCall, retryableName, fieldRetrier, null)
+            buildBodySync(method, superCall, retryableName, fieldRetrier)
         }
 
         return KoraAspect.ApplyResult.MethodBody(body)
     }
 
-    private fun buildBodySync(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String?) = CodeBlock.builder()
-        .add("return %L.asState()", fieldRetrier).indent().add("\n")
-        .controlFlow(".use { _retryState ->", fieldRetrier) {
-            addStatement("var _cause: Exception? = null")
-            addStatement("lateinit var _result: %T", method.returnType?.resolve()?.toTypeName())
-            controlFlow("while (true)") {
-                controlFlow("try") {
-                    add("_result = ").add(buildMethodCall(method, superCall)).add("\n")
-                    addStatement("break")
-                    nextControlFlow("catch (_e: Exception)")
-                    addStatement("val _retry = _retryState.canRetry(_e)")
-                    controlFlow("if (_retry is %T)", CantRetry) {
-                        addStatement("if (_cause != null) _e.addSuppressed(_cause)")
-                        addStatement("throw _e")
-                    }
-                    controlFlow("if (_retry is %T)", RetryExhausted) {
-                        addStatement("val _exhaustedException = _retry.toException()")
-                        addStatement("if (_cause != null) _exhaustedException.addSuppressed(_cause)")
-                        addStatement("throw _exhaustedException")
-                    }
-                    controlFlow("if (_retry is %T)", CanRetry) {
-                        controlFlow("if (_cause == null)") {
-                            addStatement("_cause = _e")
-                            nextControlFlow("else")
-                            addStatement("_cause.addSuppressed(_e)")
-                        }
-                        if (method.isSuspend()) {
-                            addStatement("val _delay = _retryState.delayNanos")
-                            addStatement("%L?.recordAttempt(%S, _delay)", fieldMetric, retryName)
-                            addStatement("%M(_delay.%M)", delayMember, timeMember)
-                        } else {
-                            addStatement("_retryState.doDelay()")
+    private fun buildBodySync(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String): CodeBlock {
+        return CodeBlock.builder()
+            .add("return %L.asState()", fieldRetrier).indent().add("\n")
+            .controlFlow(".use { _state ->", fieldRetrier) {
+                addStatement("var _cause: Exception? = null")
+                addStatement("lateinit var _result: %T", method.returnType?.resolve()?.toTypeName())
+                controlFlow("while (true)") {
+                    controlFlow("try") {
+                        add("_result = ").add(buildMethodCall(method, superCall)).add("\n")
+                        addStatement("break")
+                        nextControlFlow("catch (_e: Exception)")
+                        addStatement("val _status = _state.onException(_e)")
+                        controlFlow("when (_status)") {
+                            addStatement("%T.REJECTED -> throw _e", MEMBER_RETRY_STATUS)
+                            controlFlow("%T.ACCEPTED ->", MEMBER_RETRY_STATUS) {
+                                add(
+                                    """
+                            if (_cause == null) {
+                                _cause = _e
+                            } else {
+                                _cause.addSuppressed(_e)
+                            }
+                            
+                            """.trimIndent()
+                                )
+                                if (method.isSuspend()) {
+                                    addStatement("%M(_state.delayNanos.%M)", MEMBER_DELAY, MEMBER_TIME)
+                                } else {
+                                    addStatement("_state.doDelay()")
+                                }
+                            }
+                            controlFlow("%T.EXHAUSTED ->", MEMBER_RETRY_STATUS) {
+                                add(
+                                    """
+                            var _exhaustedException = %M(_state.getAttempts())
+                            if (_cause != null) {
+                                _exhaustedException.addSuppressed(_cause)
+                            }
+                            throw _exhaustedException
+                            
+                            """.trimIndent(), MEMBER_RETRY_EXCEPTION
+                                )
+                            }
                         }
                     }
                 }
+                addStatement("return@use _result")
             }
-            addStatement("return@use _result")
-        }
-        .unindent()
-        .add("\n")
-        .build()
+            .unindent()
+            .add("\n")
+            .build()
+    }
 
-
-    private fun buildBodyFlow(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String, fieldMetric: String) =
-        CodeBlock.builder().controlFlow("return %M", flowMember) {
-            controlFlow("return@flow %L.asState().use { _retryState ->", fieldRetrier) {
-                add("%M (", emitMember).indent()
-                add(buildMethodCall(method, superCall)).add(".").controlFlow("%M { _cause, _ ->", retryMember) {
-                    addStatement("val _retry = _retryState.canRetry(_cause)")
-                    controlFlow("if (_retry is %T)", RetryExhausted) {
-                        addStatement("throw _retry.toException()")
-                    }
-                    controlFlow("if (_retry is %T)", CanRetry) {
-                        addStatement("val _delay = _retryState.delayNanos")
-                        addStatement("%L?.recordAttempt(%S, _delay)", fieldMetric, retryName)
-                        addStatement("%M(_delay.%M)", delayMember, timeMember)
-                        addStatement("true")
-                        nextControlFlow("else")
-                        addStatement("false")
+    private fun buildBodyFlow(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String): CodeBlock {
+        return CodeBlock.builder().controlFlow("return %M", MEMBER_FLOW) {
+            controlFlow("return@flow %L.asState().use { _state ->", fieldRetrier) {
+                add("%M (", MEMBER_FLOW_EMIT).indent()
+                add(buildMethodCall(method, superCall)).add(".").controlFlow("%M { _cause, _ ->", MEMBER_FLOW_RETRY) {
+                    addStatement("val _status = _state.onException(_cause)")
+                    controlFlow("when (_status)") {
+                        addStatement("%T.REJECTED -> false", MEMBER_RETRY_STATUS)
+                        controlFlow("%T.ACCEPTED ->", MEMBER_RETRY_STATUS) {
+                            addStatement("%M(_state.delayNanos.%M)", MEMBER_DELAY, MEMBER_TIME)
+                            addStatement("true")
+                        }
+                        controlFlow("%T.EXHAUSTED ->", MEMBER_RETRY_STATUS) {
+                            addStatement("throw %M(_state.getAttempts())", MEMBER_RETRY_EXCEPTION)
+                        }
                     }
                 }
                 unindent().add("\n").add(")\n")
             }
-        }
-            .build()
+        }.build()
+    }
 
     private fun buildMethodCall(method: KSFunctionDeclaration, call: String): CodeBlock {
         return CodeBlock.of(method.parameters.asSequence().map { p -> CodeBlock.of("%L", p) }.joinToString(", ", "$call(", ")"))

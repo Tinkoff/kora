@@ -1,14 +1,17 @@
 package ru.tinkoff.kora.resilient.retry.simple;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.resilient.retry.Retrier;
 import ru.tinkoff.kora.resilient.retry.RetrierFailurePredicate;
 import ru.tinkoff.kora.resilient.retry.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-record SimpleRetrierRetryState(
+record SimpleRetryState(
     String name,
     long started,
     long delayNanos,
@@ -19,36 +22,57 @@ record SimpleRetrierRetryState(
     AtomicInteger attempts
 ) implements Retrier.RetryState {
 
+    private static final Logger logger = LoggerFactory.getLogger(SimpleRetryState.class);
+
     @Override
-    public long getDelayNanos() {
-        return delayNanos + delayStepNanos * attempts.get();
+    public int getAttempts() {
+        return attempts.get();
     }
 
     @Override
-    public Retrier.RetryState.CanRetryResult canRetry(@Nonnull Throwable throwable) {
+    public long getDelayNanos() {
+        return delayNanos + delayStepNanos * (attempts.get() - 1);
+    }
+
+    @Nonnull
+    @Override
+    public RetryStatus onException(@Nonnull Throwable throwable) {
         if (!failurePredicate.test(throwable)) {
-            return CanRetryResult.CantRetry.INSTANCE;
+            logger.trace("RetryState '{}' rejected throwable: {}", name, throwable.getClass().getCanonicalName());
+            return RetryStatus.REJECTED;
         }
 
-        var attempts = this.attempts.incrementAndGet();
-        if (attempts <= attemptsMax) {
-            return CanRetryResult.CanRetry.INSTANCE;
+        var attemptsUsed = attempts.incrementAndGet();
+        if (attemptsUsed <= attemptsMax) {
+            if(logger.isTraceEnabled()) {
+                logger.trace("RetryState '{}' initiating '{}' retry for '{}' due to throwable: {}",
+                    name, attemptsUsed, Duration.ofMillis(getDelayNanos()), throwable.getClass().getCanonicalName());
+            }
+
+            return RetryStatus.ACCEPTED;
         } else {
-            return new CanRetryResult.RetryExhausted(attempts);
+            return RetryStatus.EXHAUSTED;
         }
     }
 
     @Override
     public void doDelay() {
         long nextDelayNanos = getDelayNanos();
-        metrics.recordAttempt(name, nextDelayNanos);
         sleepUninterruptibly(nextDelayNanos);
     }
 
     @Override
     public void close() {
-        if (attempts.get() > attemptsMax) {
+        var attemptsUsed = attempts.get();
+        if (attemptsUsed > attemptsMax) {
+            logger.trace("RetryState '{}' exhausted all '{}' attempts", name, attemptsMax);
             metrics.recordExhaustedAttempts(name, attemptsMax);
+        } else if (attemptsUsed > 0) {
+            logger.trace("RetryState '{}' success after '{}' failed attempts", name, attemptsUsed);
+            for (int i = 1; i < attemptsUsed; i++) {
+                final long attemptDelay = delayNanos + delayStepNanos * i;
+                metrics.recordAttempt(name, attemptDelay);
+            }
         }
     }
 

@@ -14,19 +14,17 @@ public interface Retrier {
      * Retry State implementation for manual retry execution handling
      */
     interface RetryState extends AutoCloseable {
-        sealed interface CanRetryResult {
-            enum CanRetry implements CanRetryResult {INSTANCE}
 
-            enum CantRetry implements CanRetryResult {INSTANCE}
-
-            record RetryExhausted(int attempts) implements CanRetryResult {
-                public RetryAttemptException toException() {
-                    return new RetryAttemptException("All '" + this.attempts + "' attempts elapsed during retry");
-                }
-            }
+        enum RetryStatus {
+            ACCEPTED,
+            REJECTED,
+            EXHAUSTED
         }
 
-        CanRetryResult canRetry(@Nonnull Throwable throwable);
+        @Nonnull
+        RetryStatus onException(@Nonnull Throwable throwable);
+
+        int getAttempts();
 
         long getDelayNanos();
 

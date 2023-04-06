@@ -18,6 +18,8 @@ import static com.squareup.javapoet.CodeBlock.joining;
 
 public class RetryableKoraAspect implements KoraAspect {
 
+    private static final ClassName RETRY_STATUS = ClassName.get("ru.tinkoff.kora.resilient.retry", "Retrier", "RetryState", "RetryStatus");
+    private static final ClassName RETRY_EXCEPTION = ClassName.get("ru.tinkoff.kora.resilient.retry", "RetryAttemptException");
     private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.retry.annotation.Retryable";
 
     private final ProcessingEnvironment env;
@@ -61,50 +63,51 @@ public class RetryableKoraAspect implements KoraAspect {
         return new ApplyResult.MethodBody(body);
     }
 
-    private static final ClassName CanRetryResult = ClassName.get("ru.tinkoff.kora.resilient.retry", "Retrier", "RetryState", "CanRetryResult");
-    private static final ClassName CanRetry = CanRetryResult.nestedClass("CanRetry");
-    private static final ClassName CantRetry = CanRetryResult.nestedClass("CantRetry");
-    private static final ClassName RetryExhausted = CanRetryResult.nestedClass("RetryExhausted");
-
-
     private CodeBlock buildBodySync(ExecutableElement method, String superCall, String fieldRetry) {
-        var b = CodeBlock.builder()
+        var builder = CodeBlock.builder()
             .addStatement("var _cause = (Exception) null")
-            .beginControlFlow("try (var _retryState = $L.asState())", fieldRetry)
+            .beginControlFlow("try (var _state = $L.asState())", fieldRetry)
             .beginControlFlow("while (true)")
             .beginControlFlow("try");
+
         if (MethodUtils.isVoid(method)) {
-            b.addStatement(buildMethodCall(method, superCall));
-            b.addStatement("return");
+            builder.addStatement(buildMethodCall(method, superCall));
+            builder.addStatement("return");
         } else {
-            b.add("return ").addStatement(buildMethodCall(method, superCall));
+            builder.add("return ").addStatement(buildMethodCall(method, superCall));
         }
-        b.nextControlFlow("catch (Exception _e)");
-        b.addStatement("var _retry = _retryState.canRetry(_e)");
-        b.beginControlFlow("if (_retry instanceof $T)", CantRetry)
-            .addStatement("if (_cause != null) _e.addSuppressed(_cause)")
-            .addStatement("throw _e")
+
+        builder.nextControlFlow("catch (Exception _e)");
+        builder.addStatement("final $T _status = _state.onException(_e)", RETRY_STATUS);
+        builder.beginControlFlow("switch (_status) ")
+            .addStatement("case REJECTED -> throw _e");
+        builder.beginControlFlow("case ACCEPTED ->")
+            .add("""
+                if (_cause == null) {
+                    _cause = _e;
+                } else {
+                    _cause.addSuppressed(_e);
+                }
+                _state.doDelay();
+                """)
             .endControlFlow();
-        b.beginControlFlow("if (_retry instanceof $T _exhausted)", RetryExhausted)
-            .addStatement("var _exhaustedException = _exhausted.toException()")
-            .addStatement("if (_cause != null) _exhaustedException.addSuppressed(_cause)")
-            .addStatement("throw _exhaustedException")
-            .endControlFlow();
-        b.beginControlFlow("if (_retry instanceof $T)", CanRetry)
-            .beginControlFlow("if (_cause == null)")
-            .addStatement("_cause = _e")
-            .nextControlFlow("else")
-            .addStatement("_cause.addSuppressed(_e)")
-            .endControlFlow() //if (_cause == null)
-            .addStatement("_retryState.doDelay()")
+        builder.beginControlFlow("case EXHAUSTED ->")
+            .add("""
+                var _exhaustedException = new $T(_state.getAttempts());
+                if (_cause != null) {
+                    _exhaustedException.addSuppressed(_cause);
+                }
+                throw _exhaustedException;
+                """, RETRY_EXCEPTION)
             .endControlFlow();
 
-        b
-            .endControlFlow() // try
-            .endControlFlow() // while
-            .endControlFlow() // try retry state
-        ;
-        return b.build();
+        builder
+            .endControlFlow()   // switch
+            .endControlFlow()   // try
+            .endControlFlow()   // while
+            .endControlFlow();  // try retry state
+
+        return builder.build();
     }
 
     private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String fieldRetry) {
