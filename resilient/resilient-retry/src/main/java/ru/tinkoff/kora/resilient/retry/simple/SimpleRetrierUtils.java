@@ -2,7 +2,7 @@ package ru.tinkoff.kora.resilient.retry.simple;
 
 public final class SimpleRetrierUtils {
 
-    private SimpleRetrierUtils() { }
+    private SimpleRetrierUtils() {}
 
     public static void doThrow(Throwable e) {
         SimpleRetrierUtils.doThrow0(e);

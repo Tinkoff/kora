@@ -1,19 +1,19 @@
 package ru.tinkoff.kora.resilient.timeout.simple;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.resilient.timeout.TimeoutException;
 import ru.tinkoff.kora.resilient.timeout.Timeouter;
 import ru.tinkoff.kora.resilient.timeout.telemetry.TimeoutMetrics;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, ExecutorService executor) implements Timeouter {
+
+    private static final Logger logger = LoggerFactory.getLogger(SimpleTimeouter.class);
 
     @Nonnull
     @Override
@@ -27,8 +27,8 @@ record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, 
     }
 
     @Override
-    public <T> T execute(@Nonnull Supplier<T> supplier) throws TimeoutException {
-        return internalExecute(e -> e.submit(supplier::get));
+    public <T> T execute(@Nonnull Callable<T> callable) throws TimeoutException {
+        return internalExecute(e -> e.submit(callable));
     }
 
     private <T> T internalExecute(Function<ExecutorService, Future<T>> consumer) throws TimeoutException {
@@ -37,8 +37,10 @@ record SimpleTimeouter(String name, long delayMaxNanos, TimeoutMetrics metrics, 
         } catch (ExecutionException e) {
             SimpleTimeouterUtils.doThrow(e.getCause());
         } catch (java.util.concurrent.TimeoutException e) {
+            final Duration timeout = timeout();
+            logger.trace("SimpleTimeouter '{}' registered timeout after: {}", name, timeout);
             metrics.recordTimeout(name, delayMaxNanos);
-            throw new TimeoutException("Timeout exceeded " + timeout());
+            throw new TimeoutException("Timeout exceeded " + timeout);
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }

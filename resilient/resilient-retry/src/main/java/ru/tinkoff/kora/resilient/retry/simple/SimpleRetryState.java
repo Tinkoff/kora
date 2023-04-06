@@ -44,7 +44,7 @@ record SimpleRetryState(
 
         var attemptsUsed = attempts.incrementAndGet();
         if (attemptsUsed <= attemptsMax) {
-            if(logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled()) {
                 logger.trace("RetryState '{}' initiating '{}' retry for '{}' due to throwable: {}",
                     name, attemptsUsed, Duration.ofMillis(getDelayNanos()), throwable.getClass().getCanonicalName());
             }

@@ -2,7 +2,7 @@ package ru.tinkoff.kora.resilient.timeout.simple;
 
 public final class SimpleTimeouterUtils {
 
-    private SimpleTimeouterUtils() { }
+    private SimpleTimeouterUtils() {}
 
     public static void doThrow(Throwable e) {
         SimpleTimeouterUtils.doThrow0(e);
