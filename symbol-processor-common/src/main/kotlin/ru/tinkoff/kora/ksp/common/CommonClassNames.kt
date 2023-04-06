@@ -61,6 +61,6 @@ object CommonClassNames {
 
     fun KSTypeReference.isVoid(): Boolean {
         val typeAsStr = resolve().toClassName().canonicalName
-        return Void::class.java.canonicalName == typeAsStr || "void" == typeAsStr
+        return Void::class.java.canonicalName == typeAsStr || "void" == typeAsStr || Unit::class.java.canonicalName == typeAsStr
     }
 }
