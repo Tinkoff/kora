@@ -78,10 +78,10 @@ public class RetryableKoraAspect implements KoraAspect {
         }
 
         builder.nextControlFlow("catch (Exception _e)");
-        builder.addStatement("final $T _status = _state.onException(_e)", RETRY_STATUS);
-        builder.beginControlFlow("switch (_status) ")
-            .addStatement("case REJECTED -> throw _e");
-        builder.beginControlFlow("case ACCEPTED ->")
+        builder.addStatement("var _status = _state.onException(_e)");
+        builder.beginControlFlow("if ($T.REJECTED == _status)", RETRY_STATUS)
+            .addStatement("throw _e")
+            .nextControlFlow("else if($T.ACCEPTED == _status)", RETRY_STATUS)
             .add("""
                 if (_cause == null) {
                     _cause = _e;
@@ -90,8 +90,7 @@ public class RetryableKoraAspect implements KoraAspect {
                 }
                 _state.doDelay();
                 """)
-            .endControlFlow();
-        builder.beginControlFlow("case EXHAUSTED ->")
+            .nextControlFlow("else if($T.EXHAUSTED  == _status)", RETRY_STATUS)
             .add("""
                 var _exhaustedException = new $T(_state.getAttempts());
                 if (_cause != null) {
@@ -102,7 +101,6 @@ public class RetryableKoraAspect implements KoraAspect {
             .endControlFlow();
 
         builder
-            .endControlFlow()   // switch
             .endControlFlow()   // try
             .endControlFlow()   // while
             .endControlFlow();  // try retry state

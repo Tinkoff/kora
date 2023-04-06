@@ -75,34 +75,32 @@ final class SimpleRetrier implements Retrier {
                     return consumer.get();
                 } catch (Exception e) {
                     var status = state.onException(e);
-                    switch (status) {
-                        case REJECTED -> throw e;
-                        case ACCEPTED -> {
-                            if (cause == null) {
-                                cause = e;
-                            } else {
-                                cause.addSuppressed(e);
-                            }
-                            state.doDelay();
+                    if (status == RetryState.RetryStatus.REJECTED) {
+                        throw e;
+                    } else if (status == RetryState.RetryStatus.ACCEPTED) {
+                        if (cause == null) {
+                            cause = e;
+                        } else {
+                            cause.addSuppressed(e);
                         }
-                        case EXHAUSTED -> {
-                            if (fallback != null) {
-                                try {
-                                    return fallback.get();
-                                } catch (Exception ex) {
-                                    if (cause != null) {
-                                        ex.addSuppressed(cause);
-                                    }
-                                    throw ex;
+                        state.doDelay();
+                    } else if (status == RetryState.RetryStatus.EXHAUSTED) {
+                        if (fallback != null) {
+                            try {
+                                return fallback.get();
+                            } catch (Exception ex) {
+                                if (cause != null) {
+                                    ex.addSuppressed(cause);
                                 }
+                                throw ex;
                             }
-
-                            var exhaustedException = new RetryAttemptException(state.getAttempts());
-                            if (cause != null) {
-                                exhaustedException.addSuppressed(cause);
-                            }
-                            throw exhaustedException;
                         }
+
+                        var exhaustedException = new RetryAttemptException(state.getAttempts());
+                        if (cause != null) {
+                            exhaustedException.addSuppressed(cause);
+                        }
+                        throw exhaustedException;
                     }
                 }
             }
