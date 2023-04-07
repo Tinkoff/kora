@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.json.annotation.processor.reader;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
 import ru.tinkoff.kora.json.annotation.processor.JsonTypes;
@@ -34,7 +33,7 @@ public class EnumReaderGenerator {
         typeBuilder.addMethod(MethodSpec.methodBuilder("read")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addException(IOException.class)
-            .addParameter(TypeName.get(JsonParser.class), "_parser")
+            .addParameter(JsonTypes.jsonParser, "_parser")
             .returns(typeName)
             .addAnnotation(Override.class)
             .addAnnotation(Nullable.class)

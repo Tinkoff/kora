@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.json.ksp.reader
 
-import com.fasterxml.jackson.core.JsonParseException
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -69,7 +68,7 @@ class SealedInterfaceReaderGenerator(private val resolver: Resolver, logger: KSP
                 readerName
             )
         }
-        function.addCode("else -> throw %T(_parser, %S)", JsonParseException::class.java, "Unknown discriminator")
+        function.addCode("else -> throw %T(_parser, %S)", JsonTypes.jsonParseException, "Unknown discriminator")
         function.endControlFlow()
         typeBuilder.addFunction(function.build())
         return typeBuilder.build()

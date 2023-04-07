@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.json.annotation.processor.writer;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SerializedString;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
 import ru.tinkoff.kora.json.annotation.processor.JsonTypes;
@@ -43,15 +41,15 @@ public class JsonWriterGenerator {
 
         this.addWriters(typeBuilder, meta);
         for (var field : meta.fields()) {
-            typeBuilder.addField(FieldSpec.builder(SerializedString.class, this.jsonNameStaticName(field), Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .initializer(CodeBlock.of("new $T($S)", SerializedString.class, field.jsonName()))
+            typeBuilder.addField(FieldSpec.builder(JsonTypes.serializedString, this.jsonNameStaticName(field), Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                .initializer(CodeBlock.of("new $T($S)", JsonTypes.serializedString, field.jsonName()))
                 .build());
         }
 
         var method = MethodSpec.methodBuilder("write")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addException(IOException.class)
-            .addParameter(TypeName.get(JsonGenerator.class), "_gen")
+            .addParameter(JsonTypes.jsonGenerator, "_gen")
             .addParameter(ParameterSpec.builder(TypeName.get(meta.typeMirror()), "_object").addAnnotation(Nullable.class).build())
             .addAnnotation(Override.class);
         method.addCode("if (_object == null) {$>\n_gen.writeNull();\nreturn;$<\n}\n");

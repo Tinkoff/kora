@@ -1,9 +1,5 @@
 package ru.tinkoff.kora.json.annotation.processor.reader;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.io.SerializedString;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
@@ -25,8 +21,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.UUID;
-
-import static com.fasterxml.jackson.core.JsonToken.*;
 
 public class JsonReaderGenerator {
     private final Types types;
@@ -70,13 +64,13 @@ public class JsonReaderGenerator {
         var method = MethodSpec.methodBuilder("read")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addException(IOException.class)
-            .addParameter(TypeName.get(JsonParser.class), "_parser")
+            .addParameter(JsonTypes.jsonParser, "_parser")
             .returns(TypeName.get(meta.typeElement().asType()))
             .addAnnotation(Override.class)
             .addAnnotation(Nullable.class);
         method.addStatement("var _token = _parser.currentToken()");
-        method.addCode("if (_token == $T.VALUE_NULL) $>\nreturn null;$<\n", JsonToken.class);
-        assertTokenType(method, START_OBJECT);
+        method.addCode("if (_token == $T.VALUE_NULL) $>\nreturn null;$<\n", JsonTypes.jsonToken);
+        assertTokenType(method, "START_OBJECT");
 
         if (meta.fields().size() <= 32) {
             method.addStatement("var _receivedFields = new int[]{NULLABLE_FIELDS_RECEIVED}", BitSet.class);
@@ -93,8 +87,8 @@ public class JsonReaderGenerator {
         } else {
             method.addStatement("_token = _parser.currentToken()");
         }
-        method.addCode("while (_token != $T.END_OBJECT) {$>\n", JsonToken.class);
-        assertTokenType(method, FIELD_NAME);
+        method.addCode("while (_token != $T.END_OBJECT) {$>\n", JsonTypes.jsonToken);
+        assertTokenType(method, "FIELD_NAME");
         method.addStatement("var _fieldName = _parser.getCurrentName()");
         method.addCode("switch (_fieldName) {$>\n");
         for (int i = 0, fieldsSize = meta.fields().size(); i < fieldsSize; i++) {
@@ -129,7 +123,7 @@ public class JsonReaderGenerator {
                   }
                   throw new $T(_parser, __error.toString());
                 }
-                """, meta.fields().size(), StringBuilder.class, errorSwitch.build(), JsonParseException.class);
+                """, meta.fields().size(), StringBuilder.class, errorSwitch.build(), JsonTypes.jsonParseException);
         } else {
             method.addCode("""
                 if (_receivedFields[0] != ALL_FIELDS_RECEIVED) {
@@ -142,7 +136,7 @@ public class JsonReaderGenerator {
                   }
                   throw new $T(_parser, __error.toString());
                 }
-                """, StringBuilder.class, meta.fields().size(), errorSwitch.build(), JsonParseException.class);
+                """, StringBuilder.class, meta.fields().size(), errorSwitch.build(), JsonTypes.jsonParseException);
         }
 
         method.addCode("return new $T(", meta.typeElement());
@@ -262,8 +256,8 @@ public class JsonReaderGenerator {
 
     private void addFieldNames(TypeSpec.Builder typeBuilder, JsonClassReaderMeta meta) {
         for (var field : meta.fields()) {
-            typeBuilder.addField(FieldSpec.builder(SerializedString.class, this.jsonNameStaticName(field), Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .initializer(CodeBlock.of("new $T($S)", SerializedString.class, field.jsonName()))
+            typeBuilder.addField(FieldSpec.builder(JsonTypes.serializedString, this.jsonNameStaticName(field), Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                .initializer(CodeBlock.of("new $T($S)", JsonTypes.serializedString, field.jsonName()))
                 .build());
         }
     }
@@ -308,7 +302,7 @@ public class JsonReaderGenerator {
     private MethodSpec readParamMethod(int index, int size, FieldMeta field) {
         var method = MethodSpec.methodBuilder(this.readerMethodName(field))
             .addModifiers(Modifier.PRIVATE)
-            .addParameter(JsonParser.class, "_parser")
+            .addParameter(JsonTypes.jsonParser, "_parser")
             .addException(IOException.class)
             .addParameter(size > 32 ? TypeName.get(BitSet.class) : ArrayTypeName.of(TypeName.INT), "_receivedFields")
             .returns(field.typeName());
@@ -318,7 +312,7 @@ public class JsonReaderGenerator {
                 method.addCode("""
                     if (_token == $T.VALUE_NULL)
                       throw new $T(_parser, $S);
-                    """, JsonToken.class, JsonParseException.class, "Expecting nonnull value for field %s, got VALUE_NULL token".formatted(field.jsonName()));
+                    """, JsonTypes.jsonToken, JsonTypes.jsonParseException, "Expecting nonnull value for field %s, got VALUE_NULL token".formatted(field.jsonName()));
                 if (size > 32) {
                     method.addCode("_receivedFields.set($L);\n", index);
                 } else {
@@ -348,12 +342,12 @@ public class JsonReaderGenerator {
                 if (_token == $T.VALUE_NULL) {
                   return null;
                 }
-                """, JsonToken.class);
+                """, JsonTypes.jsonToken);
         } else {
             method.addCode("""
                 if (_token == $T.VALUE_NULL)
                   throw new $T(_parser, $S);
-                """, JsonToken.class, JsonParseException.class, "Expecting nonnull value for field %s, got VALUE_NULL token".formatted(field.jsonName()));
+                """, JsonTypes.jsonToken, JsonTypes.jsonParseException, "Expecting nonnull value for field %s, got VALUE_NULL token".formatted(field.jsonName()));
             if (size > 32) {
                 method.addCode("_receivedFields.set($L);\n", index);
             } else {
@@ -375,85 +369,85 @@ public class JsonReaderGenerator {
                 if (_token == $T.VALUE_STRING) {
                   $L _parser.getText();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case BOOLEAN_OBJECT, BOOLEAN_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_TRUE) {
                   $L true;
                 } else if (_token == $T.VALUE_FALSE) {
                   $L false;
                 }
-                """, JsonToken.class, parameterName, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName, JsonTypes.jsonToken, parameterName);
             case INTEGER_OBJECT, INTEGER_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_INT) {
                   $L _parser.getIntValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case BIG_INTEGER -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_INT) {
                   $L _parser.getBigIntegerValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case BIG_DECIMAL -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_INT || _token == $T.VALUE_NUMBER_FLOAT) {
                   $L _parser.getDecimalValue();
                 }
-                """, JsonToken.class, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, JsonTypes.jsonToken, parameterName);
             case DOUBLE_OBJECT, DOUBLE_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_FLOAT) {
                   $L _parser.getDoubleValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case FLOAT_OBJECT, FLOAT_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_FLOAT) {
                   $L _parser.getFloatValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case LONG_OBJECT, LONG_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_INT) {
                   $L _parser.getLongValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case SHORT_OBJECT, SHORT_PRIMITIVE -> CodeBlock.of("""
                 if (_token == $T.VALUE_NUMBER_INT) {
                   $L _parser.getShortValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case BINARY -> CodeBlock.of("""
                 if (_token == $T.VALUE_STRING) {
                   $L _parser.getBinaryValue();
                 }
-                """, JsonToken.class, parameterName);
+                """, JsonTypes.jsonToken, parameterName);
             case UUID -> CodeBlock.of("""
                 if (_token == $T.VALUE_STRING) {
                   $L $T.fromString(_parser.getText());
                 }
-                """, JsonToken.class, parameterName, UUID.class);
+                """, JsonTypes.jsonToken, parameterName, UUID.class);
         };
         method.add(code);
         if (nullable) {
-            method.add("else if (_token == $T.VALUE_NULL) {$>\n$L null;}$<\n", JsonToken.class, parameterName);
+            method.add("else if (_token == $T.VALUE_NULL) {$>\n$L null;}$<\n", JsonTypes.jsonToken, parameterName);
         }
-        method.add("else {$>\nthrow new $T(_parser, $S + _token);$<\n}", JsonParseException.class, "Expecting %s token for field '%s', got ".formatted(Arrays.toString(expectedTokens(knownType, nullable)), jsonName));
+        method.add("else {$>\nthrow new $T(_parser, $S + _token);$<\n}", JsonTypes.jsonParseException, "Expecting %s token for field '%s', got ".formatted(Arrays.toString(expectedTokens(knownType, nullable)), jsonName));
         return method.build();
     }
 
-    private JsonToken[] expectedTokens(KnownType.KnownTypesEnum knownType, boolean nullable) {
+    private String[] expectedTokens(KnownType.KnownTypesEnum knownType, boolean nullable) {
         var result = switch (knownType) {
-            case STRING, BINARY, UUID -> new JsonToken[]{VALUE_STRING};
-            case BOOLEAN_OBJECT, BOOLEAN_PRIMITIVE -> new JsonToken[]{VALUE_TRUE, VALUE_FALSE};
-            case SHORT_OBJECT, INTEGER_OBJECT, LONG_OBJECT, BIG_INTEGER, INTEGER_PRIMITIVE, LONG_PRIMITIVE, SHORT_PRIMITIVE -> new JsonToken[]{VALUE_NUMBER_INT};
-            case BIG_DECIMAL, DOUBLE_OBJECT, FLOAT_OBJECT, DOUBLE_PRIMITIVE, FLOAT_PRIMITIVE -> new JsonToken[]{VALUE_NUMBER_FLOAT, VALUE_NUMBER_INT};
+            case STRING, BINARY, UUID -> new String[]{"VALUE_STRING"};
+            case BOOLEAN_OBJECT, BOOLEAN_PRIMITIVE -> new String[]{"VALUE_TRUE", "VALUE_FALSE"};
+            case SHORT_OBJECT, INTEGER_OBJECT, LONG_OBJECT, BIG_INTEGER, INTEGER_PRIMITIVE, LONG_PRIMITIVE, SHORT_PRIMITIVE -> new String[]{"VALUE_NUMBER_INT"};
+            case BIG_DECIMAL, DOUBLE_OBJECT, FLOAT_OBJECT, DOUBLE_PRIMITIVE, FLOAT_PRIMITIVE -> new String[]{"VALUE_NUMBER_FLOAT", "VALUE_NUMBER_INT"};
         };
         if (nullable) {
             result = Arrays.copyOf(result, result.length + 1);
-            result[result.length - 1] = VALUE_NULL;
+            result[result.length - 1] = "VALUE_NULL";
         }
         return result;
     }
 
-    private void assertTokenType(MethodSpec.Builder method, JsonToken expectedToken) {
+    private void assertTokenType(MethodSpec.Builder method, String expectedToken) {
         method.addCode("if (_token != $T.$L) $>\nthrow new $T(_parser, $S + _token);$<\n",
-            JsonToken.class, expectedToken.name(), JsonParseException.class, "Expecting %s token, got ".formatted(expectedToken)
+            JsonTypes.jsonToken, expectedToken, JsonTypes.jsonParseException, "Expecting %s token, got ".formatted(expectedToken)
         );
     }
 

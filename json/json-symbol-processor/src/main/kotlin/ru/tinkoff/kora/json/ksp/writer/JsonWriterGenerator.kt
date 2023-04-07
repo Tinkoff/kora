@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.json.ksp.writer
 
-import com.fasterxml.jackson.core.io.SerializedString
 import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -38,8 +37,8 @@ class JsonWriterGenerator(
         this.addWriters(typeBuilder, meta, typeParameterResolver)
         for (field in meta.fields) {
             typeBuilder.addProperty(
-                PropertySpec.builder(this.jsonNameStaticName(field), SerializedString::class, KModifier.PRIVATE)
-                    .initializer(CodeBlock.of("%T(%S)", SerializedString::class.java, field.jsonName))
+                PropertySpec.builder(this.jsonNameStaticName(field), JsonTypes.serializedString, KModifier.PRIVATE)
+                    .initializer(CodeBlock.of("%T(%S)", JsonTypes.serializedString, field.jsonName))
                     .build()
             )
         }

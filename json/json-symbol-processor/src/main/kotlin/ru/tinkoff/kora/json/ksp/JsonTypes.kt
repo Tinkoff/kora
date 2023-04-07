@@ -26,5 +26,7 @@ object JsonTypes {
     val jsonParseException = ClassName("com.fasterxml.jackson.core", "JsonParseException")
     val jsonParser = ClassName("com.fasterxml.jackson.core", "JsonParser")
     val jsonGenerator = ClassName("com.fasterxml.jackson.core", "JsonGenerator")
+    val jsonToken = ClassName("com.fasterxml.jackson.core", "JsonToken")
+    val serializedString = ClassName("com.fasterxml.jackson.core.io", "SerializedString")
 
 }

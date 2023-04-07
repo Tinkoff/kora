@@ -25,4 +25,7 @@ public class JsonTypes {
     public static final ClassName jsonParseException = ClassName.get("com.fasterxml.jackson.core", "JsonParseException");
     public static final ClassName jsonParser = ClassName.get("com.fasterxml.jackson.core", "JsonParser");
     public static final ClassName jsonGenerator = ClassName.get("com.fasterxml.jackson.core", "JsonGenerator");
+    public static final ClassName jsonToken = ClassName.get("com.fasterxml.jackson.core", "JsonToken");
+    public static final ClassName serializedString = ClassName.get("com.fasterxml.jackson.core.io", "SerializedString");
+
 }
