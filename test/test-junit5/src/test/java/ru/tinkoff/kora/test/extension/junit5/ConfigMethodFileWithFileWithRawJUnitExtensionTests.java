@@ -16,7 +16,7 @@ public class ConfigMethodFileWithFileWithRawJUnitExtensionTests extends Assertio
     public @NotNull KoraConfigModification config() {
         return KoraConfigModification.ofConfigFile("reference-raw.conf")
             .mergeWithConfigFile("config/reference-env.conf")
-            .mergeWithConfig("""
+            .mergeWithConfigHocon("""
                             myconfig {
                               myinnerconfig {
                                 second = 2

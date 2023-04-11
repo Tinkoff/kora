@@ -14,7 +14,7 @@ public class ConfigMethodRawJUnitExtensionTests extends Assertions implements Ko
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfig("""
+        return KoraConfigModification.ofConfigHocon("""
             myconfig {
               myinnerconfig {
                 myproperty = 1

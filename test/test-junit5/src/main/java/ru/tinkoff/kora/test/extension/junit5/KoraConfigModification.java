@@ -25,8 +25,8 @@ public final class KoraConfigModification {
      * @param config application configuration in HOCON format as string
      * @return self
      */
-    public static KoraConfigModification ofConfig(@Nonnull @Language("HOCON") String config) {
-        return new KoraConfigModification(configOfString(config));
+    public static KoraConfigModification ofConfigHocon(@Nonnull @Language("HOCON") String config) {
+        return new KoraConfigModification(configOfHOCON(config));
     }
 
     /**
@@ -41,8 +41,8 @@ public final class KoraConfigModification {
      * @param config application configuration in HOCON format as string
      * @return self
      */
-    public KoraConfigModification mergeWithConfig(@Nonnull @Language("HOCON") String config) {
-        for (var entry : configOfString(config).entrySet()) {
+    public KoraConfigModification mergeWithConfigHocon(@Nonnull @Language("HOCON") String config) {
+        for (var entry : configOfHOCON(config).entrySet()) {
             this.mergedConfig = this.mergedConfig.withValue(entry.getKey(), entry.getValue());
         }
         return this;
@@ -66,7 +66,7 @@ public final class KoraConfigModification {
             .render(ConfigRenderOptions.concise());
     }
 
-    private static Config configOfString(String config) {
+    private static Config configOfHOCON(@Language("HOCON") String config) {
         return ConfigFactory.parseString(config, ConfigParseOptions.defaults().setAllowMissing(true));
     }
 

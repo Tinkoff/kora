@@ -15,7 +15,7 @@ public class ConfigMethodFileWithRawWithFileAnnotationWithRawAnnotationJUnitExte
     @Override
     public @NotNull KoraConfigModification config() {
         return KoraConfigModification.ofConfigFile("reference-raw.conf")   // 1
-            .mergeWithConfig("""
+            .mergeWithConfigHocon("""
                             myconfig {
                               myinnerconfig {
                                 myproperty = 1
