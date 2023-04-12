@@ -72,7 +72,7 @@ class ReaderTypeMetaParser(
         val jsonField = findJsonField(parameter, jsonClass)
         val jsonName = parseJsonName(parameter, jsonField, nameConverter)
         val fieldType = parameter.type.resolve()
-        val typeName = parameter.type.toTypeName((parameter.parent as KSClassDeclaration).typeParameters.toTypeParameterResolver())
+        val typeName = parameter.type.toTypeName(jsonClass.typeParameters.toTypeParameterResolver())
         val reader = jsonField?.findValueNoDefault<KSType>("reader")
         val typeMeta = this.parseReaderFieldType(fieldType, typeName)
         return JsonClassReaderMeta.FieldMeta(parameter, jsonName, typeName, typeMeta, reader)
