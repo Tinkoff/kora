@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.*
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import ru.tinkoff.kora.common.naming.NameConverter
 import ru.tinkoff.kora.json.ksp.JsonTypes
 import ru.tinkoff.kora.json.ksp.KnownType
@@ -71,7 +72,7 @@ class ReaderTypeMetaParser(
         val jsonField = findJsonField(parameter, jsonClass)
         val jsonName = parseJsonName(parameter, jsonField, nameConverter)
         val fieldType = parameter.type.resolve()
-        val typeName = parameter.type.toTypeName()
+        val typeName = fieldType.toTypeName(jsonClass.typeParameters.toTypeParameterResolver())
         val reader = jsonField?.findValueNoDefault<KSType>("reader")
         val typeMeta = this.parseReaderFieldType(fieldType, typeName)
         return JsonClassReaderMeta.FieldMeta(parameter, jsonName, typeName, typeMeta, reader)
