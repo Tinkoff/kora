@@ -1,9 +1,6 @@
 package ru.tinkoff.kora.json.ksp.extension
 
-import com.google.devtools.ksp.getClassDeclarationByName
-import com.google.devtools.ksp.getConstructors
-import com.google.devtools.ksp.isOpen
-import com.google.devtools.ksp.isPrivate
+import com.google.devtools.ksp.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -14,6 +11,7 @@ import ru.tinkoff.kora.json.ksp.writer.WriterTypeMetaParser
 import ru.tinkoff.kora.kora.app.ksp.extension.ExtensionResult
 import ru.tinkoff.kora.kora.app.ksp.extension.KoraExtension
 import ru.tinkoff.kora.ksp.common.AnnotationUtils.isAnnotationPresent
+import ru.tinkoff.kora.ksp.common.KspCommonUtils.parametrized
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 
 class JsonKoraExtension(
@@ -33,6 +31,22 @@ class JsonKoraExtension(
         val erasure = actualType.starProjection()
         if (erasure == jsonWriterErasure) {
             val possibleJsonClass = type.arguments[0].type!!.resolve()
+            if (possibleJsonClass.isMarkedNullable) {
+                val jsonWriterDecl = resolver.getClassDeclarationByName(JsonTypes.jsonWriter.canonicalName)!!
+                val functionDecl = resolver.getFunctionDeclarationsByName("ru.tinkoff.kora.json.common.JsonKotlin.writerForNullable").first()
+                val writerType = jsonWriterDecl.asType(
+                    listOf(
+                        resolver.getTypeArgument(resolver.createKSTypeReferenceFromKSType(possibleJsonClass), Variance.INVARIANT)
+                    )
+                )
+                val delegateType = jsonWriterDecl.asType(
+                    listOf(
+                        resolver.getTypeArgument(resolver.createKSTypeReferenceFromKSType(possibleJsonClass.makeNotNullable()), Variance.INVARIANT)
+                    )
+                )
+                val functionType = functionDecl.parametrized(writerType, listOf(delegateType))
+                return { ExtensionResult.fromExecutable(functionDecl, functionType) }
+            }
             val possibleJsonClassDeclaration = possibleJsonClass.declaration
             if (possibleJsonClassDeclaration !is KSClassDeclaration) {
                 return null
@@ -52,6 +66,22 @@ class JsonKoraExtension(
         }
         if (erasure == jsonReaderErasure) {
             val possibleJsonClass = type.arguments[0].type!!.resolve()
+            if (possibleJsonClass.isMarkedNullable) {
+                val jsonReaderDecl = resolver.getClassDeclarationByName(JsonTypes.jsonReader.canonicalName)!!
+                val functionDecl = resolver.getFunctionDeclarationsByName("ru.tinkoff.kora.json.common.JsonKotlin.readerForNullable").first()
+                val readerType = jsonReaderDecl.asType(
+                    listOf(
+                        resolver.getTypeArgument(resolver.createKSTypeReferenceFromKSType(possibleJsonClass), Variance.INVARIANT)
+                    )
+                )
+                val delegateType = jsonReaderDecl.asType(
+                    listOf(
+                        resolver.getTypeArgument(resolver.createKSTypeReferenceFromKSType(possibleJsonClass.makeNotNullable()), Variance.INVARIANT)
+                    )
+                )
+                val functionType = functionDecl.parametrized(readerType, listOf(delegateType))
+                return { ExtensionResult.fromExecutable(functionDecl, functionType) }
+            }
             val possibleJsonClassDeclaration = possibleJsonClass.declaration
             if (possibleJsonClassDeclaration !is KSClassDeclaration) {
                 return null
