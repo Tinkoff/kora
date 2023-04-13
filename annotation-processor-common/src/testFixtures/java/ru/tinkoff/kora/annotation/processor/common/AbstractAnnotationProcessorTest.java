@@ -7,7 +7,9 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.annotation.processor.common.compile.ByteArrayJavaFileObject;
 import ru.tinkoff.kora.annotation.processor.common.compile.KoraCompileTestJavaFileManager;
+import ru.tinkoff.kora.application.graph.*;
 
+import javax.annotation.Nullable;
 import javax.annotation.processing.Processor;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public abstract class AbstractAnnotationProcessorTest {
@@ -159,4 +162,69 @@ public abstract class AbstractAnnotationProcessorTest {
         T get();
     }
 
+
+    public GraphContainer loadGraph(String appName) {
+        try {
+            var type = compileResult.loadClass(appName + "Graph");
+            var constructor = type.getConstructors()[0];
+            var supplier = (Supplier<ApplicationGraphDraw>) constructor.newInstance();
+            var draw = supplier.get();
+            return new GraphContainer(draw);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static class GraphContainer implements Graph {
+        private final ApplicationGraphDraw draw;
+        private final Graph graph;
+
+        public GraphContainer(ApplicationGraphDraw draw) {
+            this.draw = draw;
+            this.graph = draw.init().block();
+        }
+
+        @Nullable
+        public <T> T findByType(Class<? extends T> type) {
+            for (var node : draw.getNodes()) {
+                var object = graph.get(node);
+                if (type.isInstance(object)) {
+                    return type.cast(object);
+                }
+            }
+            return null;
+        }
+
+        @Nullable
+        public <T> List<T> findAllByType(Class<? extends T> type) {
+            var result = new ArrayList<T>();
+            for (var node : draw.getNodes()) {
+                var object = graph.get(node);
+                if (type.isInstance(object)) {
+                    result.add(type.cast(object));
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public ApplicationGraphDraw draw() {
+            return graph.draw();
+        }
+
+        @Override
+        public <T> T get(Node<T> node) {
+            return graph.get(node);
+        }
+
+        @Override
+        public <T> ValueOf<T> valueOf(Node<? extends T> node) {
+            return graph.valueOf(node);
+        }
+
+        @Override
+        public <T> PromiseOf<T> promiseOf(Node<T> node) {
+            return graph.promiseOf(node);
+        }
+    }
 }
