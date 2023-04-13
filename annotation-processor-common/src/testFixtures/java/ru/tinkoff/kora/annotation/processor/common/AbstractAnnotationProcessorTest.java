@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -80,6 +81,7 @@ public abstract class AbstractAnnotationProcessorTest {
                     .map(p -> Map.entry(s.indexOf(p), p.length()))
                     .filter(e -> e.getKey() >= 0)
                     .map(e -> e.getKey() + e.getValue())
+                    .min(Comparator.comparing(Function.identity()))
                     .map(classStart -> {
                         var firstSpace = s.indexOf(" ", classStart + 1);
                         var firstBracket = s.indexOf("(", classStart + 1);
@@ -90,7 +92,6 @@ public abstract class AbstractAnnotationProcessorTest {
                             .getAsInt();
                         return s.substring(classStart, classEnd).trim();
                     })
-                    .findFirst()
                     .get();
 
                 return new ByteArrayJavaFileObject(JavaFileObject.Kind.SOURCE, testPackage + "." + firstClass, s.getBytes(StandardCharsets.UTF_8));
