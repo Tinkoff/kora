@@ -1,16 +1,21 @@
 package ru.tinkoff.kora.database.r2dbc;
 
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.database.common.DataBaseModule;
+import ru.tinkoff.kora.database.r2dbc.mapper.parameter.R2dbcParameterColumnMapper;
+import ru.tinkoff.kora.database.r2dbc.mapper.result.R2dbcResultColumnMapper;
 import ru.tinkoff.kora.database.r2dbc.mapper.result.R2dbcResultFluxMapper;
 import ru.tinkoff.kora.database.r2dbc.mapper.result.R2dbcRowMapper;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
+import java.util.UUID;
 
 public interface R2dbcModule extends DataBaseModule {
 
@@ -42,14 +47,6 @@ public interface R2dbcModule extends DataBaseModule {
         return row -> row.get(0, Double.class);
     }
 
-    default R2dbcRowMapper<LocalDate> localDateR2dbcRowMapper() {
-        return row -> row.get(0, LocalDate.class);
-    }
-
-    default R2dbcRowMapper<LocalDateTime> localDateTimeR2dbcRowMapper() {
-        return row -> row.get(0, LocalDateTime.class);
-    }
-
     default R2dbcRowMapper<BigDecimal> bigDecimalR2dbcRowMapper() {
         return row -> row.get(0, BigDecimal.class);
     }
@@ -60,5 +57,115 @@ public interface R2dbcModule extends DataBaseModule {
 
     default R2dbcRowMapper<byte[]> byteArrayR2dbcRowMapper() {
         return row -> row.get(0, byte[].class);
+    }
+
+    default R2dbcRowMapper<UUID> uuidR2dbcRowMapper() {
+        return row -> row.get(0, UUID.class);
+    }
+
+    default R2dbcRowMapper<LocalDate> localDateR2dbcRowMapper() {
+        return row -> row.get(0, LocalDate.class);
+    }
+
+    default R2dbcRowMapper<LocalTime> localTimeR2dbcRowMapper() {
+        return row -> row.get(0, LocalTime.class);
+    }
+
+    default R2dbcRowMapper<LocalDateTime> localDateTimeR2dbcRowMapper() {
+        return row -> row.get(0, LocalDateTime.class);
+    }
+
+    default R2dbcRowMapper<OffsetTime> offsetTimeR2dbcRowMapper() {
+        return row -> row.get(0, OffsetTime.class);
+    }
+
+    default R2dbcRowMapper<OffsetDateTime> offsetDateTimeR2dbcRowMapper() {
+        return row -> row.get(0, OffsetDateTime.class);
+    }
+
+    // Parameter Mapper
+    default R2dbcParameterColumnMapper<UUID> uuidR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, UUID.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    default R2dbcParameterColumnMapper<LocalDate> localDateR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, LocalDate.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    default R2dbcParameterColumnMapper<LocalTime> LocalTimeR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, LocalTime.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    default R2dbcParameterColumnMapper<LocalDateTime> LocalDateTimeR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, LocalDateTime.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    default R2dbcParameterColumnMapper<OffsetTime> offsetTimeR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, OffsetTime.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    default R2dbcParameterColumnMapper<OffsetDateTime> OffsetDateTimeR2dbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.bindNull(index, OffsetDateTime.class);
+            } else {
+                stmt.bind(index, o);
+            }
+        };
+    }
+
+    // Result Column Mappers
+    default R2dbcResultColumnMapper<UUID> uuidR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, UUID.class);
+    }
+
+    default R2dbcResultColumnMapper<LocalDate> localDateR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, LocalDate.class);
+    }
+
+    default R2dbcResultColumnMapper<LocalTime> localTimeR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, LocalTime.class);
+    }
+
+    default R2dbcResultColumnMapper<LocalDateTime> localDateTimeR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, LocalDateTime.class);
+    }
+
+    default R2dbcResultColumnMapper<OffsetTime> offsetTimeR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, OffsetTime.class);
+    }
+
+    default R2dbcResultColumnMapper<OffsetDateTime> offsetDateTimeR2dbcResultColumnMapper() {
+        return (row, label) -> row.get(label, OffsetDateTime.class);
     }
 }
