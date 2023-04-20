@@ -10,7 +10,6 @@ import ru.tinkoff.kora.http.common.HttpHeaders
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
 import ru.tinkoff.kora.http.server.common.HttpServerResponse
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse
 import ru.tinkoff.kora.http.server.common.handler.*
 import ru.tinkoff.kora.http.server.symbol.processor.controllers.ReadableEntity
 import ru.tinkoff.kora.http.server.symbol.processor.controllers.SomeEntity
@@ -117,7 +116,7 @@ object Mappers {
         if (responseType == Integer::class.java) {
             return integerResponseMapper()
         }
-        if (responseType == HttpServerResponse::class.java || responseType == SimpleHttpServerResponse::class.java) {
+        if (responseType == HttpServerResponse::class.java) {
             return noopResponseMapper()
         }
         if (responseType == SomeEntity::class.java) {
@@ -150,11 +149,10 @@ object Mappers {
     private fun <T> jsonResponseMapper(someEntityClass: TypeRef<T>): HttpServerResponseMapper<T> {
         return HttpServerResponseMapper<T> { result ->
             Mono.just(
-                SimpleHttpServerResponse(
+                HttpServerResponse.of(
                     200,
                     "text/plain",
-                    HttpHeaders.EMPTY,
-                    ByteBuffer.wrap(result.toString().toByteArray(StandardCharsets.UTF_8))
+                    result.toString().toByteArray(StandardCharsets.UTF_8)
                 )
             )
         }
@@ -183,11 +181,9 @@ object Mappers {
     private fun voidResponseMapper(): HttpServerResponseMapper<Unit?> {
         return HttpServerResponseMapper { result: Unit? ->
             Mono.just(
-                SimpleHttpServerResponse(
+                HttpServerResponse.of(
                     200,
-                    "text/plain",
-                    HttpHeaders.of(),
-                    null
+                    "text/plain"
                 )
             )
         }
@@ -196,10 +192,9 @@ object Mappers {
     private fun stringResponseMapper(): HttpServerResponseMapper<String?> {
         return HttpServerResponseMapper { result: String? ->
             Mono.just(
-                SimpleHttpServerResponse(
+                HttpServerResponse.of(
                     200,
                     "text/plain",
-                    HttpHeaders.of(),
                     StandardCharsets.UTF_8.encode(result ?: "null")
                 )
             )
@@ -215,10 +210,9 @@ object Mappers {
     private fun integerResponseMapper(): HttpServerResponseMapper<Int> {
         return HttpServerResponseMapper { r: Int ->
             Mono.just(
-                SimpleHttpServerResponse(
+                HttpServerResponse.of(
                     200,
                     "text/plain",
-                    HttpHeaders.of(),
                     StandardCharsets.UTF_8.encode(r.toString())
                 )
             )

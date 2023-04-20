@@ -5,7 +5,7 @@ import ru.tinkoff.kora.common.Mapping;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.http.client.common.annotation.HttpClient;
 import ru.tinkoff.kora.http.client.common.annotation.ResponseCodeMapper;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper;
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponse;
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponseMapper;
@@ -54,7 +54,7 @@ public interface ClientWithMappers {
     class IssueRequestMapper implements HttpClientRequestMapper<Issue> {
 
         @Override
-        public HttpClientRequestBuilder apply(Request<Issue> request) {
+        public HttpClientRequest.Builder apply(Request<Issue> request) {
             return request.builder().body("TEST".getBytes(StandardCharsets.UTF_8));
         }
     }

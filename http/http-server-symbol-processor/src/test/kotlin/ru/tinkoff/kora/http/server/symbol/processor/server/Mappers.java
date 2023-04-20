@@ -11,7 +11,6 @@ import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.common.HttpServerRequest;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.BlockingRequestExecutor;
 import ru.tinkoff.kora.http.server.common.handler.HttpServerRequestMapper;
 import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseEntityMapper;

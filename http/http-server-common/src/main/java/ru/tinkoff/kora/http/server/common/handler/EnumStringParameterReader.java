@@ -20,7 +20,7 @@ public final class EnumStringParameterReader<T extends Enum<T>> implements Strin
     public T read(String string) {
         var value = this.values.get(string);
         if (value == null) {
-            throw HttpServerResponseException.of(400, "Invalid value '%s'. Valid values are: %s".formatted(string, this.values.keySet()));
+            throw new HttpServerResponseException(400, "Invalid value '%s'. Valid values are: %s".formatted(string, this.values.keySet()));
         }
         return value;
     }

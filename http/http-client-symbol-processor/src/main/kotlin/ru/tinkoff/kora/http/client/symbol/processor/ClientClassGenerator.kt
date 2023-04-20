@@ -17,7 +17,7 @@ import ru.tinkoff.kora.http.client.common.HttpClientException
 import ru.tinkoff.kora.http.client.common.HttpClientResponseException
 import ru.tinkoff.kora.http.client.common.annotation.ResponseCodeMapper
 import ru.tinkoff.kora.http.client.common.annotation.ResponseCodeMapper.ResponseCodeMappers
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponse
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponseMapper
@@ -146,9 +146,9 @@ class ClientClassGenerator(private val resolver: Resolver) {
         b.addStatement("val _client = %L", methodClientName)
         val isRBMutable = methodData.parameters.any { it is Parameter.BodyParameter }
         b.addStatement(
-            "%L _requestBuilder = %T(%S, %LUrl)",
+            "%L _requestBuilder = %T.of(%S, %LUrl)",
             if (isRBMutable) "var" else "val",
-            HttpClientRequestBuilder::class,
+            HttpClientRequest::class,
             httpRoute.method,
             method.simpleName.asString()
         )
@@ -157,10 +157,10 @@ class ClientClassGenerator(private val resolver: Resolver) {
             if (parameter is Parameter.PathParameter) {
                 val parameterType = parameter.parameter.type.resolve()
                 if (!requiresConverter(parameterType)) {
-                    b.addCode("_requestBuilder.templateParam(%S, %T.toString(%L))\n", parameter.pathParameterName, Objects::class, parameter.parameter.name!!.asString())
+                    b.addCode("_requestBuilder.pathParam(%S, %T.toString(%L))\n", parameter.pathParameterName, Objects::class, parameter.parameter.name!!.asString())
                 } else {
                     b.addStatement(
-                        "_requestBuilder.templateParam(%S, %L.convert(%L))",
+                        "_requestBuilder.pathParam(%S, %L.convert(%L))",
                         parameter.pathParameterName,
                         getConverterName(methodData, parameter.parameter),
                         parameter.parameter.name!!.asString()

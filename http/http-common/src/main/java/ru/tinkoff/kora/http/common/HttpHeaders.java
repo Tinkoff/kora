@@ -1,13 +1,11 @@
 package ru.tinkoff.kora.http.common;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
-    HttpHeaders EMPTY = new HttpHeadersImpl();
 
     @Nullable
     String getFirst(String name);
@@ -15,11 +13,11 @@ public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
     @Nullable
     List<String> get(String name);
 
+    int size();
+
     default boolean has(String key) {
         return getFirst(key) != null;
     }
-
-    int size();
 
     default Set<String> names() {
         var names = new HashSet<String>();
@@ -61,12 +59,18 @@ public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
     }
 
     @SafeVarargs
-    static HttpHeaders of(Map.Entry<String, List<String>>... entries) {
+    static HttpHeaders of(@Nonnull Map.Entry<String, List<String>>... entries) {
         return new HttpHeadersImpl(entries);
     }
 
+    static HttpHeaders of(@Nonnull Map<String, String> headers) {
+        final Map<String, List<String>> headersMap = new HashMap<>(headers.size());
+        headers.forEach((k,v) -> headersMap.put(k,List.of(v)));
+        return new HttpHeadersImpl(headersMap);
+    }
+
     static HttpHeaders of() {
-        return EMPTY;
+        return HttpHeadersImpl.EMPTY;
     }
 
     static HttpHeaders of(String k1, String v1) {

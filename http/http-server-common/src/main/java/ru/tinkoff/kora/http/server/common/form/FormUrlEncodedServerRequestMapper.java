@@ -19,7 +19,7 @@ public final class FormUrlEncodedServerRequestMapper implements HttpServerReques
         var contentType = request.headers().getFirst("content-type");
         if (contentType == null || !contentType.equalsIgnoreCase("application/x-www-form-urlencoded")) {
             request.body().subscribe();
-            return Mono.error(HttpServerResponseException.of(415, "Expected content type: 'application/x-www-form-urlencoded'"));
+            return Mono.error(new HttpServerResponseException(415, "Expected content type: 'application/x-www-form-urlencoded'"));
         }
         return ReactorUtils.toByteArrayMono(request.body()).map(bytes -> {
             var str = new String(bytes, StandardCharsets.UTF_8);

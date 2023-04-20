@@ -13,7 +13,6 @@ import ru.tinkoff.kora.http.server.annotation.processor.controller.TestEnum;
 import ru.tinkoff.kora.http.server.common.HttpServerRequest;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.*;
 
 import java.lang.reflect.InvocationTargetException;
@@ -134,9 +133,8 @@ public class Mappers {
         return request -> Mono.just(null);
     }
 
-
     private static <T> HttpServerResponseMapper<T> jsonResponseMapper(TypeRef<T> someEntityClass) {
-        return result -> Mono.just(new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.EMPTY, ByteBuffer.wrap(result.toString().getBytes(StandardCharsets.UTF_8))));
+        return result -> Mono.just(HttpServerResponse.of(200, "text/plain", result.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
     private static HttpServerResponseMapper<HttpServerResponse> noopResponseMapper() {
@@ -152,11 +150,11 @@ public class Mappers {
     }
 
     private static HttpServerResponseMapper<Void> voidResponseMapper() {
-        return result -> Mono.just(new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), null));
+        return result -> Mono.just(HttpServerResponse.of(200, "text/plain"));
     }
 
     private static HttpServerResponseMapper<String> stringResponseMapper() {
-        return result -> Mono.just(new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode(result != null ? result : "null")));
+        return result -> Mono.just(HttpServerResponse.of(200, "text/plain", StandardCharsets.UTF_8.encode(result != null ? result : "null")));
     }
 
     private static HttpServerRequestMapper<Integer> integerRequestMapper() {
@@ -164,7 +162,7 @@ public class Mappers {
     }
 
     private static HttpServerResponseMapper<Integer> integerResponseMapper() {
-        return r -> Mono.just(new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode(r.toString())));
+        return r -> Mono.just(HttpServerResponse.of(200, "text/plain", StandardCharsets.UTF_8.encode(r.toString())));
     }
 
     private static HttpServerRequestMapper<ByteBuffer> byteBufferPublisherRequestMapper() {
@@ -176,7 +174,7 @@ public class Mappers {
     }
 
     private static HttpServerResponseMapper<byte[]> byteArrayResponseMapper() {
-        return r -> Mono.just(new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap(r)));
+        return r -> Mono.just(HttpServerResponse.of(200, "text/plain", r));
     }
 
     private static StringParameterReader<ReadableEntity> readableEntityStringReader() {

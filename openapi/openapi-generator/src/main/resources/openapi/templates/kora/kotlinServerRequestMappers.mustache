@@ -3,6 +3,7 @@ package {{package}}
 import ru.tinkoff.kora.http.server.common.form.MultipartReader
 import ru.tinkoff.kora.http.server.common.handler.HttpServerRequestMapper
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
+import ru.tinkoff.kora.http.server.common.HttpServerResponseException
 import reactor.core.publisher.Mono
 
 @ru.tinkoff.kora.common.annotation.Generated("openapi generator kora client"){{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}
@@ -28,7 +29,7 @@ interface {{classname}}ServerRequestMappers {
         val {{paramName}} = if ({{paramName}}Part == null || {{paramName}}Part.values().isEmpty()) null else {{paramName}}Part.values().first()
 {{/vendorExtensions.requiresMapper}}{{#required}}
         if ({{paramName}} == null) {
-          sink.error(ru.tinkoff.kora.http.server.common.HttpServerResponseException.of(400, "Form field '{{baseName}}' is required"))
+          sink.error(HttpServerResponseException(400, "Form field '{{baseName}}' is required"))
           return@handle
         }
 {{/required}}{{/isArray}}{{/formParams}}
@@ -59,7 +60,7 @@ interface {{classname}}ServerRequestMappers {
         .handle { state, sink ->
           {{#formParams}}{{#required}}
           if (state.{{paramName}} == null) {
-            sink.error(ru.tinkoff.kora.http.server.common.HttpServerResponseException.of(400, "Form field '{{baseName}}' is required"))
+            sink.error(HttpServerResponseException(400, "Form field '{{baseName}}' is required"))
             return@handle
           }
           {{/required}}{{/formParams}}

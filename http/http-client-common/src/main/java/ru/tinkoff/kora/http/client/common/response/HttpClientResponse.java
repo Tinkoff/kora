@@ -7,6 +7,7 @@ import ru.tinkoff.kora.http.common.HttpHeaders;
 import java.nio.ByteBuffer;
 
 public interface HttpClientResponse {
+
     int code();
 
     HttpHeaders headers();

@@ -7,7 +7,6 @@ import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.annotation.processor.HttpControllerProcessor;
 import ru.tinkoff.kora.http.server.common.HttpServerRequestHandler;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -41,7 +40,7 @@ public class TestHttpServer<T> {
                 return new HttpResponseAssert(response);
             }
         }
-        return new HttpResponseAssert(new SimpleHttpServerResponse(404, "text/plain", HttpHeaders.of(), null));
+        return new HttpResponseAssert(HttpServerResponse.of(404, "text/plain"));
     }
 
     private Map<String, String> extractRouteParams(String routeTemplate, String path) {

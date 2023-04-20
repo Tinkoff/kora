@@ -54,7 +54,7 @@ public class PrivateApiHandler {
             return this.liveness();
         }
 
-        return Mono.just(new SimpleHttpServerResponse(404, PLAIN_TEXT_CONTENT_TYPE, HttpHeaders.of(), ByteBuffer.wrap("Private api path not found".getBytes(StandardCharsets.UTF_8))));
+        return Mono.just(HttpServerResponse.of(404, PLAIN_TEXT_CONTENT_TYPE, "Private api path not found".getBytes(StandardCharsets.UTF_8)));
     }
 
     private Publisher<HttpServerResponse> metrics() {
@@ -62,7 +62,7 @@ public class PrivateApiHandler {
             .map(PrivateApiMetrics::scrape)
             .orElse("");
         var body = ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8));
-        return Mono.just(new SimpleHttpServerResponse(200, "text/plain; charset=utf-8", HttpHeaders.of(), body));
+        return Mono.just(HttpServerResponse.of(200, "text/plain; charset=utf-8", body));
     }
 
     private Publisher<HttpServerResponse> readiness() {
@@ -79,24 +79,24 @@ public class PrivateApiHandler {
                 var probe = probePromise.get();
                 if (!probe.isPresent()) {
                     var body = ByteBuffer.wrap("Probe is not ready yet".getBytes(StandardCharsets.UTF_8));
-                    return Mono.just(new SimpleHttpServerResponse(503, PLAIN_TEXT_CONTENT_TYPE, HttpHeaders.of(), body));
+                    return Mono.just(HttpServerResponse.of(503, PLAIN_TEXT_CONTENT_TYPE, body));
                 }
 
                 return performProbe.apply(probe.get()).map(failure -> {
                     var body = ByteBuffer.wrap(failure.getBytes(StandardCharsets.UTF_8));
-                    return new SimpleHttpServerResponse(503, PLAIN_TEXT_CONTENT_TYPE, HttpHeaders.of(), body);
+                    return HttpServerResponse.of(503, PLAIN_TEXT_CONTENT_TYPE, body);
                 });
             })
             .next()
             .switchIfEmpty(Mono.defer(() -> {
                 var body = ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8));
-                return Mono.just(new SimpleHttpServerResponse(200, PLAIN_TEXT_CONTENT_TYPE, HttpHeaders.of(), body));
+                return Mono.just(HttpServerResponse.of(200, PLAIN_TEXT_CONTENT_TYPE, body));
             }))
             .timeout(Duration.ofSeconds(30))
             .onErrorResume(err -> {
                 String message = "Probe failed: " + err.getMessage();
                 var body = ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8));
-                return Mono.just(new SimpleHttpServerResponse(503, PLAIN_TEXT_CONTENT_TYPE, HttpHeaders.of(), body));
+                return Mono.just(HttpServerResponse.of(503, PLAIN_TEXT_CONTENT_TYPE, body));
             });
     }
 }

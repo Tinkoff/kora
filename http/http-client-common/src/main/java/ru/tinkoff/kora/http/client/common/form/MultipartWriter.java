@@ -2,7 +2,7 @@ package ru.tinkoff.kora.http.client.common.form;
 
 import reactor.core.Fuseable;
 import reactor.core.publisher.Flux;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import ru.tinkoff.kora.http.common.form.FormMultipart;
 
 import java.nio.ByteBuffer;
@@ -13,11 +13,11 @@ import java.util.UUID;
 public class MultipartWriter {
     private static final ByteBuffer RN_BUF = StandardCharsets.US_ASCII.encode("\r\n");
 
-    public static HttpClientRequestBuilder write(HttpClientRequestBuilder b, List<? extends FormMultipart.FormPart> parts) {
+    public static HttpClientRequest.Builder write(HttpClientRequest.Builder b, List<? extends FormMultipart.FormPart> parts) {
         return write(b, "blob:" + UUID.randomUUID(), parts);
     }
 
-    public static HttpClientRequestBuilder write(HttpClientRequestBuilder b, String boundary, List<? extends FormMultipart.FormPart> parts) {
+    public static HttpClientRequest.Builder write(HttpClientRequest.Builder b, String boundary, List<? extends FormMultipart.FormPart> parts) {
         var boundaryBuff = StandardCharsets.US_ASCII.encode("--" + boundary);
 
         var body = Flux.fromIterable(parts).concatMap(part -> {

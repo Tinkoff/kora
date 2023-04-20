@@ -11,7 +11,7 @@ import ru.tinkoff.kora.http.client.common.HttpClient;
 import ru.tinkoff.kora.http.client.common.HttpClientException;
 import ru.tinkoff.kora.http.client.common.HttpClientResponseException;
 import ru.tinkoff.kora.http.client.common.annotation.ResponseCodeMapper;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper;
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponse;
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponseMapper;
@@ -91,15 +91,15 @@ public class ClientClassGenerator {
         var httpRoute = method.getAnnotation(HttpRoute.class);
         b.addCode("""
             var _client = this.$L;
-            var _requestBuilder = new $T($S, this.$LUrl)
+            var _requestBuilder = $T.of($S, this.$LUrl)
               .requestTimeout(this.$L);
-            """, methodClientName, HttpClientRequestBuilder.class, httpRoute.method(), method.getSimpleName(), methodRequestTimeout);
+            """, methodClientName, HttpClientRequest.class, httpRoute.method(), method.getSimpleName(), methodRequestTimeout);
         for (var parameter : methodData.parameters()) {
             if (parameter instanceof Parameter.PathParameter path) {
                 if (requiresConverter(path.parameter().asType())) {
-                    b.addCode("_requestBuilder.templateParam($S, $L.convert($L));\n", path.pathParameterName(), getConverterName(methodData, path.parameter()), path.parameter());
+                    b.addCode("_requestBuilder.pathParam($S, $L.convert($L));\n", path.pathParameterName(), getConverterName(methodData, path.parameter()), path.parameter());
                 } else {
-                    b.addCode("_requestBuilder.templateParam($S, $T.toString($L));\n", path.pathParameterName(), Objects.class, path.parameter());
+                    b.addCode("_requestBuilder.pathParam($S, $T.toString($L));\n", path.pathParameterName(), Objects.class, path.parameter());
                 }
             }
             if (parameter instanceof Parameter.HeaderParameter header) {

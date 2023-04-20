@@ -5,6 +5,7 @@ import ru.tinkoff.kora.http.common.HttpHeaders
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.collections.ArrayList
 
 internal class SimpleHttpServerRequest(
     private val method: String,
@@ -33,13 +34,13 @@ internal class SimpleHttpServerRequest(
         return HttpHeaders.of(*entries)
     }
 
-    override fun queryParams(): Map<String, Deque<String>> {
+    override fun queryParams(): Map<String, List<String>> {
         val questionMark = path.indexOf('?')
         if (questionMark < 0) {
             return mapOf()
         }
         val params = path.substring(questionMark + 1)
-        val result = mutableMapOf<String, Deque<String>>()
+        val result = mutableMapOf<String, MutableList<String>>()
         params.split("&".toRegex()).forEach { param ->
             val eq = param.indexOf('=')
             if (eq <= 0) {
@@ -47,7 +48,7 @@ internal class SimpleHttpServerRequest(
             }
             val name = param.substring(0, eq)
             val value = param.substring(eq + 1)
-            result[name]?.add(value) ?: result.put(name, ArrayDeque<String>().apply { this.add(value) })
+            result[name]?.add(value) ?: result.put(name, ArrayList<String>().apply { this.add(value) })
         }
         return result
     }

@@ -9,63 +9,61 @@ import java.nio.ByteBuffer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class HttpServerResponseException extends RuntimeException implements HttpServerResponse {
-    private final int code;
-    private final String contentType;
-    private final ByteBuffer body;
-    private final HttpHeaders headers;
 
-    public HttpServerResponseException(int code, String contentType, String message, ByteBuffer body, HttpHeaders headers) {
-        this(null, message, code, contentType, body, headers);
+    private final HttpServerResponse response;
+
+    public HttpServerResponseException(int code, String message) {
+        super(message);
+        this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(message));
     }
 
-    public HttpServerResponseException(@Nullable Throwable cause, String message, int code, String contentType, ByteBuffer body, HttpHeaders headers) {
+    public HttpServerResponseException(int code, String message, Throwable cause) {
         super(message, cause);
-        this.code = code;
-        this.contentType = contentType;
-        this.body = body.slice();
-        this.headers = headers;
+        this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(message));
     }
 
-    public static HttpServerResponseException of(int code, String text) {
-        return of(null, code, text);
+    public HttpServerResponseException(int code, Throwable cause) {
+        super(cause.getMessage(), cause);
+        this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(cause.getMessage()));
     }
 
-    public static HttpServerResponseException of(@Nullable Throwable cause, int code, String text) {
-        return new HttpServerResponseException(cause, text, code, "text/plain; charset=utf-8", UTF_8.encode(text), HttpHeaders.of());
+    public HttpServerResponseException(HttpServerResponse response, String message) {
+        super(message);
+        this.response = response;
+    }
+
+    public HttpServerResponseException(HttpServerResponse response, String message, Throwable cause) {
+        super(message, cause);
+        this.response = response;
     }
 
     @Override
     public int code() {
-        return this.code;
+        return response.code();
     }
 
     @Override
     public int contentLength() {
-        return this.body.remaining();
+        return response.contentLength();
     }
 
     @Override
     public String contentType() {
-        return this.contentType;
+        return response.contentType();
     }
 
     @Override
     public HttpHeaders headers() {
-        return this.headers;
+        return response.headers();
     }
 
     @Override
     public Flux<? extends ByteBuffer> body() {
-        return Flux.just(this.body.slice());
+        return response.body();
     }
 
     @Override
     public String toString() {
-        return "HttpResponseException{" +
-               "message=" + getMessage() +
-               "code=" + code +
-               ", contentType='" + contentType + '\'' +
-               ", headers=" + headers +
-               '}';
+        return response.toString();
     }
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class AsyncHttpClientHeaders implements HttpHeaders {
+
     private final io.netty.handler.codec.http.HttpHeaders headers;
 
     public AsyncHttpClientHeaders(io.netty.handler.codec.http.HttpHeaders headers) {
@@ -61,5 +62,10 @@ public class AsyncHttpClientHeaders implements HttpHeaders {
                 return Map.entry(key, values);
             }
         };
+    }
+
+    @Override
+    public String toString() {
+        return headers.toString();
     }
 }

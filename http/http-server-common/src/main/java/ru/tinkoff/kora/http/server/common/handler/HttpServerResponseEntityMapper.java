@@ -4,7 +4,6 @@ import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class HttpServerResponseEntityMapper<T> implements HttpServerResponseMapp
                 } else if (response.headers().size() == 0) {
                     headers = result.headers();
                 } else {
-                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    @SuppressWarnings({"unchecked"})
                     Map.Entry<String, List<String>>[] entries = new Map.Entry[response.headers().size() + result.headers().size()];
                     var i = 0;
                     for (var entry : response.headers()) {
@@ -39,7 +38,7 @@ public class HttpServerResponseEntityMapper<T> implements HttpServerResponseMapp
                     headers = HttpHeaders.of(entries);
                 }
 
-                return new SimpleHttpServerResponse(
+                return HttpServerResponse.of(
                     result.code(),
                     response.contentType(),
                     headers,

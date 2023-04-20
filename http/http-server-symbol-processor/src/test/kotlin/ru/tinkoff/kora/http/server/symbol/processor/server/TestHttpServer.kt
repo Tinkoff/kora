@@ -6,7 +6,6 @@ import reactor.core.publisher.Mono
 import ru.tinkoff.kora.http.common.HttpHeaders
 import ru.tinkoff.kora.http.server.common.HttpServerRequestHandler
 import ru.tinkoff.kora.http.server.common.HttpServerResponse
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse
 import ru.tinkoff.kora.http.server.symbol.procesor.HttpControllerProcessorProvider
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import java.lang.invoke.MethodHandles
@@ -41,7 +40,7 @@ class TestHttpServer<T>(private val requestHandlers: List<HttpServerRequestHandl
                 return HttpResponseAssert(response)
             }
         }
-        return HttpResponseAssert(SimpleHttpServerResponse(404, "text/plain", HttpHeaders.of(), null))
+        return HttpResponseAssert(HttpServerResponse.of(404, "text/plain"))
     }
 
     private fun extractRouteParams(routeTemplate: String, path: String): Map<String, String>? {

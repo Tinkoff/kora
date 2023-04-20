@@ -4,7 +4,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseMapper;
 import ru.tinkoff.kora.json.common.JsonWriter;
 
@@ -22,7 +21,7 @@ public class JsonWriterHttpServerResponseMapper<T> implements HttpServerResponse
         return Mono.fromCallable(() -> {
             var bytes = JsonWriterHttpServerResponseMapper.this.writer.toByteArray(result);
             var byteBuffer = ByteBuffer.wrap(bytes);
-            return new SimpleHttpServerResponse(200, "application/json", HttpHeaders.of(), bytes.length, Flux.just(byteBuffer));
+            return HttpServerResponse.of(200, "application/json", byteBuffer);
         });
     }
 }

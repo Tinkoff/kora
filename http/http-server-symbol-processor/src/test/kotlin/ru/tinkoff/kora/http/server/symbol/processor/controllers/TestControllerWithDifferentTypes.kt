@@ -8,7 +8,6 @@ import ru.tinkoff.kora.http.common.HttpMethod
 import ru.tinkoff.kora.http.common.annotation.HttpRoute
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
 import ru.tinkoff.kora.http.server.common.HttpServerResponse
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse
 import ru.tinkoff.kora.http.server.common.annotation.HttpController
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -16,11 +15,10 @@ import java.nio.charset.StandardCharsets
 @HttpController
 open class TestControllerWithDifferentTypes {
     @HttpRoute(method = HttpMethod.GET, path = "/")
-    open suspend fun getRoot(): SimpleHttpServerResponse {
-        val response = SimpleHttpServerResponse(
+    open suspend fun getRoot(): HttpServerResponse {
+        val response = HttpServerResponse.of(
             200,
             "text/plain",
-            HttpHeaders.of(),
             StandardCharsets.UTF_8.encode("Hello world")
         )
         delay(1)
@@ -29,7 +27,7 @@ open class TestControllerWithDifferentTypes {
 
     @HttpRoute(method = HttpMethod.GET, path = "/somePage")
     open suspend fun getSomePage(httpServerRequest: HttpServerRequest?): HttpServerResponse {
-        val response = SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode("Hello world"))
+        val response = HttpServerResponse.of(200, "text/plain", StandardCharsets.UTF_8.encode("Hello world"))
         delay(1000)
 
         return  response

@@ -11,7 +11,6 @@ import ru.tinkoff.kora.http.common.annotation.Query;
 import ru.tinkoff.kora.http.server.common.HttpServerRequestHandler;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.*;
 
 import javax.annotation.Nullable;
@@ -140,9 +139,9 @@ public class RequestHandlerGenerator {
                 controllerCall = CodeBlock.of("""
                     _executor.execute(() -> {
                       _controller.$L($L);
-                      return new $T(200, "application/octet-stream", $T.of(), $T.allocate(0));
+                      return $T.of(200, "application/octet-stream", $T.allocate(0));
                     })
-                    """, requestMappingData.executableElement().getSimpleName(), executeParameters, SimpleHttpServerResponse.class, HttpHeaders.class, ByteBuffer.class);
+                    """, requestMappingData.executableElement().getSimpleName(), executeParameters, HttpServerResponse.class, ByteBuffer.class);
             } else if (isNullable) {
                 controllerCall = CodeBlock.of("_executor.execute(() -> $T.ofNullable(_controller.$L($L)))\n", Optional.class, requestMappingData.executableElement().getSimpleName(), executeParameters);
             } else {
@@ -151,7 +150,7 @@ public class RequestHandlerGenerator {
         } else if (isMonoVoid) {
             controllerCall = CodeBlock.builder()
                 .add("$T.deferContextual(_ctx -> _controller.$L($L))\n", Mono.class, requestMappingData.executableElement().getSimpleName(), executeParameters)
-                .add("  .thenReturn(new $T(200, \"application/octet-stream\", $T.of(), $T.allocate(0)))", SimpleHttpServerResponse.class, HttpHeaders.class, ByteBuffer.class)
+                .add("  .thenReturn($T.of(200, \"application/octet-stream\", $T.allocate(0)))", HttpServerResponse.class, ByteBuffer.class)
                 .build();
         } else {
             controllerCall = CodeBlock.of("$T.deferContextual(_ctx -> _controller.$L($L))", Mono.class, requestMappingData.executableElement().getSimpleName(), executeParameters);

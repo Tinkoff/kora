@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.http.client.common.HttpClientEncoderException;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper;
 
 public class JacksonHttpClientRequestMapper<T> implements HttpClientRequestMapper<T> {
@@ -21,7 +21,7 @@ public class JacksonHttpClientRequestMapper<T> implements HttpClientRequestMappe
     }
 
     @Override
-    public HttpClientRequestBuilder apply(Request<T> request) {
+    public HttpClientRequest.Builder apply(Request<T> request) {
         try {
             var bytes = this.objectWriter.writeValueAsBytes(request.parameter());
             return request.builder().body(bytes)

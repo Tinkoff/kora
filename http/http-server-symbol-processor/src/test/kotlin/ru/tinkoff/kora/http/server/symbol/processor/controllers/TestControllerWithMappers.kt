@@ -8,7 +8,6 @@ import ru.tinkoff.kora.http.common.HttpMethod
 import ru.tinkoff.kora.http.common.annotation.HttpRoute
 import ru.tinkoff.kora.http.server.common.HttpServerRequest
 import ru.tinkoff.kora.http.server.common.HttpServerResponse
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse
 import ru.tinkoff.kora.http.server.common.annotation.HttpController
 import ru.tinkoff.kora.http.server.common.handler.HttpServerRequestMapper
 import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseMapper
@@ -51,10 +50,9 @@ open class TestControllerWithMappers {
     class StringResponseMapper : HttpServerResponseMapper<String> {
         override fun apply(result: String?): Mono<out HttpServerResponse> {
             return Mono.just(
-                SimpleHttpServerResponse(
+                HttpServerResponse.of(
                     200,
                     "text/plain",
-                    HttpHeaders.of(),
                     StandardCharsets.UTF_8.encode(result)
                 )
             )

@@ -20,7 +20,7 @@ public class MultipleParamsController {
         @Override
         public Mono<Param1> apply(HttpServerRequest request) {
             if (request.headers().getFirst("Test-Header") == null) {
-                throw HttpServerResponseException.of(null, 400, "TEST");
+                throw new HttpServerResponseException(400, "TEST");
             }
             return Mono.just(new Param1());
         }

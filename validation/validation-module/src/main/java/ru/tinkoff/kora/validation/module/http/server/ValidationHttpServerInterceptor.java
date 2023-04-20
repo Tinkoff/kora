@@ -37,6 +37,6 @@ public final class ValidationHttpServerInterceptor implements HttpServerIntercep
             }
         }
         var message = exception.getMessage();
-        return HttpServerResponseException.of(400, message);
+        return new HttpServerResponseException(400, message);
     }
 }

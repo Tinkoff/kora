@@ -26,7 +26,7 @@ public final class RequestHandlerUtils {
     public static String parseStringPathParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -35,53 +35,53 @@ public final class RequestHandlerUtils {
     public static UUID parseUUIDPathParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
 
 
         try {
             return UUID.fromString(result);
         } catch (IllegalArgumentException e) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
+            throw new HttpServerResponseException(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
         }
     }
 
     public static int parseIntegerPathParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
 
         try {
             return Integer.parseInt(result);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
+            throw new HttpServerResponseException(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
         }
     }
 
     public static long parseLongPathParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
 
         try {
             return Long.parseLong(result);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
+            throw new HttpServerResponseException(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
         }
     }
 
     public static double parseDoublePathParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
 
         try {
             return Double.parseDouble(result);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
+            throw new HttpServerResponseException(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
         }
     }
 
@@ -89,13 +89,13 @@ public final class RequestHandlerUtils {
     public static <T extends Enum<T>> T parseEnumPathParameter(HttpServerRequest request, Class<T> enumType, String name) throws HttpServerResponseException {
         var result = request.pathParams().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Path parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Path parameter '%s' is required".formatted(name));
         }
 
         try {
             return Enum.valueOf(enumType, result);
         } catch (Exception exception) {
-            throw HttpServerResponseException.of(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
+            throw new HttpServerResponseException(400, "Path parameter %s(%s) has invalid value".formatted(name, result));
         }
     }
 
@@ -106,7 +106,7 @@ public final class RequestHandlerUtils {
     public static String parseStringHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.headers().get(name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' is required".formatted(name));
         }
         return String.join(", ", result);
     }
@@ -123,7 +123,7 @@ public final class RequestHandlerUtils {
     public static List<String> parseStringListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalStringListHeaderParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' is required".formatted(name));
         }
 
         return result;
@@ -146,18 +146,18 @@ public final class RequestHandlerUtils {
     public static int parseIntegerHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = request.headers().get(name);
         if (result == null || result.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' is required".formatted(name));
         }
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Header '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Integer.parseInt(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Header %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Header %s(%s) has invalid value".formatted(name, first));
         }
     }
 
@@ -170,20 +170,20 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Header '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Integer.parseInt(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Header %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Header %s(%s) has invalid value".formatted(name, first));
         }
     }
 
     public static List<Integer> parseIntegerListHeaderParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalIntegerListHeaderParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Header '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Header '%s' is required".formatted(name));
         }
         return result;
     }
@@ -203,13 +203,13 @@ public final class RequestHandlerUtils {
                 for (String s : split) {
                     s = s.trim();
                     if (s.isEmpty()) {
-                        throw HttpServerResponseException.of(400, "Header %s(%s) has invalid value".formatted(name, header));
+                        throw new HttpServerResponseException(400, "Header %s(%s) has invalid value".formatted(name, header));
                     }
 
                     try {
                         result.add(Integer.parseInt(s));
                     } catch (NumberFormatException e) {
-                        throw HttpServerResponseException.of(400, "Header %s(%s) has invalid value".formatted(name, s));
+                        throw new HttpServerResponseException(400, "Header %s(%s) has invalid value".formatted(name, s));
                     }
                 }
             }
@@ -225,7 +225,7 @@ public final class RequestHandlerUtils {
     public static UUID parseUuidQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalUuidQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
 
         return result;
@@ -240,13 +240,13 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return UUID.fromString(first);
         } catch (IllegalArgumentException e) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid value '%s'".formatted(name, result));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid value '%s'".formatted(name, result));
         }
     }
 
@@ -254,7 +254,7 @@ public final class RequestHandlerUtils {
     public static String parseStringQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalStringQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
 
         return result;
@@ -273,7 +273,7 @@ public final class RequestHandlerUtils {
     public static int parseIntegerQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalIntegerQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -287,20 +287,20 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Integer.parseInt(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
         }
     }
 
     public static long parseLongQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalLongQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -314,13 +314,13 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Long.parseLong(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
         }
     }
 
@@ -328,7 +328,7 @@ public final class RequestHandlerUtils {
     public static <T extends Enum<T>> T parseEnumQueryParameter(HttpServerRequest request, Class<T> type, String name) throws HttpServerResponseException {
         var result = parseOptionalEnumQueryParameter(request, type, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -342,20 +342,20 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Enum.valueOf(type, first);
         } catch (Exception exception) {
-            throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, result));
+            throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, result));
         }
     }
 
     public static boolean parseBooleanQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalBooleanQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -369,21 +369,21 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             // todo
             return Boolean.parseBoolean(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
         }
     }
 
     public static double parseDoubleQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalDoubleQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -397,13 +397,13 @@ public final class RequestHandlerUtils {
 
         var first = result.iterator().next().trim();
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
         }
 
         try {
             return Double.parseDouble(first);
         } catch (NumberFormatException e) {
-            throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
+            throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, first));
         }
     }
 
@@ -414,7 +414,7 @@ public final class RequestHandlerUtils {
     public static List<Integer> parseIntegerListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalIntegerListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -431,13 +431,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return Integer.parseInt(v);
                 } catch (NumberFormatException e) {
-                    throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
+                    throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
                 }
             })
             .toList();
@@ -447,7 +447,7 @@ public final class RequestHandlerUtils {
     public static List<UUID> parseUuidListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalUuidListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -464,13 +464,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return UUID.fromString(v);
                 } catch (IllegalArgumentException e) {
-                    throw HttpServerResponseException.of(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
+                    throw new HttpServerResponseException(400, "Path parameter '%s' has invalid value '%s'".formatted(name, result));
                 }
             })
             .toList();
@@ -480,7 +480,7 @@ public final class RequestHandlerUtils {
     public static List<String> parseStringListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalStringListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -499,7 +499,7 @@ public final class RequestHandlerUtils {
     public static List<Long> parseLongListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalLongListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -516,13 +516,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return Long.parseLong(v);
                 } catch (NumberFormatException e) {
-                    throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
+                    throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
                 }
             })
             .toList();
@@ -532,7 +532,7 @@ public final class RequestHandlerUtils {
     public static List<Double> parseDoubleListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalDoubleListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -549,13 +549,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return Double.parseDouble(v);
                 } catch (NumberFormatException e) {
-                    throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
+                    throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
                 }
             })
             .toList();
@@ -565,7 +565,7 @@ public final class RequestHandlerUtils {
     public static List<Boolean> parseBooleanListQueryParameter(HttpServerRequest request, String name) throws HttpServerResponseException {
         var result = parseOptionalBooleanListQueryParameter(request, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -582,13 +582,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return Boolean.parseBoolean(v);
                 } catch (NumberFormatException e) {
-                    throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
+                    throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, v));
                 }
             })
             .toList();
@@ -598,7 +598,7 @@ public final class RequestHandlerUtils {
     public static <T extends Enum<T>> List<T> parseEnumListQueryParameter(HttpServerRequest request, Class<T> type, String name) throws HttpServerResponseException {
         var result = parseOptionalEnumListQueryParameter(request, type, name);
         if (result == null) {
-            throw HttpServerResponseException.of(400, "Query parameter '%s' is required".formatted(name));
+            throw new HttpServerResponseException(400, "Query parameter '%s' is required".formatted(name));
         }
         return result;
     }
@@ -615,13 +615,13 @@ public final class RequestHandlerUtils {
             .map(v -> {
                 v = v.trim();
                 if (v.isEmpty()) {
-                    throw HttpServerResponseException.of(400, "Query parameter '%s' has invalid blank string value".formatted(name));
+                    throw new HttpServerResponseException(400, "Query parameter '%s' has invalid blank string value".formatted(name));
                 }
 
                 try {
                     return Enum.valueOf(type, v);
                 } catch (Exception exception) {
-                    throw HttpServerResponseException.of(400, "Query parameter %s(%s) has invalid value".formatted(name, result));
+                    throw new HttpServerResponseException(400, "Query parameter %s(%s) has invalid value".formatted(name, result));
                 }
             })
             .collect(Collectors.toList());

@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 public class PublicApiHandler implements RefreshListener {
     private final Function<HttpServerRequest, Mono<HttpServerResponse>> NOT_FOUND_HANDLER = request ->
-        Mono.just(new SimpleHttpServerResponse(404, "application/octet-stream", HttpHeaders.of(), null));
+        Mono.just(HttpServerResponse.of(404, "application/octet-stream"));
 
     private final Map<String, PathTemplateMatcher<ValueOf<HttpServerRequestHandler>>> pathTemplateMatcher;
     private final PathTemplateMatcher<List<String>> allMethodMatchers;
@@ -80,7 +80,7 @@ public class PublicApiHandler implements RefreshListener {
         return this.handlers.size();
     }
 
-    public record PublicApiRequest(String method, String path, String hostName, String scheme, HttpHeaders headers, Map<String, ? extends Collection<String>> queryParams, Flux<ByteBuffer> body) {}
+    public record PublicApiRequest(String method, String path, String hostName, String scheme, HttpHeaders headers, Map<String, List<String>> queryParams, Flux<ByteBuffer> body) {}
 
     public void process(PublicApiRequest routerRequest, HttpServerResponseSender responseSender) {
         final Function<HttpServerRequest, Mono<HttpServerResponse>> handlerFunction;
@@ -93,7 +93,7 @@ public class PublicApiHandler implements RefreshListener {
             var allMethodMatch = allMethodMatchers.match(routerRequest.path);
             if (allMethodMatch != null) {
                 var allowed = String.join(", ", allMethodMatch.value());
-                handlerFunction = request -> Mono.just(new SimpleHttpServerResponse(405, "application/octet-stream", HttpHeaders.of("allow", allowed), null));
+                handlerFunction = request -> Mono.just(HttpServerResponse.of(405, "application/octet-stream", HttpHeaders.of("allow", allowed)));
                 routeTemplate = allMethodMatch.matchedTemplate();
                 templateParameters = Map.of();
             } else {
@@ -108,7 +108,6 @@ public class PublicApiHandler implements RefreshListener {
         }
 
         var request = new Request(routerRequest.method(), routerRequest.path(), routeTemplate, routerRequest.headers(), routerRequest.queryParams(), templateParameters, routerRequest.body());
-
         var ctx = this.telemetry.get().get(routerRequest, routeTemplate);
         var method = routerRequest.method;
 
@@ -120,7 +119,7 @@ public class PublicApiHandler implements RefreshListener {
                     error -> {
                         var response = error instanceof HttpServerResponse httpServerResponse
                             ? httpServerResponse
-                            : new SimpleHttpServerResponse(500, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode(
+                            : HttpServerResponse.of(500, "text/plain", StandardCharsets.UTF_8.encode(
                             Objects.requireNonNullElse(error.getMessage(), "Unknown error")
                         ));
                         this.sendResponse(ctx, responseSender, response, error);
@@ -129,7 +128,7 @@ public class PublicApiHandler implements RefreshListener {
         } catch (Throwable error) {
             var response = error instanceof HttpServerResponse httpServerResponse
                 ? httpServerResponse
-                : new SimpleHttpServerResponse(500, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode(
+                : HttpServerResponse.of(500, "text/plain", StandardCharsets.UTF_8.encode(
                 Objects.requireNonNullElse(error.getMessage(), "Unknown error")
             ));
             this.sendResponse(ctx, responseSender, response, error);
@@ -146,7 +145,7 @@ public class PublicApiHandler implements RefreshListener {
                 }
                 ctx.close(success.code(), resultCode, ex);
             } else if (result instanceof HttpServerResponseSender.ResponseBodyErrorBeforeCommit responseBodyError) {
-                var newResponse = new SimpleHttpServerResponse(500, "text/plain", HttpHeaders.of(), StandardCharsets.UTF_8.encode(
+                var newResponse = HttpServerResponse.of(500, "text/plain", StandardCharsets.UTF_8.encode(
                     Objects.requireNonNullElse(responseBodyError.error().getMessage(), "Unknown error")
                 ));
                 responseSender.send(newResponse).subscribe(v -> {
@@ -166,16 +165,13 @@ public class PublicApiHandler implements RefreshListener {
         return method + " " + routeTemplate;
     }
 
-    private record Request(
-        String method,
-        String path,
-        @Nullable String matchedTemplate,
-        HttpHeaders headers,
-        Map<String, ? extends Collection<String>> queryParams,
-        Map<String, String> pathParams,
-        Flux<ByteBuffer> body)
-
-        implements HttpServerRequest {
+    private record Request(String method,
+                           String path,
+                           @Nullable String matchedTemplate,
+                           HttpHeaders headers,
+                           Map<String, List<String>> queryParams,
+                           Map<String, String> pathParams,
+                           Flux<ByteBuffer> body) implements HttpServerRequest {
     }
 
     private interface RequestHandler extends BiFunction<HttpServerRequest, Function<HttpServerRequest, Mono<HttpServerResponse>>, Mono<HttpServerResponse>> {}

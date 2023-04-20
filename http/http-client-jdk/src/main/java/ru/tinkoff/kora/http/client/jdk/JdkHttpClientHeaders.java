@@ -8,9 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-;
-
 public class JdkHttpClientHeaders implements HttpHeaders {
+
     private final Map<String, List<String>> headers;
 
     public JdkHttpClientHeaders(java.net.http.HttpHeaders headers) {
@@ -42,5 +41,10 @@ public class JdkHttpClientHeaders implements HttpHeaders {
     @Override
     public Iterator<Map.Entry<String, List<String>>> iterator() {
         return this.headers.entrySet().iterator();
+    }
+
+    @Override
+    public String toString() {
+        return headers.toString();
     }
 }

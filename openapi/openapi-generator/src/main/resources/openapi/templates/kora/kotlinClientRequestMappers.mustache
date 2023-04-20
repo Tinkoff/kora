@@ -3,7 +3,7 @@ package {{package}}
 import ru.tinkoff.kora.http.client.common.form.UrlEncodedWriter
 import ru.tinkoff.kora.http.client.common.form.MultipartWriter
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest
 import reactor.core.publisher.Mono
 
 @ru.tinkoff.kora.common.annotation.Generated("openapi generator kora client"){{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}
@@ -15,7 +15,7 @@ interface {{classname}}ClientRequestMappers {
   class {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParamRequestMapper{{#vendorExtensions.requiresFormParamMappers}}({{#vendorExtensions.formParamMappers}}
     private val {{paramName}}Converter: ru.tinkoff.kora.http.client.common.writer.StringParameterConverter<{{paramType}}>,
 {{/vendorExtensions.formParamMappers}}  ){{/vendorExtensions.requiresFormParamMappers}}: HttpClientRequestMapper<{{classname}}.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParam> {
-    override fun apply(request: HttpClientRequestMapper.Request<{{classname}}.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParam>): HttpClientRequestBuilder {
+    override fun apply(request: HttpClientRequestMapper.Request<{{classname}}.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParam>): HttpClientRequest.Builder {
       {{#vendorExtensions.urlEncodedForm}}
       val b = UrlEncodedWriter(){{#formParams}}
       request.parameter().{{paramName}}?.let { {{#vendorExtensions.requiresMapper}}

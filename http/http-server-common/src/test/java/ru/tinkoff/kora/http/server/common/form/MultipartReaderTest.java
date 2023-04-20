@@ -10,10 +10,7 @@ import ru.tinkoff.kora.http.server.common.HttpServerRequest;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -265,7 +262,7 @@ class MultipartReaderTest {
 
         @Override
         public HttpHeaders headers() {
-            @SuppressWarnings({"unchecked", "rawtypes"})
+            @SuppressWarnings({"unchecked"})
             Map.Entry<String, List<String>>[] entries = new Map.Entry[headers.length];
             for (int i = 0; i < headers.length; i++) {
                 entries[i] = Map.entry(headers[i].getKey(), List.of(headers[i].getValue()));
@@ -274,7 +271,7 @@ class MultipartReaderTest {
         }
 
         @Override
-        public Map<String, Deque<String>> queryParams() {
+        public Map<String, List<String>> queryParams() {
             var questionMark = path.indexOf('?');
             if (questionMark < 0) {
                 return Map.of();
@@ -284,14 +281,14 @@ class MultipartReaderTest {
                 .map(param -> {
                     var eq = param.indexOf('=');
                     if (eq <= 0) {
-                        return Map.entry(param, new ArrayDeque<String>(0));
+                        return Map.entry(param, new ArrayList<String>(0));
                     }
                     var name = param.substring(0, eq);
                     var value = param.substring(eq + 1);
-                    return Map.entry(name, new ArrayDeque<>(List.of(value)));
+                    return Map.entry(name, new ArrayList<>(List.of(value)));
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (d1, d2) -> {
-                    var d3 = new ArrayDeque<>(d1);
+                    var d3 = new ArrayList<>(d1);
                     d3.addAll(d2);
                     return d3;
                 }));
