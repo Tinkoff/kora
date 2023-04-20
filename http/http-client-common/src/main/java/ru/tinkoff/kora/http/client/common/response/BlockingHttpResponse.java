@@ -10,6 +10,7 @@ import ru.tinkoff.kora.http.common.HttpHeaders;
 import java.io.InputStream;
 
 public interface BlockingHttpResponse extends AutoCloseable {
+
     int code();
 
     HttpHeaders headers();

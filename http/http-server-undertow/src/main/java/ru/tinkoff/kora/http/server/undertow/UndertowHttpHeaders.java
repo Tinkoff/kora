@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public class UndertowHttpHeaders implements HttpHeaders {
+
     private final HeaderMap headerMap;
 
     public UndertowHttpHeaders(HeaderMap headerMap) {
@@ -57,5 +58,10 @@ public class UndertowHttpHeaders implements HttpHeaders {
                 return Map.entry(next.getHeaderName().toString(), next);
             }
         };
+    }
+
+    @Override
+    public String toString() {
+        return headerMap.toString();
     }
 }

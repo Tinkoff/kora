@@ -4,7 +4,10 @@ package ru.tinkoff.kora.http.common;
 import javax.annotation.Nullable;
 import java.util.*;
 
-class HttpHeadersImpl implements HttpHeaders {
+final class HttpHeadersImpl implements HttpHeaders {
+
+    static final HttpHeaders EMPTY = new HttpHeadersImpl();
+
     private final Map<String, List<String>> values;
 
     @SafeVarargs
@@ -70,5 +73,10 @@ class HttpHeadersImpl implements HttpHeaders {
     @Override
     public Iterator<Map.Entry<String, List<String>>> iterator() {
         return this.values.entrySet().iterator();
+    }
+
+    @Override
+    public String toString() {
+        return values.toString();
     }
 }

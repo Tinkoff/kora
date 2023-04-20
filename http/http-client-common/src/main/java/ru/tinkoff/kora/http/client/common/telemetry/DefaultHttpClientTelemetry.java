@@ -38,12 +38,12 @@ public final class DefaultHttpClientTelemetry implements HttpClientTelemetry {
     public HttpServerTelemetryContext get(Context ctx, HttpClientRequest request) {
         var startTime = System.nanoTime();
         var method = request.method();
-        var uri = URI.create(request.resolvedUri());
+        var uri = URI.create(request.uriResolved());
         var host = uri.getHost();
         var scheme = uri.getScheme();
         var operation = request.operation();
         var authority = request.authority();
-        var resolvedUri = request.resolvedUri();
+        var resolvedUri = request.uriResolved();
         var target = operation.substring(method.length() + 1);
 
         var createSpanResult = this.tracing == null ? null : this.tracing.createSpan(ctx, request);

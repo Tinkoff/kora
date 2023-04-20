@@ -35,7 +35,7 @@ public class JdkHttpClient implements HttpClient {
     public Mono<HttpClientResponse> execute(HttpClientRequest request) {
         return Mono.deferContextual(ctxView -> {
             var httpClientRequest = HttpRequest.newBuilder()
-                .uri(URI.create(request.resolvedUri()));
+                .uri(URI.create(request.uriResolved()));
             if (request.requestTimeout() > 0) {
                 httpClientRequest.timeout(Duration.ofMillis(request.requestTimeout()));
             }
@@ -81,7 +81,7 @@ public class JdkHttpClient implements HttpClient {
 
     public BlockingHttpResponse executeBlocking(HttpClientRequest request) {
         var httpClientRequest = HttpRequest.newBuilder()
-            .uri(URI.create(request.resolvedUri()));
+            .uri(URI.create(request.uriResolved()));
         if (request.requestTimeout() > 0) {
             httpClientRequest.timeout(Duration.ofMillis(request.requestTimeout()));
         }

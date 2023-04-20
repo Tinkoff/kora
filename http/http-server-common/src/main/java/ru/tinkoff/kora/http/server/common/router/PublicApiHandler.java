@@ -80,7 +80,7 @@ public class PublicApiHandler implements RefreshListener {
         return this.handlers.size();
     }
 
-    public record PublicApiRequest(String method, String path, String hostName, String scheme, HttpHeaders headers, Map<String, ? extends Collection<String>> queryParams, Flux<ByteBuffer> body) {}
+    public record PublicApiRequest(String method, String path, String hostName, String scheme, HttpHeaders headers, Map<String, List<String>> queryParams, Flux<ByteBuffer> body) {}
 
     public void process(PublicApiRequest routerRequest, HttpServerResponseSender responseSender) {
         final Function<HttpServerRequest, Mono<HttpServerResponse>> handlerFunction;
@@ -108,7 +108,6 @@ public class PublicApiHandler implements RefreshListener {
         }
 
         var request = new Request(routerRequest.method(), routerRequest.path(), routeTemplate, routerRequest.headers(), routerRequest.queryParams(), templateParameters, routerRequest.body());
-
         var ctx = this.telemetry.get().get(routerRequest, routeTemplate);
         var method = routerRequest.method;
 
@@ -166,16 +165,13 @@ public class PublicApiHandler implements RefreshListener {
         return method + " " + routeTemplate;
     }
 
-    private record Request(
-        String method,
-        String path,
-        @Nullable String matchedTemplate,
-        HttpHeaders headers,
-        Map<String, ? extends Collection<String>> queryParams,
-        Map<String, String> pathParams,
-        Flux<ByteBuffer> body)
-
-        implements HttpServerRequest {
+    private record Request(String method,
+                           String path,
+                           @Nullable String matchedTemplate,
+                           HttpHeaders headers,
+                           Map<String, List<String>> queryParams,
+                           Map<String, String> pathParams,
+                           Flux<ByteBuffer> body) implements HttpServerRequest {
     }
 
     private interface RequestHandler extends BiFunction<HttpServerRequest, Function<HttpServerRequest, Mono<HttpServerResponse>>, Mono<HttpServerResponse>> {}
