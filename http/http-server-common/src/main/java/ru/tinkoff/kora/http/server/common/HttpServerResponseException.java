@@ -12,22 +12,27 @@ public class HttpServerResponseException extends RuntimeException implements Htt
 
     private final HttpServerResponse response;
 
-    public HttpServerResponseException(String message, int code) {
+    public HttpServerResponseException(int code, String message) {
         super(message);
         this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(message));
     }
 
-    public HttpServerResponseException(String message, Throwable cause, int code) {
+    public HttpServerResponseException(int code, String message, Throwable cause) {
         super(message, cause);
         this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(message));
     }
 
-    public HttpServerResponseException(String message, HttpServerResponse response) {
+    public HttpServerResponseException(int code, Throwable cause) {
+        super(cause.getMessage(), cause);
+        this.response = HttpServerResponse.of(code, ContentType.TEXT_PLAIN_UTF_8, UTF_8.encode(cause.getMessage()));
+    }
+
+    public HttpServerResponseException(HttpServerResponse response, String message) {
         super(message);
         this.response = response;
     }
 
-    public HttpServerResponseException(String message, Throwable cause, HttpServerResponse response) {
+    public HttpServerResponseException(HttpServerResponse response, String message, Throwable cause) {
         super(message, cause);
         this.response = response;
     }

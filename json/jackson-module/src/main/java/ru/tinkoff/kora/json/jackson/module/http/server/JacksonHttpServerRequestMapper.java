@@ -24,7 +24,7 @@ public class JacksonHttpServerRequestMapper<T> implements HttpServerRequestMappe
                 try {
                     sink.next(this.objectMapper.readValue(bytes));
                 } catch (Exception e) {
-                    var httpException = HttpServerResponseException.of(e, 400, e.getMessage());
+                    var httpException = new HttpServerResponseException(400, e.getMessage(), e);
                     sink.error(httpException);
                 }
             });

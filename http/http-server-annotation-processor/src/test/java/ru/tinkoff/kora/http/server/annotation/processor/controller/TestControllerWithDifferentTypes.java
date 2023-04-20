@@ -7,7 +7,6 @@ import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.common.annotation.HttpRoute;
 import ru.tinkoff.kora.http.server.common.HttpServerRequest;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.annotation.HttpController;
 
 import java.nio.ByteBuffer;
@@ -21,14 +20,14 @@ import static ru.tinkoff.kora.http.common.HttpMethod.*;
 public class TestControllerWithDifferentTypes {
     @HttpRoute(method = GET, path = "/")
     Mono<HttpServerResponse> getRoot() {
-        var response = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), UTF_8.encode("Hello world"));
+        var response = HttpServerResponse.of(200, "text/plain", UTF_8.encode("Hello world"));
 
         return Mono.delay(Duration.ofMillis(1)).thenReturn(response);
     }
 
     @HttpRoute(method = GET, path = "/somePage")
     Mono<HttpServerResponse> getSomePage(HttpServerRequest httpServerRequest) {
-        var response = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), UTF_8.encode("Hello world"));
+        var response = HttpServerResponse.of(200, "text/plain", UTF_8.encode("Hello world"));
 
         return Mono.delay(Duration.ofMillis(1)).thenReturn(response);
     }

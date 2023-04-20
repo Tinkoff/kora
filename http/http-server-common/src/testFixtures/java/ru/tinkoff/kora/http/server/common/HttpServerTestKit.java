@@ -172,7 +172,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testHelloWorld() throws IOException {
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", "hello world".getBytes(StandardCharsets.UTF_8));
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
 
         this.startServer(handler);
@@ -193,7 +193,7 @@ public abstract class HttpServerTestKit {
     void serverWithBigResponse() throws IOException {
         var data = new byte[10 * 1024 * 1024];
         ThreadLocalRandom.current().nextBytes(data);
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), 10 * 1024 * 1024, Mono.fromCallable(() -> ByteBuffer.wrap(data))
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), 10 * 1024 * 1024, Mono.fromCallable(() -> ByteBuffer.wrap(data))
             .delayElement(Duration.ofMillis(100))
             .flux());
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
@@ -222,7 +222,7 @@ public abstract class HttpServerTestKit {
             System.arraycopy(bytes, 0, data, i * 1024, 1024);
         }
 
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), 102400, Flux.fromIterable(dataList).map(ByteBuffer::wrap));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), 102400, Flux.fromIterable(dataList).map(ByteBuffer::wrap));
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
 
         this.startServer(handler);
@@ -241,7 +241,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testHelloWorldParallel() throws ExecutionException, InterruptedException {
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
 
         this.startServer(handler);
@@ -283,7 +283,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testUnknownPath() throws IOException {
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
         this.startServer(handler);
 
@@ -388,7 +388,7 @@ public abstract class HttpServerTestKit {
     @Test
     void testHttpResponseExceptionOnHandle() throws IOException {
         var handler = handler(GET, "/", request -> {
-            throw HttpServerResponseException.of(400, "test");
+            throw new HttpServerResponseException(400, "test");
         });
         this.startServer(handler);
 
@@ -406,7 +406,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testHttpResponseExceptionInResult() throws IOException {
-        var handler = handler(GET, "/", request -> Mono.error(HttpServerResponseException.of(400, "test")));
+        var handler = handler(GET, "/", request -> Mono.error(new HttpServerResponseException(400, "test")));
         this.startServer(handler);
 
         var request = request("/")
@@ -472,7 +472,7 @@ public abstract class HttpServerTestKit {
     @Test
     void testEmptyBodyHandling() throws IOException {
         var handler = handler(POST, "/", request -> ReactorUtils.toByteArrayMono(request.body())
-            .thenReturn(new SimpleHttpServerResponse(
+            .thenReturn(HttpServerResponse.of(
                 200,
                 "application/octet-stream",
                 HttpHeaders.of(),
@@ -492,7 +492,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testRequestBody() throws IOException {
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
         var executor = Executors.newSingleThreadExecutor();
         var size = 20 * 1024 * 1024;
         var handler = handler(POST, "/", request -> Mono.create(sink -> {
@@ -524,7 +524,7 @@ public abstract class HttpServerTestKit {
 
     @Test
     void testInterceptor() throws IOException {
-        var httpResponse = new SimpleHttpServerResponse(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
+        var httpResponse = HttpServerResponse.of(200, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("hello world".getBytes(StandardCharsets.UTF_8)));
         var handler = handler(GET, "/", request -> Mono.delay(Duration.ofMillis(ThreadLocalRandom.current().nextInt(100, 500))).thenReturn(httpResponse));
         var interceptor1 = new HttpServerInterceptor() {
             @Override
@@ -532,7 +532,7 @@ public abstract class HttpServerTestKit {
                 var header = request.headers().getFirst("test-header1");
                 if (header != null) {
                     request.body().subscribe();
-                    return Mono.just(new SimpleHttpServerResponse(500, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("error".getBytes(StandardCharsets.UTF_8))));
+                    return Mono.just(HttpServerResponse.of(500, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("error".getBytes(StandardCharsets.UTF_8))));
                 }
                 return chain.apply(request);
             }
@@ -543,7 +543,7 @@ public abstract class HttpServerTestKit {
                 var header = request.headers().getFirst("test-header2");
                 if (header != null) {
                     request.body().subscribe();
-                    return Mono.just(new SimpleHttpServerResponse(400, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("error".getBytes(StandardCharsets.UTF_8))));
+                    return Mono.just(HttpServerResponse.of(400, "text/plain", HttpHeaders.of(), ByteBuffer.wrap("error".getBytes(StandardCharsets.UTF_8))));
                 }
                 return chain.apply(request);
             }

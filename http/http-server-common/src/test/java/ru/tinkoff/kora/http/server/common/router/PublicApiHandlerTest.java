@@ -9,8 +9,8 @@ import ru.tinkoff.kora.application.graph.All;
 import ru.tinkoff.kora.application.graph.ValueOf;
 import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.common.HttpServerRequestHandler;
+import ru.tinkoff.kora.http.server.common.HttpServerResponse;
 import ru.tinkoff.kora.http.server.common.HttpServerResponseSender;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.HttpServerRequestHandlerImpl;
 import ru.tinkoff.kora.http.server.common.telemetry.HttpServerTelemetry;
 
@@ -52,14 +52,14 @@ class PublicApiHandlerTest {
         var responseSender = mock(HttpServerResponseSender.class);
         when(responseSender.send(any())).thenReturn(Mono.just(new HttpServerResponseSender.Success(200)));
 
-        var request = new PublicApiHandler.PublicApiRequest("POST", "/test", "test", "http", HttpHeaders.EMPTY, Map.of(), Flux.empty());
+        var request = new PublicApiHandler.PublicApiRequest("POST", "/test", "test", "http", HttpHeaders.of(), Map.of(), Flux.empty());
         handler.process(request, responseSender);
 
         verify(responseSender).send(argThat(argument -> argument.code() == 200));
     }
 
     private HttpServerRequestHandler handler(String method, String route) {
-        return new HttpServerRequestHandlerImpl(method, route, httpServerRequest -> Mono.just(new SimpleHttpServerResponse(200, "application/octet-stream", HttpHeaders.EMPTY, null)));
+        return new HttpServerRequestHandlerImpl(method, route, httpServerRequest -> Mono.just(HttpServerResponse.of(200, "application/octet-stream")));
     }
 
     private <T> ValueOf<T> valueOf(T object) {

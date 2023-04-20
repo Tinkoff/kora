@@ -7,86 +7,86 @@ import java.util.*
 
 @Throws(HttpServerResponseException::class)
 fun extractStringPathParameter(request: HttpServerRequest, name: String): String {
-    return request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    return request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractUUIDPathParameter(request: HttpServerRequest, name: String): UUID {
-    var result = request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    var result = request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 
     result = result.trim()
     if (result.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Path parameter '$name' has invalid blank string value")
     }
 
     return try {
         UUID.fromString(result)
     } catch (e: IllegalArgumentException) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name($result)' has invalid value")
+        throw HttpServerResponseException(400, "Path parameter '$name($result)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractIntPathParameter(request: HttpServerRequest, name: String): Int {
-    var result = request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    var result = request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 
     result = result.trim()
     if (result.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Path parameter '$name' has invalid blank string value")
     }
 
     return try {
         result.toInt()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name($result)' has invalid value")
+        throw HttpServerResponseException(400, "Path parameter '$name($result)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractLongPathParameter(request: HttpServerRequest, name: String): Long {
-    var result = request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    var result = request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 
     result = result.trim()
     if (result.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Path parameter '$name' has invalid blank string value")
     }
 
     return try {
         result.toLong()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name($result)' has invalid value")
+        throw HttpServerResponseException(400, "Path parameter '$name($result)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractDoublePathParameter(request: HttpServerRequest, name: String): Double {
-    var result = request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    var result = request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 
     result = result.trim()
     if (result.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Path parameter '$name' has invalid blank string value")
     }
 
     return try {
         result.toDouble()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name($result)' has invalid value")
+        throw HttpServerResponseException(400, "Path parameter '$name($result)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun <T : Enum<T>?> extractEnumPathParameter(request: HttpServerRequest, enumType: Class<T>?, name: String): T {
-    var result = request.pathParams()[name] ?: throw HttpServerResponseException.of(400, "Path parameter '$name' is required")
+    var result = request.pathParams()[name] ?: throw HttpServerResponseException(400, "Path parameter '$name' is required")
 
     result = result.trim()
     if (result.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Path parameter '$name' has invalid blank string value")
     }
 
     return try {
         java.lang.Enum.valueOf(enumType, result)
     } catch (exception: Exception) {
-        throw HttpServerResponseException.of(400, "Path parameter '$name($result)' has invalid value")
+        throw HttpServerResponseException(400, "Path parameter '$name($result)' has invalid value")
     }
 }
 
@@ -95,7 +95,7 @@ fun <T : Enum<T>?> extractEnumPathParameter(request: HttpServerRequest, enumType
  */
 @Throws(HttpServerResponseException::class)
 fun extractStringHeaderParameter(request: HttpServerRequest, name: String): String {
-    val result = request.headers()[name] ?: throw HttpServerResponseException.of(400, "Header '$name' is required")
+    val result = request.headers()[name] ?: throw HttpServerResponseException(400, "Header '$name' is required")
     return result.joinToString(", ")
 }
 
@@ -107,7 +107,7 @@ fun extractNullableStringHeaderParameter(request: HttpServerRequest, name: Strin
 
 @Throws(HttpServerResponseException::class)
 fun extractStringListHeaderParameter(request: HttpServerRequest, name: String): List<String> {
-    return extractNullableStringListHeaderParameter(request, name) ?: throw HttpServerResponseException.of(400, "Header '$name' is required")
+    return extractNullableStringListHeaderParameter(request, name) ?: throw HttpServerResponseException(400, "Header '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -127,7 +127,7 @@ fun extractNullableStringListHeaderParameter(request: HttpServerRequest, name: S
 fun extractStringQueryParameter(request: HttpServerRequest, name: String): String {
     val result = request.queryParams()[name]
     if (result.isNullOrEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+        throw HttpServerResponseException(400, "Query parameter '$name' is required")
     }
     return result.iterator().next()
 }
@@ -140,7 +140,7 @@ fun extractNullableStringQueryParameter(request: HttpServerRequest, name: String
 
 @Throws(HttpServerResponseException::class)
 fun extractStringListQueryParameter(request: HttpServerRequest, name: String): List<String> {
-    val result = request.queryParams()[name] ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    val result = request.queryParams()[name] ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
     return if (result.isEmpty()) emptyList() else result.toMutableList().toList()
 }
 
@@ -152,7 +152,7 @@ fun extractNullableStringListQueryParameter(request: HttpServerRequest, name: St
 
 @Throws(HttpServerResponseException::class)
 fun extractUUIDQueryParameter(request: HttpServerRequest, name: String): UUID {
-    return extractNullableUUIDQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableUUIDQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -164,19 +164,19 @@ fun extractNullableUUIDQueryParameter(request: HttpServerRequest, name: String):
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         UUID.fromString(first)
     } catch (e: IllegalArgumentException) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractUUIDListQueryParameter(request: HttpServerRequest, name: String): List<UUID> {
-    return extractNullableUUIDListQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableUUIDListQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -186,13 +186,13 @@ fun extractNullableUUIDListQueryParameter(request: HttpServerRequest, name: Stri
         .map {
             val first = it.trim()
             if (first.isEmpty()) {
-                throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+                throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
             }
 
             try {
                 UUID.fromString(first)
             } catch (e: IllegalArgumentException) {
-                throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+                throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
             }
         }
         .toList()
@@ -200,7 +200,7 @@ fun extractNullableUUIDListQueryParameter(request: HttpServerRequest, name: Stri
 
 @Throws(HttpServerResponseException::class)
 fun extractIntQueryParameter(request: HttpServerRequest, name: String): Int {
-    return extractNullableIntQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableIntQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -212,19 +212,19 @@ fun extractNullableIntQueryParameter(request: HttpServerRequest, name: String): 
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         first.toInt()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractIntListQueryParameter(request: HttpServerRequest, name: String): List<Int> {
-    return extractNullableIntListQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableIntListQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -233,20 +233,20 @@ fun extractNullableIntListQueryParameter(request: HttpServerRequest, name: Strin
     return result.mapNotNull { v ->
         val first = v.trim()
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+            throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
         }
 
         try {
             first.toInt()
         } catch (e: NumberFormatException) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+            throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
         }
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractLongQueryParameter(request: HttpServerRequest, name: String): Long {
-    return extractNullableLongQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableLongQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -258,19 +258,19 @@ fun extractNullableLongQueryParameter(request: HttpServerRequest, name: String):
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         first.toLong()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractLongListQueryParameter(request: HttpServerRequest, name: String): List<Long> {
-    return extractNullableLongListQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableLongListQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -279,20 +279,20 @@ fun extractNullableLongListQueryParameter(request: HttpServerRequest, name: Stri
     return result.mapNotNull { v ->
         val first = v.trim()
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+            throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
         }
 
         try {
             first.toLong()
         } catch (e: NumberFormatException) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+            throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
         }
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractDoubleQueryParameter(request: HttpServerRequest, name: String): Double {
-    return extractNullableDoubleQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableDoubleQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -304,19 +304,19 @@ fun extractNullableDoubleQueryParameter(request: HttpServerRequest, name: String
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         first.toDouble()
     } catch (e: NumberFormatException) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractDoubleListQueryParameter(request: HttpServerRequest, name: String): List<Double> {
-    return extractNullableDoubleListQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableDoubleListQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -325,20 +325,20 @@ fun extractNullableDoubleListQueryParameter(request: HttpServerRequest, name: St
     return result.mapNotNull { v ->
         val first = v.trim()
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+            throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
         }
 
         try {
             first.toDouble()
         } catch (e: NumberFormatException) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+            throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
         }
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractBooleanQueryParameter(request: HttpServerRequest, name: String): Boolean {
-    return extractNullableBooleanQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableBooleanQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -350,19 +350,19 @@ fun extractNullableBooleanQueryParameter(request: HttpServerRequest, name: Strin
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         first.toBoolean()
     } catch (e: Exception) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun extractBooleanListQueryParameter(request: HttpServerRequest, name: String): List<Boolean> {
-    return extractNullableBooleanListQueryParameter(request, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableBooleanListQueryParameter(request, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -371,20 +371,20 @@ fun extractNullableBooleanListQueryParameter(request: HttpServerRequest, name: S
     return result.mapNotNull { v ->
         val first = v.trim()
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+            throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
         }
 
         try {
             first.toBoolean()
         } catch (e: Exception) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+            throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
         }
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun <T : Enum<T>?> extractEnumQueryParameter(request: HttpServerRequest, type: Class<T>?, name: String): T {
-    return extractNullableEnumQueryParameter(request, type, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableEnumQueryParameter(request, type, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -396,19 +396,19 @@ fun <T : Enum<T>?> extractNullableEnumQueryParameter(request: HttpServerRequest,
 
     val first = result.iterator().next().trim()
     if (first.isEmpty()) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+        throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
     }
 
     return try {
         java.lang.Enum.valueOf(type, first)
     } catch (exception: Exception) {
-        throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+        throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
     }
 }
 
 @Throws(HttpServerResponseException::class)
 fun <T : Enum<T>?> extractEnumListQueryParameter(request: HttpServerRequest, type: Class<T>, name: String): List<T> {
-    return extractNullableEnumListQueryParameter(request, type, name) ?: throw HttpServerResponseException.of(400, "Query parameter '$name' is required")
+    return extractNullableEnumListQueryParameter(request, type, name) ?: throw HttpServerResponseException(400, "Query parameter '$name' is required")
 }
 
 @Throws(HttpServerResponseException::class)
@@ -417,13 +417,13 @@ fun <T : Enum<T>?> extractNullableEnumListQueryParameter(request: HttpServerRequ
     return result.mapNotNull { v ->
         val first = v.trim()
         if (first.isEmpty()) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name' has invalid blank string value")
+            throw HttpServerResponseException(400, "Query parameter '$name' has invalid blank string value")
         }
 
         try {
             java.lang.Enum.valueOf(type, v)
         } catch (e: Exception) {
-            throw HttpServerResponseException.of(400, "Query parameter '$name($first)' has invalid value")
+            throw HttpServerResponseException(400, "Query parameter '$name($first)' has invalid value")
         }
     }
 }

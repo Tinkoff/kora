@@ -3,7 +3,7 @@ package {{package}};
 import ru.tinkoff.kora.http.client.common.form.UrlEncodedWriter;
 import ru.tinkoff.kora.http.client.common.form.MultipartWriter;
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import reactor.core.publisher.Mono;
 
 @ru.tinkoff.kora.common.annotation.Generated("openapi generator kora client"){{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}
@@ -29,7 +29,7 @@ public interface {{classname}}ClientRequestMappers {
 {{/vendorExtensions.requiresFormParamMappers}}
 
     @Override
-    public HttpClientRequestBuilder apply(HttpClientRequestMapper.Request<{{classname}}.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParam> request) {
+    public HttpClientRequest.Builder apply(HttpClientRequestMapper.Request<{{classname}}.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}FormParam> request) {
       {{#vendorExtensions.urlEncodedForm}}
       var b = new UrlEncodedWriter();{{#formParams}}
       if (request.parameter().{{paramName}}() != null) {

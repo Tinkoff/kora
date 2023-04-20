@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.http.client.common.form;
 
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URLEncoder;
@@ -18,7 +19,7 @@ public class UrlEncodedWriter {
         this.baos.writeBytes(URLEncoder.encode(value, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
     }
 
-    public HttpClientRequestBuilder write(HttpClientRequestBuilder b) {
+    public HttpClientRequest.Builder write(HttpClientRequest.Builder b) {
         var data = this.baos.toByteArray();
         return b
             .header("content-type", "application/x-www-form-urlencoded")

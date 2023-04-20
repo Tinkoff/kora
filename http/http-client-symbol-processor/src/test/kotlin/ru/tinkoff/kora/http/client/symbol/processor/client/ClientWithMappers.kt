@@ -5,7 +5,7 @@ import ru.tinkoff.kora.common.Mapping
 import ru.tinkoff.kora.common.Tag
 import ru.tinkoff.kora.http.client.common.annotation.HttpClient
 import ru.tinkoff.kora.http.client.common.annotation.ResponseCodeMapper
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponse
 import ru.tinkoff.kora.http.client.common.response.HttpClientResponseMapper
@@ -51,7 +51,7 @@ interface ClientWithMappers {
     }
 
     class IssueRequestMapper : HttpClientRequestMapper<Issue> {
-        override fun apply(request: HttpClientRequestMapper.Request<Issue>): HttpClientRequestBuilder {
+        override fun apply(request: HttpClientRequestMapper.Request<Issue>): HttpClientRequest.Builder {
             return request.builder().body("TEST".toByteArray(StandardCharsets.UTF_8))
         }
     }

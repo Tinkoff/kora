@@ -71,15 +71,15 @@ public interface HttpServerModule extends StringParameterReadersModule {
     }
 
     default HttpServerResponseMapper<ByteBuffer> byteBufBodyResponseMapper() {
-        return r -> Mono.just(new SimpleHttpServerResponse(200, "application/octet-stream", HttpHeaders.EMPTY, r));
+        return r -> Mono.just(HttpServerResponse.of(200, "application/octet-stream", r));
     }
 
     default HttpServerResponseMapper<byte[]> byteArrayResponseMapper() {
-        return r -> Mono.just(new SimpleHttpServerResponse(200, "application/octet-stream", HttpHeaders.EMPTY, ByteBuffer.wrap(r)));
+        return r -> Mono.just(HttpServerResponse.of(200, "application/octet-stream", r));
     }
 
     default HttpServerResponseMapper<String> stringResponseMapper() {
-        return r -> Mono.just(new SimpleHttpServerResponse(200, "text/plain; charset=utf-8", HttpHeaders.EMPTY, ByteBuffer.wrap(r.getBytes(StandardCharsets.UTF_8))));
+        return r -> Mono.just(HttpServerResponse.of(200, "text/plain; charset=utf-8", r.getBytes(StandardCharsets.UTF_8)));
     }
 
     default <T> HttpServerResponseMapper<HttpServerResponseEntity<T>> httpServerResponseEntityMapper(HttpServerResponseMapper<T> delegate) {

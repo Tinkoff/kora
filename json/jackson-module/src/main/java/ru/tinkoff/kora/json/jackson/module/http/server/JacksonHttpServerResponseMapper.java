@@ -7,7 +7,6 @@ import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.server.common.HttpServerResponse;
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse;
 import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseMapper;
 
 import java.nio.ByteBuffer;
@@ -23,7 +22,7 @@ public class JacksonHttpServerResponseMapper<T> implements HttpServerResponseMap
     public Mono<HttpServerResponse> apply(Object result) {
         return Mono.fromCallable(() -> {
             var resultBytes = this.objectMapper.writeValueAsBytes(result);
-            return new SimpleHttpServerResponse(200, "application/json", HttpHeaders.of(), resultBytes.length, Flux.just(ByteBuffer.wrap(resultBytes)));
+            return HttpServerResponse.of(200, "application/json", resultBytes);
         });
     }
 }

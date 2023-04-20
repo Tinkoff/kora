@@ -17,7 +17,7 @@ open class MultipleParamsController {
     class Param1Mapping : HttpServerRequestMapper<Param1?> {
         override fun apply(request: HttpServerRequest): Mono<Param1?> {
             if (request.headers().getFirst("Test-Header") == null) {
-                throw HttpServerResponseException.of(
+                throw HttpServerResponseException(
                     400,
                     "TEST"
                 )

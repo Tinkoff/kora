@@ -12,7 +12,7 @@ public interface StringParameterReader<T> {
             try {
                 return converter.apply(string);
             } catch (Exception e) {
-                throw HttpServerResponseException.of(e, 400, errorMessage);
+                throw new HttpServerResponseException(400, errorMessage, e);
             }
         };
     }
@@ -22,7 +22,7 @@ public interface StringParameterReader<T> {
             try {
                 return converter.apply(string);
             } catch (Exception e) {
-                throw HttpServerResponseException.of(e, 400, errorMessage.apply(string));
+                throw new HttpServerResponseException(400, errorMessage.apply(string), e);
             }
         };
     }

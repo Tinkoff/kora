@@ -19,11 +19,12 @@ public class MultipartReader {
     public static Flux<MultipartFile> read(HttpServerRequest r) {
         var contentType = r.headers().getFirst("content-type");
         if (contentType == null) {
-            throw HttpServerResponseException.of(400, "content-type header is required");
+            throw new HttpServerResponseException(400, "content-type header is required");
         }
+
         var m = boundaryPattern.matcher(contentType);
         if (!m.matches()) {
-            throw HttpServerResponseException.of(400, "content-type header is invalid");
+            throw new HttpServerResponseException(400, "content-type header is invalid");
         }
         var boundary = m.group("boundary");
         return r.body().flatMap(new MultipartDecoder(boundary));
@@ -67,16 +68,16 @@ public class MultipartReader {
                             break loop;
                         }
                         if (this.buf.get(this.readPosition) != '-' || this.buf.get(this.readPosition + 1) != '-') {
-                            return Flux.error(HttpServerResponseException.of(400, "Invalid beginning of multipart body"));
+                            return Flux.error(new HttpServerResponseException(400, "Invalid beginning of multipart body"));
                         }
                         readPosition += 2;
                         this.buf.get(readPosition, this.boundaryBuf);
                         if (!Arrays.equals(this.boundary, this.boundaryBuf)) {
-                            return Flux.error(HttpServerResponseException.of(400, "Invalid beginning of multipart body"));
+                            return Flux.error(new HttpServerResponseException(400, "Invalid beginning of multipart body"));
                         }
                         readPosition += this.boundary.length;
                         if (this.buf.get(readPosition) != '\r' || this.buf.get(readPosition + 1) != '\n') {
-                            return Flux.error(HttpServerResponseException.of(400, "Invalid beginning of multipart body"));
+                            return Flux.error(new HttpServerResponseException(400, "Invalid beginning of multipart body"));
                         }
                         readPosition += 2;
                         this.readPosition = readPosition;
@@ -96,7 +97,7 @@ public class MultipartReader {
                         } else {
                             var contentDisposition = this.parseContentDisposition();
                             if (contentDisposition == null) {
-                                return Flux.error(HttpServerResponseException.of(400, "Multipart part is missing content-disposition header"));
+                                return Flux.error(new HttpServerResponseException(400, "Multipart part is missing content-disposition header"));
                             }
                             this.currentContentDisposition = contentDisposition;
                             this.state = State.READ_BODY;

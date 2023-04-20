@@ -60,13 +60,13 @@ public interface ApiSecurity {
 
                 val {{#lambda.camelcase}}{{name}}{{/lambda.camelcase}} = this.{{#lambda.camelcase}}{{name}}{{/lambda.camelcase}}.extract(request, {{#lambda.camelcase}}{{name}}{{/lambda.camelcase}}_token){{^isOAuth}}{{/isOAuth}}{{#isOAuth}}{{#vendorExtensions.hasScopes}}
                   .handle<Principal> { principal, sink -> {{#scopes}}
-                     if (!principal.scopes().contains("{{scope}}")) throw HttpServerResponseException.of(403, ""){{/scopes}}
+                     if (!principal.scopes().contains("{{scope}}")) throw HttpServerResponseException(403, ""){{/scopes}}
                      sink.next(principal)
                   }{{/vendorExtensions.hasScopes}}{{/isOAuth}}{{/methods}}{{#methods}}{{#vendorExtensions.isFirst}}
 
                 {{#lambda.camelcase}}{{name}}{{/lambda.camelcase}}{{/vendorExtensions.isFirst}}{{/methods}}{{#methods}}{{^vendorExtensions.isFirst}}
                   .switchIfEmpty(Mono.defer { {{#lambda.camelcase}}{{name}}{{/lambda.camelcase}} }){{/vendorExtensions.isFirst}}{{/methods}}
-                  .switchIfEmpty(Mono.error { HttpServerResponseException.of(403, "") })
+                  .switchIfEmpty(Mono.error { HttpServerResponseException(403, "") })
                   .doOnNext { principal -> Principal.set(context, principal) }
                   .then(Mono.defer { chain.apply(request) });
             }

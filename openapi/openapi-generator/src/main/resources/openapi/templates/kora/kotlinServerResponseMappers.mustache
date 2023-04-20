@@ -4,7 +4,6 @@ import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseMapper
 import ru.tinkoff.kora.http.server.common.handler.HttpServerResponseEntityMapper
 import ru.tinkoff.kora.http.server.common.HttpServerResponse
 import ru.tinkoff.kora.http.server.common.HttpServerResponseEntity
-import ru.tinkoff.kora.http.server.common.SimpleHttpServerResponse
 import ru.tinkoff.kora.http.common.HttpHeaders
 import reactor.core.publisher.Mono
 import {{package}}.{{classname}}Responses.*
@@ -43,7 +42,7 @@ interface {{classname}}ServerResponseMappers {
           {{/headers}}
           )
           {{^dataType}}
-          return Mono.just(SimpleHttpServerResponse({{#isDefault}}rs.statusCode{{/isDefault}}{{^isDefault}}{{code}}{{/isDefault}}, "application/octet-stream", headers, null))
+          return Mono.just(HttpServerResponse.of({{#isDefault}}rs.statusCode{{/isDefault}}{{^isDefault}}{{code}}{{/isDefault}}, "application/octet-stream", headers))
           {{/dataType}}
           {{#dataType}}
           val entity = HttpServerResponseEntity({{#isDefault}}rs.statusCode{{/isDefault}}{{^isDefault}}{{code}}{{/isDefault}}, rs.content, headers)
