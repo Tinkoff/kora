@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.json.module.http.client;
 
 import ru.tinkoff.kora.http.client.common.HttpClientEncoderException;
-import ru.tinkoff.kora.http.client.common.request.HttpClientRequestBuilder;
+import ru.tinkoff.kora.http.client.common.request.HttpClientRequest;
 import ru.tinkoff.kora.http.client.common.request.HttpClientRequestMapper;
 import ru.tinkoff.kora.json.common.JsonWriter;
 
@@ -15,7 +15,7 @@ public class JsonHttpClientRequestMapper<T> implements HttpClientRequestMapper<T
     }
 
     @Override
-    public HttpClientRequestBuilder apply(Request<T> request) {
+    public HttpClientRequest.Builder apply(Request<T> request) {
         try {
             var bytes = this.jsonWriter.toByteArray(request.parameter());
             return request.builder().body(bytes)

@@ -21,7 +21,7 @@ public class JsonReaderHttpServerRequestMapper<T> implements HttpServerRequestMa
                 try {
                     sink.next(this.reader.read(bytes));
                 } catch (Exception e) {
-                    var httpException = HttpServerResponseException.of(e, 400, e.getMessage());
+                    var httpException = new HttpServerResponseException(400, e);
                     sink.error(httpException);
                 }
             });

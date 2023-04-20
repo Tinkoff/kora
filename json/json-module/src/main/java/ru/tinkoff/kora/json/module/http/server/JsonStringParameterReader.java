@@ -19,7 +19,7 @@ public class JsonStringParameterReader<T> implements StringParameterReader<T> {
         try {
             return this.reader.read(JsonCommonModule.JSON_FACTORY.createParser(string));
         } catch (IOException e) {
-            throw HttpServerResponseException.of(400, e.getMessage());
+            throw new HttpServerResponseException(400, e.getMessage());
         }
     }
 }

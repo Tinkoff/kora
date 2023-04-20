@@ -21,7 +21,7 @@ public class JsonWriterHttpServerResponseMapper<T> implements HttpServerResponse
         return Mono.fromCallable(() -> {
             var bytes = JsonWriterHttpServerResponseMapper.this.writer.toByteArray(result);
             var byteBuffer = ByteBuffer.wrap(bytes);
-            return new SimpleHttpServerResponse(200, "application/json", HttpHeaders.of(), bytes.length, Flux.just(byteBuffer));
+            return HttpServerResponse.of(200, "application/json", byteBuffer);
         });
     }
 }
