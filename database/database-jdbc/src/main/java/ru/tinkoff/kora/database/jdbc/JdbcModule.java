@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.database.jdbc;
 
+import ru.tinkoff.kora.common.DefaultComponent;
 import ru.tinkoff.kora.database.common.DataBaseModule;
 import ru.tinkoff.kora.database.jdbc.mapper.parameter.JdbcParameterColumnMapper;
 import ru.tinkoff.kora.database.jdbc.mapper.result.JdbcResultColumnMapper;
@@ -68,6 +69,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<BigDecimal> bigDecimalJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, BigDecimal.class);
@@ -88,6 +90,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<LocalDate> localDateJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, LocalDate.class);
@@ -98,6 +101,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<LocalTime> localTimeJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, LocalTime.class);
@@ -108,6 +112,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<LocalDateTime> localDateTimeJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, LocalDateTime.class);
@@ -118,6 +123,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<OffsetTime> offsetTimeJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, OffsetTime.class);
@@ -128,6 +134,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcRowMapper<OffsetDateTime> offsetDateTimeJdbcRowMapper() {
         return rs -> {
             var value = rs.getObject(1, OffsetDateTime.class);
@@ -139,56 +146,18 @@ public interface JdbcModule extends DataBaseModule {
     }
 
     // Parameter Mappers
-    default JdbcParameterColumnMapper<LocalDate> localDateJdbcParameterColumnMapper() {
+    @DefaultComponent
+    default JdbcParameterColumnMapper<BigDecimal> bigDecimalJdbcParameterColumnMapper() {
         return (stmt, index, o) -> {
             if (o == null) {
-                stmt.setNull(index, Types.OTHER);
+                stmt.setNull(index, Types.NUMERIC);
             } else {
-                stmt.setObject(index, o, Types.OTHER);
+                stmt.setObject(index, o, Types.NUMERIC);
             }
         };
     }
 
-    default JdbcParameterColumnMapper<LocalTime> localTimeJdbcParameterColumnMapper() {
-        return (stmt, index, o) -> {
-            if (o == null) {
-                stmt.setNull(index, Types.OTHER);
-            } else {
-                stmt.setObject(index, o, Types.OTHER);
-            }
-        };
-    }
-
-    default JdbcParameterColumnMapper<LocalDateTime> LocalDateTimeJdbcParameterColumnMapper() {
-        return (stmt, index, o) -> {
-            if (o == null) {
-                stmt.setNull(index, Types.OTHER);
-            } else {
-                stmt.setObject(index, o, Types.OTHER);
-            }
-        };
-    }
-
-    default JdbcParameterColumnMapper<OffsetTime> offsetTimeJdbcParameterColumnMapper() {
-        return (stmt, index, o) -> {
-            if (o == null) {
-                stmt.setNull(index, Types.OTHER);
-            } else {
-                stmt.setObject(index, o, Types.OTHER);
-            }
-        };
-    }
-
-    default JdbcParameterColumnMapper<OffsetDateTime> offsetDateTimeJdbcParameterColumnMapper() {
-        return (stmt, index, o) -> {
-            if (o == null) {
-                stmt.setNull(index, Types.OTHER);
-            } else {
-                stmt.setObject(index, o, Types.OTHER);
-            }
-        };
-    }
-
+    @DefaultComponent
     default JdbcParameterColumnMapper<UUID> uuidJdbcParameterColumnMapper() {
         return (stmt, index, o) -> {
             if (o == null) {
@@ -199,7 +168,85 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
+    default JdbcParameterColumnMapper<LocalDate> localDateJdbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.setNull(index, Types.DATE);
+            } else {
+                stmt.setObject(index, o, Types.DATE);
+            }
+        };
+    }
+
+    @DefaultComponent
+    default JdbcParameterColumnMapper<LocalTime> localTimeJdbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.setNull(index, Types.TIME);
+            } else {
+                stmt.setObject(index, o, Types.TIME);
+            }
+        };
+    }
+
+    @DefaultComponent
+    default JdbcParameterColumnMapper<LocalDateTime> LocalDateTimeJdbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.setNull(index, Types.TIMESTAMP);
+            } else {
+                stmt.setObject(index, o, Types.TIMESTAMP);
+            }
+        };
+    }
+
+    @DefaultComponent
+    default JdbcParameterColumnMapper<OffsetTime> offsetTimeJdbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.setNull(index, Types.TIME_WITH_TIMEZONE);
+            } else {
+                stmt.setObject(index, o, Types.TIME_WITH_TIMEZONE);
+            }
+        };
+    }
+
+    @DefaultComponent
+    default JdbcParameterColumnMapper<OffsetDateTime> offsetDateTimeJdbcParameterColumnMapper() {
+        return (stmt, index, o) -> {
+            if (o == null) {
+                stmt.setNull(index, Types.TIMESTAMP_WITH_TIMEZONE);
+            } else {
+                stmt.setObject(index, o, Types.TIMESTAMP_WITH_TIMEZONE);
+            }
+        };
+    }
+
     // Result Mappers
+    @DefaultComponent
+    default JdbcResultColumnMapper<BigDecimal> bigDecimalJdbcResultColumnMapper() {
+        return (row, index) -> {
+            var value = row.getObject(index, BigDecimal.class);
+            if (row.wasNull()) {
+                return null;
+            }
+            return value;
+        };
+    }
+
+    @DefaultComponent
+    default JdbcResultColumnMapper<UUID> uuidJdbcResultColumnMapper() {
+        return (row, index) -> {
+            var value = row.getObject(index, UUID.class);
+            if (row.wasNull()) {
+                return null;
+            }
+            return value;
+        };
+    }
+
+    @DefaultComponent
     default JdbcResultColumnMapper<LocalDate> localDateJdbcColumnMapper() {
         return (row, index) -> {
             var value = row.getObject(index, LocalDate.class);
@@ -210,6 +257,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcResultColumnMapper<LocalTime> localTimeJdbcColumnMapper() {
         return (row, index) -> {
             var value = row.getObject(index, LocalTime.class);
@@ -220,6 +268,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcResultColumnMapper<LocalDateTime> localDateTimeJdbcColumnMapper() {
         return (row, index) -> {
             var value = row.getObject(index, LocalDateTime.class);
@@ -230,7 +279,7 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
-
+    @DefaultComponent
     default JdbcResultColumnMapper<OffsetTime> offsetTimeJdbcColumnMapper() {
         return (row, index) -> {
             var value = row.getObject(index, OffsetTime.class);
@@ -241,19 +290,10 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    @DefaultComponent
     default JdbcResultColumnMapper<OffsetDateTime> offsetDateTimeJdbcColumnMapper() {
         return (row, index) -> {
             var value = row.getObject(index, OffsetDateTime.class);
-            if (row.wasNull()) {
-                return null;
-            }
-            return value;
-        };
-    }
-
-    default JdbcResultColumnMapper<UUID> uuidJdbcResultColumnMapper() {
-        return (row, index) -> {
-            var value = row.getObject(index, UUID.class);
             if (row.wasNull()) {
                 return null;
             }
