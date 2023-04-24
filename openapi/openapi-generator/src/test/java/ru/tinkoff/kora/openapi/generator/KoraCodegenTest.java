@@ -96,6 +96,9 @@ class KoraCodegenTest {
             .setGlobalProperties(Map.of(
                 "skipFormModel", "false"
             ))
+            .addAdditionalProperty("tags", """
+                {"pets": {"httpClientTag": "java.lang.String.class"}}
+                """)
             .addAdditionalProperty("mode", mode)
             .addAdditionalProperty("enableServerValidation", name.contains("validation"))
             .addAdditionalProperty("clientConfigPrefix", "test");
