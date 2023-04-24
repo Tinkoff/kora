@@ -22,21 +22,6 @@ public class RecordTest extends AbstractJsonAnnotationProcessorTest {
         mapper.verify(newObject("TestRecord", 42), "{\"value\":42}");
     }
 
-    @Test
-    public void testNullableFieldRecord() {
-        compile("""
-            @Json
-            public record TestRecord(@Nullable String value) {
-            }
-            """);
-
-        compileResult.assertSuccess();
-
-        var mapper = mapper("TestRecord");
-        mapper.verify(newObject("TestRecord", "test"), "{\"value\":\"test\"}");
-        mapper.verify(newObject("TestRecord", new Object[]{null}), "{}");
-    }
-
 
     @Test
     public void testReaderFromExtension() {

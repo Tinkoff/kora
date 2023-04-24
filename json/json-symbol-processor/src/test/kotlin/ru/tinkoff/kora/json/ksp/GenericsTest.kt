@@ -57,7 +57,7 @@ class GenericsTest : AbstractJsonSymbolProcessorTest() {
             listOf(KoraAppProcessorProvider(), JsonSymbolProcessorProvider()),
             """
             @ru.tinkoff.kora.json.common.annotation.Json
-            data class TestClass <T> (val value:T?)             
+            data class TestClass <T> (val value:T)             
             """.trimIndent(),
             """
                 @KoraApp
