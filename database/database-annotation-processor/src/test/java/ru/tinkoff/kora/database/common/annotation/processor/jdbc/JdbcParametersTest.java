@@ -182,6 +182,54 @@ public class JdbcParametersTest extends AbstractJdbcRepositoryTest {
     }
 
     @Test
+    public void testEntityFieldMappingByTag() throws SQLException {
+        var mapper = Mockito.mock(JdbcParameterColumnMapper.class);
+        var repository = compileJdbc(List.of(mapper), """
+            public record SomeEntity(long id, @Tag(SomeEntity.class) String value) {}
+                
+            """, """
+            @Repository
+            public interface TestRepository extends JdbcRepository {
+                @Query("INSERT INTO test(id, value) VALUES (:entity.id, :entity.value)")
+                void test(SomeEntity entity);
+            }
+            """);
+
+        repository.invoke("test", newObject("SomeEntity", 42L, "test-value"));
+
+        verify(executor.preparedStatement).setLong(1, 42L);
+        verify(executor.preparedStatement).setObject(2, Map.of("test", "test-value"));
+    }
+
+    @Test
+    public void testtest() throws SQLException {
+        var mapper = Mockito.mock(JdbcParameterColumnMapper.class);
+        var repository = compileJdbc(List.of(mapper), """
+                @Table("metrics")
+                public record Metric(
+                    @Column("id") @Id UUID id,
+                    @Column("updated") OffsetDateTime updated,
+                    @Column("name") String name,
+                    @Column("sage_group") String sageGroup,
+                    @Column("sage_filter") @Nullable String sageFilter,
+                    @Column("labels") List<MetricCreateTO.Label> labels,
+                    @Column("config") MetricCreateTO.MetricConfig config) {
+                }
+            """, """
+            @Repository
+            public interface TestRepository extends JdbcRepository {
+                @Query("INSERT INTO test(id, value) VALUES (:entity.id, :entity.value)")
+                void test(SomeEntity entity);
+            }
+            """);
+
+        repository.invoke("test", newObject("SomeEntity", 42L, "test-value"));
+
+        verify(executor.preparedStatement).setLong(1, 42L);
+        verify(executor.preparedStatement).setObject(2, Map.of("test", "test-value"));
+    }
+
+    @Test
     public void testNativeParameterWithMapping() throws SQLException {
         var repository = compileJdbc(List.of(), """
             public final class StringToJsonbParameterMapper implements JdbcParameterColumnMapper<String> {

@@ -17,6 +17,8 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Objects;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -64,7 +66,7 @@ public final class ConsoleTextRecordEncoder implements Encoder<ILoggingEvent> {
         }
 
         w.append(event.getFormattedMessage()).flush();
-        for (var marker : event.getMarkerList()) {
+        for (var marker : Objects.requireNonNullElse(event.getMarkerList(), List.of())) {
             if (marker instanceof StructuredArgument structuredArgument) {
                 w.append("\n")
                     .append("\t").append(structuredArgument.fieldName()).append("=")

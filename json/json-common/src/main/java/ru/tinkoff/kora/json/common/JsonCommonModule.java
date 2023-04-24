@@ -429,7 +429,7 @@ public interface JsonCommonModule {
     default JsonReader<Double> doubleJsonReader() {
         return parser -> switch (parser.currentToken()) {
             case VALUE_NULL -> null;
-            case VALUE_NUMBER_FLOAT -> parser.getDoubleValue();
+            case VALUE_NUMBER_FLOAT, VALUE_NUMBER_INT -> parser.getDoubleValue();
             default -> throw new JsonParseException(parser, "Expecting VALUE_NUMBER_FLOAT token, got " + parser.currentToken());
         };
     }
