@@ -1,7 +1,13 @@
 package ru.tinkoff.kora.kora.app.ksp.declaration
 
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSTypeArgument
+import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.ksp.toClassName
 import ru.tinkoff.kora.kora.app.ksp.ProcessingContext
 import ru.tinkoff.kora.kora.app.ksp.extension.ExtensionResult
 import ru.tinkoff.kora.ksp.common.AnnotationUtils.findAnnotation
@@ -134,9 +140,7 @@ sealed interface ComponentDeclaration {
 
         fun fromDependency(ctx: ProcessingContext, classDeclaration: KSClassDeclaration): DiscoveredAsDependencyComponent {
             val constructor = classDeclaration.primaryConstructor
-            if (constructor == null) {
-                throw ProcessingErrorException("No primary constructor to parse component", classDeclaration)
-            }
+                ?: throw ProcessingErrorException("No primary constructor to parse component ${classDeclaration.toClassName().canonicalName}", classDeclaration)
             val type = classDeclaration.asType(listOf())
             if (type.isError) {
                 throw ProcessingErrorException("Component type is not resolvable in the current round of processing", classDeclaration)

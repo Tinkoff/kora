@@ -96,8 +96,8 @@ public class Context {
         public static CoroutineContext inject(CoroutineContext cctx, Context context) {
             var reactorContext = Reactor.inject(reactor.util.context.Context.of(Context.class, cctx), context);
             var coroutineContext = (CoroutineContext) (Object) ReactorContextKt.asCoroutineContext(reactorContext);
-
-            return cctx.plus(coroutineContext).plus(asCoroutineContext(context));
+            var contextElement = new CoroutineContextElement(context);
+            return cctx.plus(contextElement).plus(coroutineContext).plus(asCoroutineContext(context));
         }
 
         public static CoroutineContext asCoroutineContext(Context ctx) {

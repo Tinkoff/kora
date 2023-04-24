@@ -6,7 +6,11 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.addOriginatingKSFile
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
@@ -14,6 +18,7 @@ import org.slf4j.LoggerFactory
 import ru.tinkoff.kora.database.symbol.processor.cassandra.CassandraRepositoryGenerator
 import ru.tinkoff.kora.database.symbol.processor.jdbc.JdbcRepositoryGenerator
 import ru.tinkoff.kora.database.symbol.processor.r2dbc.R2DbcRepositoryGenerator
+import ru.tinkoff.kora.database.symbol.processor.vertx.VertxCoroutineBasedRepositoryGenerator
 import ru.tinkoff.kora.database.symbol.processor.vertx.VertxRepositoryGenerator
 import ru.tinkoff.kora.kora.app.ksp.extendsKeepAop
 import ru.tinkoff.kora.ksp.common.KspCommonUtils.generated
@@ -27,6 +32,7 @@ class RepositoryBuilder(
     private val availableGenerators = listOf(
         JdbcRepositoryGenerator(resolver),
         VertxRepositoryGenerator(resolver, kspLogger),
+        VertxCoroutineBasedRepositoryGenerator(resolver, kspLogger),
         R2DbcRepositoryGenerator(resolver),
         CassandraRepositoryGenerator(resolver),
     )

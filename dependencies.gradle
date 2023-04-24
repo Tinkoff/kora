@@ -54,6 +54,7 @@ dependencyResolutionManagement { DependencyResolutionManagement it ->
 
             library('kotlin-coroutines-core', 'org.jetbrains.kotlinx', 'kotlinx-coroutines-core').versionRef('kotlin-coroutines')
             library('kotlin-coroutines-reactor', 'org.jetbrains.kotlinx', 'kotlinx-coroutines-reactor').versionRef('kotlin-coroutines')
+            library('kotlin-coroutines-reactive', 'org.jetbrains.kotlinx', 'kotlinx-coroutines-reactive').versionRef('kotlin-coroutines')
             library('kotlin-coroutines-jdk8', 'org.jetbrains.kotlinx', 'kotlinx-coroutines-jdk8').versionRef('kotlin-coroutines')
 
             library('jackson-core', 'com.fasterxml.jackson.core', 'jackson-core').versionRef('jackson')
@@ -87,6 +88,7 @@ dependencyResolutionManagement { DependencyResolutionManagement it ->
 
             library('vertx-core', 'io.vertx', 'vertx-core').versionRef('vertx')
             library('vertx-pg-client', 'io.vertx', 'vertx-pg-client').versionRef('vertx')
+            library('vertx-kotlin-coroutines', 'io.vertx', 'vertx-lang-kotlin-coroutines').versionRef('vertx')
 
             library('r2dbc-spi', 'io.r2dbc', 'r2dbc-spi').version('1.0.0.RELEASE')
             library('r2dbc-pool', 'io.r2dbc', 'r2dbc-pool').version('1.0.0.RELEASE')
