@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.validation.common.constraint;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -93,5 +94,25 @@ class ValidationTests extends Assertions implements ValidatorModule {
     void checkViolations(Validator validator, Object value, int expectedViolations) {
         var violations = validator.validate(value);
         assertEquals(expectedViolations, violations.size());
+    }
+
+    @Test
+    void boundaryFailureForDouble() {
+        assertThrows(IllegalArgumentException.class, () -> new RangeDoubleNumberValidator<>(2.0, 1.0, Range.Boundary.INCLUSIVE_INCLUSIVE));
+    }
+
+    @Test
+    void boundaryFailureForBigDecimal() {
+        assertThrows(IllegalArgumentException.class, () -> new RangeBigDecimalValidator(2.0, 1.0, Range.Boundary.INCLUSIVE_INCLUSIVE));
+    }
+
+    @Test
+    void boundaryFailureForBigInteger() {
+        assertThrows(IllegalArgumentException.class, () -> new RangeBigIntegerValidator(2.0, 1.0, Range.Boundary.INCLUSIVE_INCLUSIVE));
+    }
+
+    @Test
+    void boundaryFailureForLong() {
+        assertThrows(IllegalArgumentException.class, () -> new RangeLongNumberValidator<>(2.0, 1.0, Range.Boundary.INCLUSIVE_INCLUSIVE));
     }
 }
