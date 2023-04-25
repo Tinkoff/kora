@@ -69,6 +69,16 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
+    default JdbcRowMapper<byte[]> byteArrayJdbcRowMapper() {
+        return rs -> {
+            var value = rs.getBytes(1);
+            if (rs.wasNull()) {
+                return null;
+            }
+            return value;
+        };
+    }
+
     @DefaultComponent
     default JdbcRowMapper<BigDecimal> bigDecimalJdbcRowMapper() {
         return rs -> {
@@ -80,9 +90,10 @@ public interface JdbcModule extends DataBaseModule {
         };
     }
 
-    default JdbcRowMapper<byte[]> byteArrayJdbcRowMapper() {
+    @DefaultComponent
+    default JdbcRowMapper<UUID> uuidJdbcRowMapper() {
         return rs -> {
-            var value = rs.getBytes(1);
+            var value = rs.getObject(1, UUID.class);
             if (rs.wasNull()) {
                 return null;
             }
