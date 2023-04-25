@@ -27,7 +27,7 @@ public interface HttpHeaders extends Iterable<Map.Entry<String, List<String>>> {
     }
 
     default HttpHeaders with(String key, String value) {
-        Map<String, List<String>> newValues = new HashMap<>(this.size());
+        Map<String, List<String>> newValues = new HashMap<>(this.size() + 1);
         for (var entry : this) {
             newValues.put(entry.getKey().toLowerCase(), entry.getValue());
         }
