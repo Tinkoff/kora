@@ -39,7 +39,7 @@ kotlin {
         languageVersion.set(JavaLanguageVersion.of("17"))
     }
 
-    // объяснем идее где лежат сгенеренные классы
+    // объясним идее где лежат сгенеренные классы
     sourceSets.main {
         kotlin.srcDir("build/generated/ksp/main/kotlin")
     }
