@@ -1,0 +1,36 @@
+plugins {
+    id "com.google.devtools.ksp"
+    id "java-test-fixtures"
+}
+apply from: "${project.rootDir}/kotlin-plugin.gradle"
+
+dependencies {
+    api project(':logging:declarative-logging:declarative-logging-annotation')
+    api project(':logging:logging-logback')
+    api project(':symbol-processor-common')
+    api project(':aop:aop-symbol-processor')
+
+    implementation 'com.google.devtools.ksp:symbol-processing-api:1.6.21-1.0.5'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.6.21'
+    implementation 'com.squareup:kotlinpoet:1.12.0'
+    implementation 'com.squareup:kotlinpoet-ksp:1.12.0'
+
+    testImplementation "ch.qos.logback:logback-classic:1.4.4"
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.7.21'
+    testImplementation 'io.github.classgraph:classgraph:4.8.146'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
+    testImplementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0'
+    testImplementation 'com.google.guava:guava:31.1-jre'
+    testImplementation project(':symbol-processor-common')
+    testImplementation project(':aop:aop-symbol-processor')
+    testImplementation testFixtures(project(':symbol-processor-common'))
+
+    testImplementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-reactor', version: '1.6.4'
+}
+
+kotlin {
+    sourceSets {
+        test.kotlin.srcDirs += 'build/in-test-generated-ksp/ksp/sources/kotlin'
+    }
+}

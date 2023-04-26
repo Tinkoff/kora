@@ -3,17 +3,24 @@ package ru.tinkoff.kora.ksp.common
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestInstance
+import reactor.core.publisher.Mono
 import java.io.File
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.util.*
+import java.util.concurrent.Future
+import kotlin.reflect.KClass
+import kotlin.reflect.full.callSuspend
+import kotlin.reflect.full.memberFunctions
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 abstract class AbstractSymbolProcessorTest {
@@ -168,6 +175,43 @@ abstract class AbstractSymbolProcessorTest {
 
     protected fun newGenerated(name: String, vararg args: Any?) = object : GeneratedObject<Any> {
         override fun invoke() = compileResult.loadClass(name).constructors[0].newInstance(*args)!!
+    }
+
+    class TestObject(
+        val objectClass: KClass<*>,
+        val objectInstance: Any
+    ) {
+
+        @SuppressWarnings("unchecked")
+        fun <T> invoke(method: String, vararg args: Any?): T? {
+            for (objectClassMethod in objectClass.memberFunctions) {
+                if (objectClassMethod.name == method && objectClassMethod.parameters.size == args.size + 1) {
+                    try {
+                        val realArgs = Array(args.size + 1) {
+                            if (it == 0) {
+                                objectInstance
+                            } else {
+                                args[it - 1]
+                            }
+                        }
+
+                        val result = if (objectClassMethod.isSuspend) {
+                            runBlocking { objectClassMethod.callSuspend(*realArgs) }
+                        } else {
+                            objectClassMethod.call(*realArgs)
+                        }
+                        return when (result) {
+                            is Mono<*> -> result.block()
+                            is Future<*> -> result.get()
+                            else -> result
+                        } as T?
+                    } catch (e: InvocationTargetException) {
+                        throw e.targetException
+                    }
+                }
+            }
+            throw IllegalArgumentException()
+        }
     }
 
 }

@@ -1,0 +1,10 @@
+dependencies {
+
+    api project(':aop:aop-annotation-processor')
+
+    testImplementation project(':logging:declarative-logging:declarative-logging-annotation')
+    testImplementation testFixtures(project(':annotation-processor-common'))
+    testImplementation project(':logging:logging-logback')
+}
+
+apply from: "${project.rootDir}/in-test-generated.gradle"

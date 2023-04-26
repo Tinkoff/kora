@@ -2,14 +2,11 @@ package ru.tinkoff.kora.database.common.annotation.processor;
 
 import org.assertj.core.api.Assertions;
 import org.intellij.lang.annotations.Language;
-import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.annotation.processor.common.AbstractAnnotationProcessorTest;
 import ru.tinkoff.kora.database.annotation.processor.RepositoryAnnotationProcessor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public abstract class AbstractRepositoryTest extends AbstractAnnotationProcessorTest {
     protected static class TestRepository {
@@ -58,7 +55,7 @@ public abstract class AbstractRepositoryTest extends AbstractAnnotationProcessor
             """;
     }
 
-    protected TestRepository compile(Object connectionFactory, List<?> arguments, @Language("java") String... sources) {
+    protected TestObject compile(Object connectionFactory, List<?> arguments, @Language("java") String... sources) {
         var compileResult = compile(List.of(new RepositoryAnnotationProcessor()), sources);
         if (compileResult.isFailed()) {
             throw compileResult.compilationException();
@@ -77,13 +74,13 @@ public abstract class AbstractRepositoryTest extends AbstractAnnotationProcessor
                 }
             }
             var repository = repositoryClass.getConstructors()[0].newInstance(realArgs);
-            return new TestRepository(repositoryClass, repository);
+            return new TestObject(repositoryClass, repository);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected TestRepository compileForArgs(List<?> arguments, @Language("java") String... sources) {
+    protected TestObject compileForArgs(List<?> arguments, @Language("java") String... sources) {
         var compileResult = compile(List.of(new RepositoryAnnotationProcessor()), sources);
         if (compileResult.isFailed()) {
             throw compileResult.compilationException();
@@ -95,7 +92,7 @@ public abstract class AbstractRepositoryTest extends AbstractAnnotationProcessor
             var repositoryClass = compileResult.loadClass("$TestRepository_Impl");
             var realArgs = arguments.toArray();
             var repository = repositoryClass.getConstructors()[0].newInstance(realArgs);
-            return new TestRepository(repositoryClass, repository);
+            return new TestObject(repositoryClass, repository);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
