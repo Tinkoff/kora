@@ -95,7 +95,7 @@ final class GraphImpl implements RefreshableGraph, Lifecycle {
                         }
                         case ON_COMPLETE -> {
                             this.semaphore.release();
-                            log.debug("Refreshing Graph completed in {}", Duration.ofNanos(System.nanoTime() - started));
+                            log.debug("Refreshing Graph completed in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                         }
                         default -> {}
                     }
@@ -125,7 +125,7 @@ final class GraphImpl implements RefreshableGraph, Lifecycle {
                         }
                         case ON_COMPLETE -> {
                             this.semaphore.release();
-                            log.debug("Graph Initializing completed in {}", Duration.ofNanos(System.nanoTime() - started));
+                            log.debug("Graph Initializing completed in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                         }
                         default -> {}
                     }
@@ -154,7 +154,7 @@ final class GraphImpl implements RefreshableGraph, Lifecycle {
                         }
                         case ON_COMPLETE -> {
                             this.semaphore.release();
-                            log.debug("Graph Releasing completed in {}", Duration.ofNanos(System.nanoTime() - started));
+                            log.debug("Graph Releasing completed in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                         }
                         default -> {}
                     }

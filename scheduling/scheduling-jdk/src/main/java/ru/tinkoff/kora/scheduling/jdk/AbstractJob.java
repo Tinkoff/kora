@@ -38,7 +38,7 @@ public abstract class AbstractJob implements Lifecycle {
                 this.scheduledFuture = this.schedule(this.service, this::runJob);
 
                 logger.info("Started Scheduled Job '{}#{}' started in {}", telemetry.jobClass().getCanonicalName(), telemetry.jobMethod(),
-                    Duration.ofNanos(System.nanoTime() - started));
+                    Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             }
         });
     }
@@ -71,7 +71,7 @@ public abstract class AbstractJob implements Lifecycle {
                 f.cancel(true);
 
                 logger.info("Scheduled Job '{}#{}' stopped in {}", telemetry.jobClass().getCanonicalName(), telemetry.jobMethod(),
-                    Duration.ofNanos(System.nanoTime() - started));
+                    Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             }
         });
     }

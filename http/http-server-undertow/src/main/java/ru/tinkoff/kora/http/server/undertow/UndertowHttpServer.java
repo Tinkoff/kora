@@ -55,7 +55,7 @@ public class UndertowHttpServer implements HttpServer, ReadinessProbe {
                     this.undertow.stop();
                     this.undertow = null;
                 }
-                logger.info("Public HTTP Server (Undertow) stopped in {}", Duration.ofNanos(System.nanoTime() - started));
+                logger.info("Public HTTP Server (Undertow) stopped in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             }));
     }
 
@@ -72,7 +72,7 @@ public class UndertowHttpServer implements HttpServer, ReadinessProbe {
                     this.undertow.start();
                     this.state.set(HttpServerState.RUN);
                     var data = StructuredArgument.marker( "port", this.port() );
-                    logger.info(data, "Public HTTP Server (Undertow) started in {}", Duration.ofNanos(System.nanoTime() - started));
+                    logger.info(data, "Public HTTP Server (Undertow) started in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                     sink.success();
                 } catch (Throwable e) {
                     sink.error(e);

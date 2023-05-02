@@ -26,7 +26,7 @@ public final class FlywayJdbcDatabaseInterceptor implements GraphInterceptor<Jdb
                     .load()
                     .migrate();
 
-                logger.info("FlyWay migration finished in {}", Duration.ofNanos(System.nanoTime() - started));
+                logger.info("FlyWay migration finished in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             })
             .thenReturn(value);
     }

@@ -47,7 +47,7 @@ public class KoraQuartzJobRegistrar implements Lifecycle {
                 this.scheduler.scheduleJob(job, koraQuartzJob.getTrigger());
             }
 
-            logger.info("Quartz Jobs {} started in {}", quartzJobsNames, Duration.ofNanos(System.nanoTime() - started));
+            logger.info("Quartz Jobs {} started in {}", quartzJobsNames, Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             return null;
         });
     }

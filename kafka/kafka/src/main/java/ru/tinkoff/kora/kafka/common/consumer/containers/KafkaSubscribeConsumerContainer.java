@@ -81,14 +81,20 @@ public final class KafkaSubscribeConsumerContainer<K, V> implements Lifecycle {
                 }
                 continue;
             }
+
             try (consumer) {
                 consumers.add(consumer);
-                logger.info("Kafka Consumer '{}' started in {}", consumerPrefix, Duration.ofNanos(System.nanoTime() - started));
-
+                boolean isFirstPoll = true;
                 while (isActive.get()) {
                     try {
                         var records = consumer.poll(config.pollTimeout());
-                        if (logger.isDebugEnabled()) {
+                        if (isFirstPoll) {
+                            logger.info("Kafka Consumer '{}' started in {}",
+                                consumerPrefix, Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
+                            isFirstPoll = false;
+                        }
+
+                        if (!records.isEmpty() && logger.isDebugEnabled()) {
                             var topics = new HashSet<String>(records.partitions().size());
                             var partitions = new HashSet<Integer>(records.partitions().size());
                             for (TopicPartition partition : records.partitions()) {
@@ -98,6 +104,8 @@ public final class KafkaSubscribeConsumerContainer<K, V> implements Lifecycle {
 
                             logger.debug("Kafka Consumer '{}' polled '{}' records from topics {} and partitions {}",
                                 consumerPrefix, records.count(), topics, partitions);
+                        } else {
+                            logger.trace("Kafka Consumer '{}' polled '0' records", consumerPrefix);
                         }
 
                         handler.handle(records, consumer, this.commitAllowed);
@@ -110,7 +118,9 @@ public final class KafkaSubscribeConsumerContainer<K, V> implements Lifecycle {
                         } catch (InterruptedException ie) {
                             logger.error("Kafka Consumer '{}' error interrupting thread", consumerPrefix, ie);
                         }
-                        if (backoffTimeout.get() < 60000) backoffTimeout.set(backoffTimeout.get() * 2);
+                        if (backoffTimeout.get() < 60000) {
+                            backoffTimeout.set(backoffTimeout.get() * 2);
+                        }
                         break;
                     } finally {
                         Context.clear();
@@ -153,7 +163,7 @@ public final class KafkaSubscribeConsumerContainer<K, V> implements Lifecycle {
                     executorService.shutdownNow();
                 }
 
-                logger.info("Kafka Consumer '{}' stopped in {}", consumerPrefix, Duration.ofNanos(System.nanoTime() - started));
+                logger.info("Kafka Consumer '{}' stopped in {}", consumerPrefix, Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             }
         });
     }

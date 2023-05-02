@@ -40,7 +40,7 @@ public class UndertowPrivateHttpServer implements PrivateHttpServer {
                     this.undertow.stop();
                     this.undertow = null;
                 }
-                logger.info("Private HTTP Server (Undertow) stopped in {}", Duration.ofNanos(System.nanoTime() - started));
+                logger.info("Private HTTP Server (Undertow) stopped in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             }));
     }
 
@@ -55,7 +55,7 @@ public class UndertowPrivateHttpServer implements PrivateHttpServer {
                     this.undertow = this.createServer();
                     this.undertow.start();
                     var data = StructuredArgument.marker( "port", this.port() );
-                    logger.info(data, "Private HTTP Server (Undertow) started in {}", Duration.ofNanos(System.nanoTime() - started));
+                    logger.info(data, "Private HTTP Server (Undertow) started in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                     sink.success();
                 } catch (Throwable e) {
                     sink.error(e);

@@ -56,7 +56,7 @@ final class DefaultLettuceCommander implements LettuceCommander, Lifecycle {
                 throw Exceptions.propagate(e);
             }
 
-            logger.info("Redis Client (Lettuce) started in {}", Duration.ofNanos(System.nanoTime() - started));
+            logger.info("Redis Client (Lettuce) started in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
         });
     }
 
@@ -67,7 +67,7 @@ final class DefaultLettuceCommander implements LettuceCommander, Lifecycle {
                 logger.debug("Redis Client (Lettuce) stopping...");
                 final long started = System.nanoTime();
                 connection.close();
-                logger.info("Redis Client (Lettuce) stopped in {}", Duration.ofNanos(System.nanoTime() - started));
+                logger.info("Redis Client (Lettuce) stopped in {}", Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
             } catch (Exception e) {
                 throw Exceptions.propagate(e);
             }
