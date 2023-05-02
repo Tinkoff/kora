@@ -41,7 +41,9 @@ public class DefaultDataBaseTelemetry implements DataBaseTelemetry {
 
         var span = tracing == null ? null : tracing.createQuerySpan(ctx, query);
         var start = System.nanoTime();
-        if (logger != null) logger.logQueryBegin(query);
+        if (logger != null) {
+            logger.logQueryBegin(query);
+        }
 
         return exception -> {
             var duration = System.nanoTime() - start;

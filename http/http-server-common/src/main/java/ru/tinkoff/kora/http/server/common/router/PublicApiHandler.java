@@ -1,6 +1,8 @@
 package ru.tinkoff.kora.http.server.common.router;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.All;
@@ -30,6 +32,9 @@ import java.util.function.Function;
  */
 
 public class PublicApiHandler implements RefreshListener {
+
+    private static final Logger log = LoggerFactory.getLogger(HttpServer.class);
+
     private final Function<HttpServerRequest, Mono<HttpServerResponse>> NOT_FOUND_HANDLER = request ->
         Mono.just(new SimpleHttpServerResponse(404, "application/octet-stream", HttpHeaders.of(), null));
 
@@ -166,7 +171,7 @@ public class PublicApiHandler implements RefreshListener {
                 ctx.close(response.code(), HttpResultCode.CONNECTION_ERROR, connectionError.error());
             }
         }, e -> {
-            HttpServerLogger.log.error("Error dropped: looks like a bug in HttpServerResponseSender", e);
+            log.error("Error dropped: looks like a bug in HttpServerResponseSender", e);
         });
     }
 
