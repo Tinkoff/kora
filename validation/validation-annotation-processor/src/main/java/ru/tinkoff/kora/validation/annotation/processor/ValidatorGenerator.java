@@ -48,7 +48,6 @@ public class ValidatorGenerator {
         }
     }
 
-
     private void generateForSealed(TypeElement validatedElement) {
         assert validatedElement.getModifiers().contains(Modifier.SEALED);
         var validatedTypeName = TypeName.get(validatedElement.asType());
@@ -119,11 +118,12 @@ public class ValidatorGenerator {
             if (field.isNotNull() && !field.isPrimitive()) {
                 fieldConstraintBuilder.add(CodeBlock.of("""
                     if(value.$L == null) {
-                        _violations.add($L.violates(\"Should be not null, but was null\"));
                         if(context.isFailFast()) {
-                            return _violations;
+                            return List.of($L.violates(\"Should be not null, but was null\"));
+                        } else {
+                            _violations.add($L.violates(\"Should be not null, but was null\"));
                         }
-                    }""", field.accessor(), contextField));
+                    }""", field.accessor(), contextField, contextField));
             }
 
             if (!field.isPrimitive()) {
@@ -134,24 +134,33 @@ public class ValidatorGenerator {
                 final ValidMeta.Constraint constraint = field.constraint().get(j);
                 final String suffix = i + "_" + j;
                 final String constraintField = constraintToFieldName.computeIfAbsent(constraint.factory(), (k) -> "_constraint" + suffix);
-
+                final String constraintResultField = "_constraintResult_" + suffix;
                 fieldConstraintBuilder.add(CodeBlock.of("""
-                    _violations.addAll($L.validate(value.$L, $L));
-                    if(context.isFailFast() && !_violations.isEmpty()) {
-                        return _violations;
-                    }""", constraintField, field.accessor(), contextField));
+                    var $N = $L.validate(value.$L, $L);
+                    if(!$N.isEmpty()) {
+                        if(context.isFailFast()) {
+                            return $N;
+                        } else {
+                            _violations.addAll($N);
+                        }
+                    }""", constraintResultField, constraintField, field.accessor(), contextField, constraintResultField, constraintResultField, constraintResultField));
             }
 
             for (int j = 0; j < field.validates().size(); j++) {
                 final ValidMeta.Validated validated = field.validates().get(j);
                 final String suffix = i + "_" + j;
                 final String validatorField = validatedToFieldName.computeIfAbsent(validated, (k) -> "_validator" + suffix);
+                final String validatorResultField = "_validatorResult_" + suffix;
 
                 fieldConstraintBuilder.add(CodeBlock.of("""
-                    _violations.addAll($L.validate(value.$L, $L));
-                    if(context.isFailFast() && !_violations.isEmpty()) {
-                        return _violations;
-                    }""", validatorField, field.accessor(), contextField));
+                    var $N = $L.validate(value.$L, $L);
+                    if(!$N.isEmpty()) {
+                        if(context.isFailFast()) {
+                            return $N;
+                        } else {
+                            _violations.addAll($N);
+                        }
+                    }""", validatorResultField, validatorField, field.accessor(), contextField, validatorResultField, validatorResultField, validatorResultField));
             }
 
             if (!field.isPrimitive()) {
