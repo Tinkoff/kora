@@ -12,8 +12,8 @@ public class ValidateSync {
     public static final String IGNORED = "ops";
 
     @Validate
-    public int validatedInput(@Range(from = 1, to = Integer.MAX_VALUE) int c1,
-                              @Nullable @NotEmpty String c2,
+    public int validatedInput(@Nullable Integer c1,
+                              @Nullable String c2,
                               @Nullable @Valid ValidTaz c3) {
         return c1;
     }

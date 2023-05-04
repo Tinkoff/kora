@@ -22,9 +22,9 @@ public abstract class ValidateRunner extends Assertions implements ValidatorModu
             final ClassLoader classLoader = getClassLoader();
             final Class<?> clazz = classLoader.loadClass("ru.tinkoff.kora.validation.annotation.processor.testdata.$ValidateSync__AopProxy");
             return (ValidateSync) clazz.getConstructors()[0].newInstance(
+                getTazValidator(),
                 rangeIntegerConstraintFactory(),
                 notEmptyStringConstraintFactory(),
-                getTazValidator(),
                 sizeListConstraintFactory(TypeRef.of(ValidTaz.class)),
                 listValidator(getTazValidator(), TypeRef.of(ValidTaz.class))
             );
