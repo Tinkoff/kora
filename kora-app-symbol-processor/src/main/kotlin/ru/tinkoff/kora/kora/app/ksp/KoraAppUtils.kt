@@ -13,7 +13,7 @@ import ru.tinkoff.kora.ksp.common.findMethods
 
 
 object KoraAppUtils {
-
+    fun KSClassDeclaration.extendsKeepAop(resolver: Resolver, newName: String) = extendsKeepAop(this, resolver, newName)
 }
 
 

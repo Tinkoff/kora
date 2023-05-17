@@ -49,6 +49,10 @@ object CommonClassNames {
     val config = ClassName("com.typesafe.config", "Config")
 
 
+    val config = ClassName("com.typesafe.config", "Config")
+    val configValueExtractor = ClassName("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor")
+
+
     fun KSType.isMono() = this.toClassName().canonicalName == mono.canonicalName
     fun KSType.isFlux() = this.toClassName().canonicalName == flux.canonicalName
     fun KSType.isFlow() = this.toClassName().canonicalName == flow.canonicalName
