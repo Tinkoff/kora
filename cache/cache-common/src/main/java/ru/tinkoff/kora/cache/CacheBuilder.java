@@ -11,7 +11,7 @@ public interface CacheBuilder<K, V> {
     Cache<K, V> build();
 
     @Nonnull
-    static <K, V> CacheBuilder<K, V> sync() {
-        return new FacadeCacheBuilder<>();
+    static <K, V> CacheBuilder<K, V> builder(@Nonnull Cache<K, V> cache) {
+        return new FacadeCacheBuilder<>(cache);
     }
 }

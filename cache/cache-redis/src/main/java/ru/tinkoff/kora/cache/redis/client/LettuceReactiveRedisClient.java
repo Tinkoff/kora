@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class LettuceReactiveRedisClient implements ReactiveRedisClient {
+final class LettuceReactiveRedisClient implements ReactiveRedisClient {
 
     private final RedisStringReactiveCommands<byte[], byte[]> stringCommands;
     private final RedisServerReactiveCommands<byte[], byte[]> serverCommands;

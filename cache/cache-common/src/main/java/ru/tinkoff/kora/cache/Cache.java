@@ -10,19 +10,7 @@ import java.util.Map;
 /**
  * Represents base Cache contract.
  */
-public interface Cache<K, V> {
-
-    /**
-     * Resolve the given value for the given key.
-     *
-     * @param key The cache key
-     * @return value associated with the key
-     */
-    @Nullable
-    V get(@Nonnull K key);
-
-    @Nonnull
-    Map<K, V> get(@Nonnull Collection<K> keys);
+public interface Cache<K, V> extends ReadableCache<K, V> {
 
     /**
      * Cache the specified value using the specified key.
@@ -46,18 +34,6 @@ public interface Cache<K, V> {
      * Invalidate all cached values within this cache.
      */
     void invalidateAll();
-
-    /**
-     * Resolve the given value for the given key.
-     *
-     * @param key The cache key
-     * @return value associated with the key or {@link Mono#empty()} if no value is specified
-     */
-    @Nonnull
-    Mono<V> getAsync(@Nonnull K key);
-
-    @Nonnull
-    Mono<Map<K, V>> getAsync(@Nonnull Collection<K> keys);
 
     /**
      * Cache the specified value using the specified key.

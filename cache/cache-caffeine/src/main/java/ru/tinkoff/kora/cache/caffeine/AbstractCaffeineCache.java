@@ -1,5 +1,7 @@
 package ru.tinkoff.kora.cache.caffeine;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.cache.Cache;
 import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
@@ -7,8 +9,10 @@ import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
-public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
+@Internal
+public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V> {
 
     private static final String ORIGIN = "caffeine";
 
@@ -27,7 +31,7 @@ public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
 
     @Override
     public V get(@Nonnull K key) {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, ORIGIN);
+        var telemetryContext = telemetry.create("GET", name, ORIGIN);
         telemetryContext.startRecording();
         var value = caffeine.getIfPresent(key);
         telemetryContext.recordSuccess(value);
@@ -37,16 +41,25 @@ public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Map<K, V> get(@Nonnull Collection<K> keys) {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, ORIGIN);
+        var telemetryContext = telemetry.create("GET_MANY", name, ORIGIN);
         telemetryContext.startRecording();
         var values = caffeine.getAllPresent(keys);
         telemetryContext.recordSuccess();
         return values;
     }
 
+    @Override
+    public V getOrCompute(@Nonnull K key, @Nonnull Function<K, V> mappingFunction) {
+        var telemetryContext = telemetry.create("GET_OR_COMPUTE", name, ORIGIN);
+        telemetryContext.startRecording();
+        var value = caffeine.get(key, mappingFunction);
+        telemetryContext.recordSuccess();
+        return value;
+    }
+
     @Nonnull
     public V put(@Nonnull K key, @Nonnull V value) {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.PUT, name, ORIGIN);
+        var telemetryContext = telemetry.create("PUT", name, ORIGIN);
         telemetryContext.startRecording();
         caffeine.put(key, value);
         telemetryContext.recordSuccess();
@@ -55,7 +68,7 @@ public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidate(@Nonnull K key) {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, ORIGIN);
+        var telemetryContext = telemetry.create("INVALIDATE", name, ORIGIN);
         telemetryContext.startRecording();
         caffeine.invalidate(key);
         telemetryContext.recordSuccess();
@@ -63,7 +76,7 @@ public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidate(@Nonnull Collection<K> keys) {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, ORIGIN);
+        var telemetryContext = telemetry.create("INVALIDATE_MANY", name, ORIGIN);
         telemetryContext.startRecording();
         caffeine.invalidateAll(keys);
         telemetryContext.recordSuccess();
@@ -71,7 +84,7 @@ public abstract class AbstractCaffeineCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidateAll() {
-        var telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE_ALL, name, ORIGIN);
+        var telemetryContext = telemetry.create("INVALIDATE_ALL", name, ORIGIN);
         telemetryContext.startRecording();
         caffeine.invalidateAll();
         telemetryContext.recordSuccess();

@@ -1,5 +1,7 @@
 package ru.tinkoff.kora.cache.redis;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.cache.Cache;
 import ru.tinkoff.kora.cache.redis.client.ReactiveRedisClient;
@@ -10,6 +12,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Internal
 public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     private final String name;
@@ -23,7 +26,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     private final Long expireAfterAccessMillis;
     private final Long expireAfterWriteMillis;
 
-    AbstractRedisCache(String name,
+    protected AbstractRedisCache(String name,
                        RedisCacheConfig config,
                        SyncRedisClient syncClient,
                        ReactiveRedisClient reactiveClient,
@@ -51,7 +54,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public V get(@Nonnull K key) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET", name, origin());
         telemetryContext.startRecording();
 
         try {
@@ -72,7 +75,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Map<K, V> get(@Nonnull Collection<K> keys) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET_MANY", name, origin());
 
         try {
             telemetryContext.startRecording();
@@ -105,7 +108,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public V put(@Nonnull K key, @Nonnull V value) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.PUT, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("PUT", name, origin());
         telemetryContext.startRecording();
 
         try {
@@ -127,7 +130,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Override
     public void invalidate(@Nonnull K key) {
         final byte[] keyAsBytes = keyMapper.apply(key);
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE", name, origin());
 
         try {
             telemetryContext.startRecording();
@@ -140,7 +143,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidate(@Nonnull Collection<K> keys) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_MANY", name, origin());
 
         try {
             final byte[][] keysAsBytes = keys.stream()
@@ -157,7 +160,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidateAll() {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE_ALL, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_ALL", name, origin());
 
         try {
             telemetryContext.startRecording();
@@ -171,7 +174,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<V> getAsync(@Nonnull K key) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
                 final byte[] keyAsBytes = keyMapper.apply(key);
@@ -193,7 +196,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<Map<K, V>> getAsync(@Nonnull Collection<K> keys) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.GET, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET_MANY", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
                 var keysByKeyByte = keys.stream()
@@ -228,7 +231,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<V> putAsync(@Nonnull K key, @Nonnull V value) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.PUT, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("PUT", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
                 final byte[] keyAsBytes = keyMapper.apply(key);
@@ -251,7 +254,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull K key) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
                 final byte[] keyAsBytes = keyMapper.apply(key);
@@ -267,7 +270,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull Collection<K> keys) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_MANY", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
                 final byte[][] keyAsBytes = keys.stream()
@@ -288,7 +291,7 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<Boolean> invalidateAllAsync() {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create(CacheTelemetry.Operation.Type.INVALIDATE_ALL, name, origin());
+        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_ALL", name, origin());
         return Mono.defer(() -> {
             telemetryContext.startRecording();
             return reactiveClient.flushAll()

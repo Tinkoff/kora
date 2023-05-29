@@ -5,15 +5,7 @@ import javax.annotation.Nullable;
 
 public interface CacheTelemetry {
 
-    record Operation(@Nonnull Type type, @Nonnull String cacheName, @Nonnull String origin) {
-
-        public enum Type {
-            GET,
-            PUT,
-            INVALIDATE,
-            INVALIDATE_ALL
-        }
-    }
+    record Operation(@Nonnull String name, @Nonnull String cacheName, @Nonnull String origin) { }
 
     interface TelemetryContext {
         void startRecording();
@@ -26,5 +18,5 @@ public interface CacheTelemetry {
     }
 
     @Nonnull
-    TelemetryContext create(@Nonnull Operation.Type type, @Nonnull String cacheName, @Nonnull String origin);
+    TelemetryContext create(@Nonnull String operationName, @Nonnull String cacheName, @Nonnull String origin);
 }

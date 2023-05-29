@@ -11,6 +11,10 @@ final class FacadeCacheBuilder<K, V> implements CacheBuilder<K, V> {
 
     private final List<Cache<K, V>> facades = new ArrayList<>();
 
+    FacadeCacheBuilder(@Nonnull Cache<K, V> cache) {
+        facades.add(cache);
+    }
+
     @Nonnull
     @Override
     public CacheBuilder<K, V> addCache(@Nonnull Cache<K, V> cache) {

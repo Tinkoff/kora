@@ -12,7 +12,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class LettuceSyncRedisClient implements SyncRedisClient {
+final class LettuceSyncRedisClient implements SyncRedisClient {
 
     private final RedisStringCommands<byte[], byte[]> stringCommands;
     private final RedisServerCommands<byte[], byte[]> serverCommands;

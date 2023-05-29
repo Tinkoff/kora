@@ -2,7 +2,6 @@ package ru.tinkoff.kora.cache.telemetry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.util.function.Tuple8;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,7 +51,7 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
 
         @Override
         public void startRecording() {
-            logger.trace("Operation '{}' for cache '{}' started", operation.type(), operation.cacheName());
+            logger.trace("Operation '{}' for cache '{}' started", operation.name(), operation.cacheName());
             startedInNanos = System.nanoTime();
 
             if (tracer != null) {
@@ -75,14 +74,14 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
                 span.recordSuccess();
             }
 
-            if (operation.type() == Operation.Type.GET) {
+            if (operation.name().startsWith("GET")) {
                 if (valueFromCache == null) {
-                    logger.trace("Operation '{}' for cache '{}' didn't retried value", operation.type(), operation.cacheName());
+                    logger.trace("Operation '{}' for cache '{}' didn't retried value", operation.name(), operation.cacheName());
                 } else {
-                    logger.debug("Operation '{}' for cache '{}' retried value", operation.type(), operation.cacheName());
+                    logger.debug("Operation '{}' for cache '{}' retried value", operation.name(), operation.cacheName());
                 }
             } else {
-                logger.trace("Operation '{}' for cache '{}' completed", operation.type(), operation.cacheName());
+                logger.trace("Operation '{}' for cache '{}' completed", operation.name(), operation.cacheName());
             }
         }
 
@@ -98,21 +97,21 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
 
             if(throwable != null) {
                 logger.warn("Operation '{}' failed for cache '{}' with message: {}",
-                    operation.type(), operation.cacheName(), throwable.getMessage());
+                    operation.name(), operation.cacheName(), throwable.getMessage());
             } else {
                 logger.warn("Operation '{}' failed for cache '{}'",
-                    operation.type(), operation.cacheName());
+                    operation.name(), operation.cacheName());
             }
         }
     }
 
     @Nonnull
     @Override
-    public TelemetryContext create(@Nonnull Operation.Type type, @Nonnull String cacheName, @Nonnull String origin) {
+    public TelemetryContext create(@Nonnull String operationName, @Nonnull String cacheName, @Nonnull String origin) {
         if (isStubTelemetry) {
             return STUB_CONTEXT;
         }
 
-        return new DefaultCacheTelemetryContext(new Operation(type, cacheName, origin));
+        return new DefaultCacheTelemetryContext(new Operation(operationName, cacheName, origin));
     }
 }
