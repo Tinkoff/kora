@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -275,7 +276,7 @@ class WebServiceClientAnnotationProcessorTest {
         var constructor = type.getConstructor(HttpClient.class, SoapClientTelemetryFactory.class, SoapServiceConfig.class);
         var httpClient = this.httpClient.with(new TelemetryInterceptor(new DefaultHttpClientTelemetry(null, null, new Sl4fjHttpClientLogger(log, log))));
         var telemetry = new DefaultSoapClientTelemetryFactory(null);
-        return constructor.newInstance(httpClient, telemetry, new SoapServiceConfig(url));
+        return constructor.newInstance(httpClient, telemetry, new SoapServiceConfig(url, Duration.ofSeconds(60)));
     }
 
     private List<String> files(String path) {
