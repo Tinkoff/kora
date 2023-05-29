@@ -4,7 +4,6 @@ import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.cache.annotation.CacheInvalidate;
 import ru.tinkoff.kora.cache.annotation.CachePut;
 import ru.tinkoff.kora.cache.annotation.Cacheable;
-import ru.tinkoff.kora.cache.redis.RedisCacheManager;
 import ru.tinkoff.kora.common.Component;
 
 import java.math.BigDecimal;

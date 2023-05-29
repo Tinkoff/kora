@@ -1,9 +1,15 @@
 package ru.tinkoff.kora.cache.telemetry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.util.function.Tuple8;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class DefaultCacheTelemetry implements CacheTelemetry {
+
+    private static final Logger logger = LoggerFactory.getLogger(CacheTelemetry.class);
 
     private static final TelemetryContext STUB_CONTEXT = new StubCacheTelemetry();
 
@@ -38,7 +44,7 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
         private final Operation operation;
 
         private CacheTracer.CacheSpan span;
-        private long startedInNanos = -1;
+        private long startedInNanos = System.nanoTime();
 
         DefaultCacheTelemetryContext(Operation operation) {
             this.operation = operation;
@@ -46,12 +52,11 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
 
         @Override
         public void startRecording() {
-            if (startedInNanos == -1) {
-                startedInNanos = System.nanoTime();
+            logger.trace("Operation '{}' for cache '{}' started", operation.type(), operation.cacheName());
+            startedInNanos = System.nanoTime();
 
-                if (tracer != null) {
-                    span = tracer.trace(operation);
-                }
+            if (tracer != null) {
+                span = tracer.trace(operation);
             }
         }
 
@@ -69,6 +74,16 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
             if (span != null) {
                 span.recordSuccess();
             }
+
+            if (operation.type() == Operation.Type.GET) {
+                if (valueFromCache == null) {
+                    logger.trace("Operation '{}' for cache '{}' didn't retried value", operation.type(), operation.cacheName());
+                } else {
+                    logger.debug("Operation '{}' for cache '{}' retried value", operation.type(), operation.cacheName());
+                }
+            } else {
+                logger.trace("Operation '{}' for cache '{}' completed", operation.type(), operation.cacheName());
+            }
         }
 
         @Override
@@ -79,6 +94,14 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
             }
             if (span != null) {
                 span.recordFailure(throwable);
+            }
+
+            if(throwable != null) {
+                logger.warn("Operation '{}' failed for cache '{}' with message: {}",
+                    operation.type(), operation.cacheName(), throwable.getMessage());
+            } else {
+                logger.warn("Operation '{}' failed for cache '{}'",
+                    operation.type(), operation.cacheName());
             }
         }
     }

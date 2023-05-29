@@ -1,18 +1,18 @@
 package ru.tinkoff.kora.cache.annotation.processor.aop;
 
 import com.squareup.javapoet.CodeBlock;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.cache.annotation.Cacheable;
 import ru.tinkoff.kora.cache.annotation.Cacheables;
-import ru.tinkoff.kora.cache.annotation.processor.CacheMeta;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
+import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import java.util.List;
 import java.util.Set;
-
-import static ru.tinkoff.kora.cache.annotation.processor.CacheOperationManager.getCacheOperation;
 
 public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
 
@@ -29,22 +29,20 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public ApplyResult apply(ExecutableElement method, String superCall, AspectContext aspectContext) {
-        final CacheOperation operation = getCacheOperation(method, env);
-        final CacheMirrors cacheMirrors = getCacheMirrors(operation, method, env);
+        final CacheOperation operation = CacheOperationUtils.getCacheMeta(method);
+        final List<String> cacheFields = getCacheFields(operation, env, aspectContext);
 
-        final List<String> cacheFields = getCacheFields(operation, cacheMirrors, aspectContext);
         final CodeBlock body = MethodUtils.isMono(method)
-            ? buildBodyMono(method, operation, superCall, cacheFields)
-            : buildBodySync(method, operation, superCall, cacheFields);
+            ? buildBodyMono(method, operation, cacheFields, superCall)
+            : buildBodySync(method, operation, cacheFields, superCall);
 
         return new ApplyResult.MethodBody(body);
     }
 
     private CodeBlock buildBodySync(ExecutableElement method,
                                     CacheOperation operation,
-                                    String superCall,
-                                    List<String> cacheFields) {
-        final String recordParameters = getKeyRecordParameters(operation, method);
+                                    List<String> cacheFields,
+                                    String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         final StringBuilder builder = new StringBuilder();
@@ -77,30 +75,40 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
         builder.append("_value = ").append(superMethod).append(";\n");
 
         // cache put
-        for (int i = 0; i < cacheFields.size(); i++) {
-            final String cache = cacheFields.get(i);
+        for (final String cache : cacheFields) {
             builder.append(cache).append(".put(_key, _value);\n");
         }
         builder.append("return _value;");
 
-        return CodeBlock.builder()
-            .add("""
-                    var _key = new $L($L);
-                    """,
-                operation.key().simpleName(), recordParameters)
-            .add(builder.toString())
-            .build();
+        if (operation.parameters().size() == 1) {
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $L;
+                        """,
+                    operation.parameters().get(0))
+                .add(builder.toString())
+                .build();
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $T.of($L);
+                        """,
+                    getCacheKey(operation), recordParameters)
+                .add(builder.toString())
+                .build();
+
+        }
     }
 
     private CodeBlock buildBodyMono(ExecutableElement method,
                                     CacheOperation operation,
-                                    String superCall,
-                                    List<String> cacheFields) {
-        final String recordParameters = getKeyRecordParameters(operation, method);
+                                    List<String> cacheFields,
+                                    String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables
-        final StringBuilder builder = new StringBuilder();
+        final CodeBlock.Builder builder = CodeBlock.builder();
 
         // cache get
         for (int i = 0; i < cacheFields.size(); i++) {
@@ -110,67 +118,96 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
                 : "_value = _value.switchIfEmpty(";
 
             final String getPart = ".getAsync(_key)";
-            builder.append(prefix)
-                .append(cache)
-                .append(getPart);
+            builder.add(prefix)
+                .add(cache)
+                .add(getPart);
 
             // put value from cache into prev level caches
             if (i > 1) {
-                builder.append("\n").append("""
-                        .publishOn(reactor.core.scheduler.Schedulers.boundedElastic())
+                builder.add("\n").add("""
+                        .publishOn($T.boundedElastic())
                         .doOnSuccess(_fromCache -> {
                             if(_fromCache != null) {
-                                reactor.core.publisher.Flux.merge(java.util.List.of(
-                    """);
+                                $T.merge($T.of(
+                    """, Schedulers.class, Flux.class, List.class);
 
                 for (int j = 0; j < i; j++) {
                     final String prevCache = cacheFields.get(j);
                     final String suffix = (j == i - 1)
                         ? ".putAsync(_key, _fromCache)\n"
                         : ".putAsync(_key, _fromCache),\n";
-                    builder.append("\t\t\t\t").append(prevCache).append(suffix);
+                    builder.add("\t\t\t\t").add(prevCache).add(suffix);
                 }
 
-                builder.append("\t\t)).then().block();\n}}));\n\n");
+                builder.add("\t\t)).then().block();\n}}));\n\n");
             } else if (i == 1) {
-                builder.append("\n\t")
-                    .append(String.format("""
+                builder.add("\n\t")
+                    .add(String.format("""
                         .doOnSuccess(_fromCache -> {
                                 if(_fromCache != null) {
                                     %s.put(_key, _fromCache);
                                 }
                         }));
                         """, cacheFields.get(0)))
-                    .append("\n");
+                    .add("\n");
             } else {
-                builder.append(";\n");
+                builder.add(";\n");
             }
         }
 
         // cache super method
-        builder.append("return _value.switchIfEmpty(").append(superMethod);
+        builder.add("return _value.switchIfEmpty(").add(superMethod);
 
         // cache put
         if (cacheFields.size() > 1) {
-            builder.append(".flatMap(_result -> reactor.core.publisher.Flux.merge(java.util.List.of(\n");
+            builder.add(".flatMap(_result -> $T.merge($T.of(\n", Flux.class, List.class);
             for (int i = 0; i < cacheFields.size(); i++) {
                 final String cache = cacheFields.get(i);
                 final String suffix = (i == cacheFields.size() - 1)
                     ? ".putAsync(_key, _result)\n"
                     : ".putAsync(_key, _result),\n";
-                builder.append("\t").append(cache).append(suffix);
+                builder.add("\t").add(cache).add(suffix);
             }
-            builder.append(")).then(Mono.just(_result))));");
+            builder.add(")).then(Mono.just(_result))));");
         } else {
-            builder.append(".doOnSuccess(_result -> ").append(cacheFields.get(0)).append(".put(_key, _result)));\n");
+            if (operation.parameters().size() == 1) {
+                builder.add("""
+                    .doOnSuccess(_result -> {
+                        if(_result != null) {
+                            $L.put($L, _result);
+                        }
+                    }));
+                    """, cacheFields.get(0), operation.parameters().get(0));
+            } else {
+                final String recordParameters = getKeyRecordParameters(operation, method);
+                builder.add("""
+                    .doOnSuccess(_result -> {
+                        if(_result != null) {
+                            $L.put($T.of($L), _result);
+                        }
+                    }));
+                    """, cacheFields.get(0), getCacheKey(operation), recordParameters);
+            }
         }
 
-        return CodeBlock.builder()
-            .add("""
-                    var _key = new $L($L);
-                    """,
-                operation.key().simpleName(), recordParameters)
-            .add(builder.toString())
-            .build();
+        if (operation.parameters().size() == 1) {
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $L;
+                        """,
+                    operation.parameters().get(0))
+                .add(builder.build())
+                .build();
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $T.of($L);
+                        """,
+                    getCacheKey(operation), recordParameters)
+                .add(builder.build())
+                .build();
+
+        }
     }
 }

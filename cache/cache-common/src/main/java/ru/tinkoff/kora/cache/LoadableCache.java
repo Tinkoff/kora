@@ -53,7 +53,7 @@ public interface LoadableCache<K, V> {
      * @param <V> Cache value
      */
     @Nonnull
-    static <K, V> LoadableCache<K, V> blocking(Cache<K, V> cache, ExecutorService executor, Function<K, V> loader) {
+    static <K, V> LoadableCache<K, V> blocking(Cache<K, V> cache, Function<K, V> loader, ExecutorService executor) {
         return create(cache, new CacheLoader.BlockingCacheLoader<>(executor, loader));
     }
 

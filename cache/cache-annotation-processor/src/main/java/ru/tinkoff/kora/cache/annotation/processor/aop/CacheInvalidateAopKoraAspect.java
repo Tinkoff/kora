@@ -4,15 +4,13 @@ import com.squareup.javapoet.CodeBlock;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.cache.annotation.CacheInvalidate;
 import ru.tinkoff.kora.cache.annotation.CacheInvalidates;
-import ru.tinkoff.kora.cache.annotation.processor.CacheMeta;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
+import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import java.util.List;
 import java.util.Set;
-
-import static ru.tinkoff.kora.cache.annotation.processor.CacheOperationManager.getCacheOperation;
 
 public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
@@ -29,22 +27,21 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public ApplyResult apply(ExecutableElement method, String superCall, AspectContext aspectContext) {
-        final CacheOperation operation = getCacheOperation(method, env);
-        final CacheMirrors cacheMirrors = getCacheMirrors(operation, method, env);
+        final CacheOperation operation = CacheOperationUtils.getCacheMeta(method);
+        final List<String> cacheFields = getCacheFields(operation, env, aspectContext);
 
-        final List<String> cacheFields = getCacheFields(operation, cacheMirrors, aspectContext);
         final CodeBlock body;
         if (MethodUtils.isMono(method)) {
-            if (operation.meta().type() == CacheMeta.Type.EVICT_ALL) {
-                body = buildBodyMonoAll(method, operation, superCall, cacheFields);
+            if (operation.type() == CacheOperation.Type.EVICT_ALL) {
+                body = buildBodyMonoAll(method, operation, cacheFields, superCall);
             } else {
-                body = buildBodyMono(method, operation, superCall, cacheFields);
+                body = buildBodyMono(method, operation, cacheFields, superCall);
             }
         } else {
-            if (operation.meta().type() == CacheMeta.Type.EVICT_ALL) {
-                body = buildBodySyncAll(method, operation, superCall, cacheFields);
+            if (operation.type() == CacheOperation.Type.EVICT_ALL) {
+                body = buildBodySyncAll(method, operation, cacheFields, superCall);
             } else {
-                body = buildBodySync(method, operation, superCall, cacheFields);
+                body = buildBodySync(method, operation, cacheFields, superCall);
             }
         }
 
@@ -53,9 +50,8 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
     private CodeBlock buildBodySync(ExecutableElement method,
                                     CacheOperation operation,
-                                    String superCall,
-                                    List<String> cacheFields) {
-        final String recordParameters = getKeyRecordParameters(operation, method);
+                                    List<String> cacheFields,
+                                    String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables
@@ -79,19 +75,30 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
             builder.append("return value;");
         }
 
-        return CodeBlock.builder()
-            .add("""
-                    var _key = new $L($L);
-                    """,
-                operation.key().simpleName(), recordParameters)
-            .add(builder.toString())
-            .build();
+        if (operation.parameters().size() == 1) {
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $L;
+                        """,
+                    operation.parameters().get(0))
+                .add(builder.toString())
+                .build();
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $T.of($L);
+                        """,
+                    getCacheKey(operation), recordParameters)
+                .add(builder.toString())
+                .build();
+        }
     }
 
     private CodeBlock buildBodySyncAll(ExecutableElement method,
                                        CacheOperation operation,
-                                       String superCall,
-                                       List<String> cacheFields) {
+                                       List<String> cacheFields,
+                                       String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables
@@ -122,9 +129,8 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
     private CodeBlock buildBodyMono(ExecutableElement method,
                                     CacheOperation operation,
-                                    String superCall,
-                                    List<String> cacheFields) {
-        final String recordParameters = getKeyRecordParameters(operation, method);
+                                    List<String> cacheFields,
+                                    String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables
@@ -149,20 +155,30 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
             builder.append(".doOnSuccess(_result -> ").append(cacheFields.get(0)).append(".invalidate(_key));\n");
         }
 
-        return CodeBlock.builder()
-            .add("""
-                    var _key = new $L($L);
-                    """,
-                operation.key().simpleName(), recordParameters)
-            .add(builder.toString())
-            .build();
-
+        if (operation.parameters().size() == 1) {
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $L;
+                        """,
+                    operation.parameters().get(0))
+                .add(builder.toString())
+                .build();
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            return CodeBlock.builder()
+                .add("""
+                        var _key = $T.of($L);
+                        """,
+                    getCacheKey(operation), recordParameters)
+                .add(builder.toString())
+                .build();
+        }
     }
 
     private CodeBlock buildBodyMonoAll(ExecutableElement method,
                                        CacheOperation operation,
-                                       String superCall,
-                                       List<String> cacheFields) {
+                                       List<String> cacheFields,
+                                       String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables

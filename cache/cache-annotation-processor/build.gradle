@@ -10,6 +10,7 @@ dependencies {
 
     testImplementation testFixtures(project(":annotation-processor-common"))
     testImplementation project(":internal:test-logging")
+    testImplementation project(":cache:cache-caffeine")
     testImplementation "com.google.testing.compile:compile-testing:0.19"
 }
 

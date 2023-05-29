@@ -1,10 +1,6 @@
 package ru.tinkoff.kora.cache.symbol.processor.testcache
 
-import ru.tinkoff.kora.cache.Cache
-import ru.tinkoff.kora.cache.CacheManager
-import ru.tinkoff.kora.cache.LoadableCache
-
-class DummyCacheManager<K, V> : CacheManager<K, V> {
+class DummyCacheManager<K, V> {
 
     private val cacheMap = HashMap<String, DummyCache<K, V>>()
 

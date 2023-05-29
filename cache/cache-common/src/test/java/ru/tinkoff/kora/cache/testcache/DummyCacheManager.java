@@ -1,8 +1,6 @@
 package ru.tinkoff.kora.cache.testcache;
 
 import ru.tinkoff.kora.cache.Cache;
-import ru.tinkoff.kora.cache.CacheManager;
-import ru.tinkoff.kora.cache.LoadableCache;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

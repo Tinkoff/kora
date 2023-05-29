@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.cache.redis.client;
 
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;

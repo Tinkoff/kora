@@ -6,31 +6,51 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.aop.annotation.processor.AopAnnotationProcessor;
-import ru.tinkoff.kora.cache.annotation.processor.testcache.DummyCacheManager;
-import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.CacheableTargetSync;
+import ru.tinkoff.kora.cache.annotation.processor.testcache.DummyCache2;
+import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.CacheableSync;
+import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig;
+import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
+import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SyncCacheAopTests extends Assertions {
+class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
 
-    private static final String CACHED_SERVICE = "ru.tinkoff.kora.cache.annotation.processor.testdata.sync.$CacheableTargetSync__AopProxy";
+    private static final String CACHED_IMPL = "ru.tinkoff.kora.cache.annotation.processor.testcache.$DummyCache2Impl";
+    private static final String CACHED_SERVICE = "ru.tinkoff.kora.cache.annotation.processor.testdata.sync.$CacheableSync__AopProxy";
 
-    private final DummyCacheManager<?, ?> cacheManager = new DummyCacheManager<>();
-    private CacheableTargetSync service = null;
+    private DummyCache2 cache = null;
+    private CacheableSync service = null;
 
-    private CacheableTargetSync getService(DummyCacheManager<?, ?> manager) {
+    private CacheableSync getService() {
         if (service != null) {
             return service;
         }
 
         try {
-            var classLoader = TestUtils.annotationProcess(CacheableTargetSync.class, new AopAnnotationProcessor(), new CacheKeyAnnotationProcessor());
+            var classLoader = TestUtils.annotationProcess(List.of(DummyCache2.class, CacheableSync.class),
+                new AopAnnotationProcessor(), new CacheAnnotationProcessor());
+
+            var cacheClass = classLoader.loadClass(CACHED_IMPL);
+            if (cacheClass == null) {
+                throw new IllegalArgumentException("Expected class not found: " + CACHED_SERVICE);
+            }
+
+            final Constructor<?> cacheConstructor = cacheClass.getDeclaredConstructors()[0];
+            cacheConstructor.setAccessible(true);
+            cache = (DummyCache2) cacheConstructor.newInstance(new CaffeineCacheConfig(null, null, null, null),
+                caffeineCacheFactory(), defaultCacheTelemetry(null, null));
+
             var serviceClass = classLoader.loadClass(CACHED_SERVICE);
             if (serviceClass == null) {
                 throw new IllegalArgumentException("Expected class not found: " + CACHED_SERVICE);
             }
-            service = (CacheableTargetSync) serviceClass.getConstructors()[0].newInstance(manager);
+
+            final Constructor<?> serviceConstructor = serviceClass.getDeclaredConstructors()[0];
+            serviceConstructor.setAccessible(true);
+            service = (CacheableSync) serviceConstructor.newInstance(cache);
             return service;
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -38,14 +58,16 @@ class SyncCacheAopTests extends Assertions {
     }
 
     @BeforeEach
-    void reset() {
-        cacheManager.reset();
+    void cleanup() {
+        if(cache != null) {
+            cache.invalidateAll();
+        }
     }
 
     @Test
     void getFromCacheWhenWasCacheEmpty() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -62,7 +84,7 @@ class SyncCacheAopTests extends Assertions {
     @Test
     void getFromCacheWhenCacheFilled() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -80,7 +102,7 @@ class SyncCacheAopTests extends Assertions {
     @Test
     void getFromCacheWrongKeyWhenCacheFilled() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -99,7 +121,7 @@ class SyncCacheAopTests extends Assertions {
     @Test
     void getFromCacheWhenCacheFilledOtherKey() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -118,7 +140,7 @@ class SyncCacheAopTests extends Assertions {
     @Test
     void getFromCacheWhenCacheInvalidate() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -137,7 +159,7 @@ class SyncCacheAopTests extends Assertions {
     @Test
     void getFromCacheWhenCacheInvalidateAll() {
         // given
-        final CacheableTargetSync service = getService(cacheManager);
+        final CacheableSync service = getService();
         service.value = "1";
         assertNotNull(service);
 

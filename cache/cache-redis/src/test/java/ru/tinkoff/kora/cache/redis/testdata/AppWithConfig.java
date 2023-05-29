@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.cache.redis.testdata;
 
 import ru.tinkoff.kora.cache.redis.CacheRunner;
-import ru.tinkoff.kora.cache.redis.DefaultRedisCacheModule;
 import ru.tinkoff.kora.cache.redis.client.SyncRedisClient;
 import ru.tinkoff.kora.common.KoraApp;
 import ru.tinkoff.kora.common.annotation.Root;

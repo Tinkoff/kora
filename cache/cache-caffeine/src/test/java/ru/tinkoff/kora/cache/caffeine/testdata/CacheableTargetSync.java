@@ -3,7 +3,6 @@ package ru.tinkoff.kora.cache.caffeine.testdata;
 import ru.tinkoff.kora.cache.annotation.CacheInvalidate;
 import ru.tinkoff.kora.cache.annotation.CachePut;
 import ru.tinkoff.kora.cache.annotation.Cacheable;
-import ru.tinkoff.kora.cache.caffeine.CaffeineCacheManager;
 import ru.tinkoff.kora.common.Component;
 
 import java.math.BigDecimal;

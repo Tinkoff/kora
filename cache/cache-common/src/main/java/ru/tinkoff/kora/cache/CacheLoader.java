@@ -58,9 +58,12 @@ public interface CacheLoader<K, V> {
     }
 
     class NonBlockingCacheLoader<K, V> implements CacheLoader<K, V> {
+
         private final Function<K, V> loader;
 
-        public NonBlockingCacheLoader(Function<K, V> loader) {this.loader = loader;}
+        public NonBlockingCacheLoader(Function<K, V> loader) {
+            this.loader = loader;
+        }
 
         @Nullable
         @Override
@@ -76,9 +79,12 @@ public interface CacheLoader<K, V> {
     }
 
     class AsyncCacheLoader<K, V> implements CacheLoader<K, V> {
+
         private final Function<K, Mono<V>> loader;
 
-        public AsyncCacheLoader(Function<K, Mono<V>> loader) {this.loader = loader;}
+        public AsyncCacheLoader(Function<K, Mono<V>> loader) {
+            this.loader = loader;
+        }
 
         @Nullable
         @Override

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.aop.annotation.processor.AopAnnotationProcessor;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
-import ru.tinkoff.kora.cache.annotation.processor.CacheKeyAnnotationProcessor;
+import ru.tinkoff.kora.cache.annotation.processor.CacheAnnotationProcessor;
 import ru.tinkoff.kora.cache.caffeine.testdata.AppWithConfig;
 import ru.tinkoff.kora.cache.caffeine.testdata.CacheableTargetMono;
 import ru.tinkoff.kora.cache.caffeine.testdata.CacheableTargetSync;
@@ -30,7 +30,7 @@ abstract class CacheRunner extends Assertions {
         try {
             final List<Class<?>> classes = new ArrayList<>(List.of(targetClasses));
             classes.add(app);
-            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new AopAnnotationProcessor(), new CacheKeyAnnotationProcessor(), new ConfigSourceAnnotationProcessor());
+            var classLoader = TestUtils.annotationProcess(classes, new KoraAppProcessor(), new AopAnnotationProcessor(), new CacheAnnotationProcessor(), new ConfigSourceAnnotationProcessor());
             var clazz = classLoader.loadClass(app.getName() + "Graph");
             var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
             return constructors[0].newInstance().get();

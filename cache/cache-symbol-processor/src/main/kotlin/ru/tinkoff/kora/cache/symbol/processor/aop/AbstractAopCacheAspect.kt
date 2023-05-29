@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.Cache
-import ru.tinkoff.kora.cache.CacheManager
 import ru.tinkoff.kora.cache.symbol.processor.CacheMeta
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.common.Tag

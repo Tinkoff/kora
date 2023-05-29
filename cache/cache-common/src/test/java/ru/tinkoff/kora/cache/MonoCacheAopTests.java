@@ -26,9 +26,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
@@ -43,9 +43,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
@@ -63,9 +63,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
@@ -83,9 +83,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
@@ -105,9 +105,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
@@ -131,9 +131,9 @@ class MonoCacheAopTests extends Assertions {
         // given
         final DummyCacheManager<String, String> cacheFacade1 = new DummyCacheManager<>();
         final DummyCache<String, String> cacheFacade2 = new DummyCache<>("test");
-        final CacheManager.Builder<String, String> builder = CacheManager.builder();
+        final CacheBuilder<String, String> builder = CacheManager.builder();
         final CacheManager<String, String> service = builder
-            .addFacadeManager(cacheFacade1)
+            .addFacade(cacheFacade1)
             .addFacadeFunction(name -> cacheFacade2)
             .build();
 
