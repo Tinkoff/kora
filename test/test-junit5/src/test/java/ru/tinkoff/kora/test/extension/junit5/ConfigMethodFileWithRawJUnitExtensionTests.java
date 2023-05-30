@@ -10,7 +10,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
 @KoraAppTest(
     application = LifecycleApplication.class,
     components = {Component1.class})
-public class ConfigMethodFileWithRawJUnitExtensionTests extends Assertions implements KoraAppTestConfig {
+public class ConfigMethodFileWithRawJUnitExtensionTests extends Assertions implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {

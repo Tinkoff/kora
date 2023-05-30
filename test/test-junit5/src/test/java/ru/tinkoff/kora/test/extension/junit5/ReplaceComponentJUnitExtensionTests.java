@@ -9,14 +9,14 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
 @KoraAppTest(
     application = LifecycleApplication.class,
     components = {LifecycleComponent.class})
-public class ReplaceComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+public class ReplaceComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraphModifier {
 
     @TestComponent
     private LifecycleComponent replaced;
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
+        return KoraGraphModification.create()
             .replaceComponent(LifecycleComponent.class, () -> (LifecycleComponent) () -> "?");
     }
 

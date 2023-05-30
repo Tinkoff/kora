@@ -15,11 +15,11 @@ import java.util.List;
 @KoraAppTest(
     application = LifecycleApplication.class,
     components = {LifecycleComponent12.class})
-public class MockComponentAnyTagViaAdditionJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+public class MockComponentAnyTagViaAdditionJUnitExtensionTests extends Assertions implements KoraAppTestGraphModifier {
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
+        return KoraGraphModification.create()
             .addComponent(LifecycleComponent.class, List.of(LifecycleComponent.class), () -> {
                 var mock = Mockito.mock(LifecycleComponent.class);
                 Mockito.when(mock.get()).thenReturn("?");

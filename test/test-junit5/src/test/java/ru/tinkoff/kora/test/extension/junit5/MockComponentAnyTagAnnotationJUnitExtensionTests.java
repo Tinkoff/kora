@@ -14,12 +14,15 @@ import java.util.List;
 
 @KoraAppTest(
     application = LifecycleApplication.class,
-    components = {LifecycleComponent23.class})
-public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+    components = {Component1.class, LifecycleComponent.class, LifecycleComponent23.class})
+public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestGraphModifier {
+
+    @TestComponent
+    private Component1 c1;
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
+        return KoraGraphModification.create()
             .mockComponent(LifecycleComponent.class, List.of(LifecycleComponent.class));
     }
 
@@ -31,7 +34,7 @@ public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions
     }
 
     @Test
-    void mockWithTag2(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component) {
+    void mockWithTag2(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
         assertEquals("?", component.get());

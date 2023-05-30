@@ -10,7 +10,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
 @KoraAppTest(
     application = LifecycleApplication.class,
     components = {LifecycleComponent2.class})
-public class AddComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+public class AddComponentJUnitExtensionTests extends Assertions implements KoraAppTestGraphModifier {
 
     @TestComponent
     private LifecycleComponent2 lifecycleComponent2;
@@ -19,7 +19,7 @@ public class AddComponentJUnitExtensionTests extends Assertions implements KoraA
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
+        return KoraGraphModification.create()
             .addComponent(LifecycleComponent.class, () -> (LifecycleComponent) () -> "?");
     }
 

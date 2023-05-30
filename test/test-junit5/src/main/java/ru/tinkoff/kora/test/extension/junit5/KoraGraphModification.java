@@ -57,7 +57,7 @@ public final class KoraGraphModification {
 
     private KoraGraphModification() {}
 
-    public static KoraGraphModification of() {
+    public static KoraGraphModification create() {
         return new KoraGraphModification();
     }
 
@@ -177,7 +177,8 @@ public final class KoraGraphModification {
     /**
      * Component that should be Mocked with {@link org.mockito.Mockito}
      */
-    KoraGraphModification mockComponent(@NotNull Type typeToMock, @Nullable Class<?>[] tags) {
+    KoraGraphModification mockComponent(@NotNull Type typeToMock,
+                                        @Nullable Class<?>[] tags) {
         if (tags == null) {
             return mockComponent(typeToMock);
         } else {

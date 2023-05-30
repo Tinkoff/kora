@@ -14,11 +14,11 @@ import java.util.List;
 @KoraAppTest(
     application = LifecycleApplication.class,
     components = {LifecycleComponent2.class})
-public class AddComponentWithBeanJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
+public class AddComponentWithBeanJUnitExtensionTests extends Assertions implements KoraAppTestGraphModifier {
 
     @Override
     public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
+        return KoraGraphModification.create()
             .addComponent(
                 LifecycleComponent.class, List.of(LifecycleComponent23.class),
                 g -> {

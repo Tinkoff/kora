@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -10,9 +9,8 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent23;
 
-import java.util.List;
-
-@KoraAppTest(application = LifecycleApplication.class)
+@KoraAppTest(application = LifecycleApplication.class,
+    components = {LifecycleComponent23.class})
 public class MockComponentAnyTagMockAnnotationJUnitExtensionTests extends Assertions {
 
     @Test

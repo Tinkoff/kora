@@ -3,7 +3,6 @@ package ru.tinkoff.kora.test.extension.junit5;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.KoraApp;
-import ru.tinkoff.kora.common.Tag;
 
 import java.lang.annotation.*;
 
@@ -45,9 +44,4 @@ public @interface KoraAppTest {
      * @return classes that are {@link Component} and applicable for Annotation Processing and will be included in Context initialization
      */
     Class<?>[] components() default {};
-
-    /**
-     * @return classes that should be Mocked, types are matched with {@link Tag.Any} tag
-     */
-    Class<?>[] mocks() default {};
 }

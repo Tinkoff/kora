@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 /**
  * Is useful when some part of configuration is dynamically configured (like TestContainer container port)
  */
-public interface KoraAppTestConfig {
+public interface KoraAppTestConfigModifier {
 
     /**
      * @return Kora Config modification for {@link KoraAppTest} tests

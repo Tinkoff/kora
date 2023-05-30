@@ -3,6 +3,7 @@ package ru.tinkoff.kora.test.extension.junit5;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.application.graph.Node;
 import ru.tinkoff.kora.common.Tag;
+import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeTypeCandidate;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -16,6 +17,10 @@ final class GraphUtils {
     private static final Class<?>[] TAG_ANY = new Class[]{Tag.Any.class};
 
     private GraphUtils() {}
+
+    static <T> Set<Node<T>> findNodeByType(ApplicationGraphDraw graph, NodeTypeCandidate candidate) {
+        return findNodeByType(graph, candidate.type(), candidate.tags());
+    }
 
     @SuppressWarnings("unchecked")
     static <T> Set<Node<T>> findNodeByType(ApplicationGraphDraw graph, Type type, Class<?>[] tags) {
@@ -41,6 +46,10 @@ final class GraphUtils {
         }
 
         return Set.of();
+    }
+
+    static <T> Set<Node<T>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, NodeTypeCandidate candidate) {
+        return findNodeByTypeOrAssignable(graph, candidate.type(), candidate.tags());
     }
 
     @SuppressWarnings("unchecked")

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
 import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
-import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
 
 @KoraAppTest(application = LifecycleApplication.class)
 public class ComponentAnnotationJUnitExtensionTests extends Assertions {
