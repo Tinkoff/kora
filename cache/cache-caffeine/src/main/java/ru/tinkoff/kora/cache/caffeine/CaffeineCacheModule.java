@@ -3,19 +3,14 @@ package ru.tinkoff.kora.cache.caffeine;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
-import com.typesafe.config.Config;
-import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.cache.telemetry.CacheMetrics;
 import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 import ru.tinkoff.kora.cache.telemetry.CacheTracer;
 import ru.tinkoff.kora.cache.telemetry.DefaultCacheTelemetry;
 import ru.tinkoff.kora.common.DefaultComponent;
-import ru.tinkoff.kora.common.Tag;
-import ru.tinkoff.kora.config.common.extractor.ConfigValueExtractor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
 
 public interface CaffeineCacheModule {
 

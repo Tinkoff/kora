@@ -20,7 +20,7 @@ public @interface CachePut {
     /**
      * @return cache name (correlate with name in configuration file)
      */
-    Class<? extends Cache<?,?>> value();
+    Class<? extends Cache<?, ?>> value();
 
     /**
      * Limit the automatic {@link CacheKeyMapper} to the given parameter names. Mutually exclusive with

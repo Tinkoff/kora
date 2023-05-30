@@ -2,7 +2,6 @@ package ru.tinkoff.kora.cache.caffeine;
 
 
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
 import java.time.Duration;
 
 public record CaffeineCacheConfig(@Nullable Duration expireAfterWrite,

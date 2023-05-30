@@ -95,7 +95,7 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
                 span.recordFailure(throwable);
             }
 
-            if(throwable != null) {
+            if (throwable != null) {
                 logger.warn("Operation '{}' failed for cache '{}' with message: {}",
                     operation.name(), operation.cacheName(), throwable.getMessage());
             } else {

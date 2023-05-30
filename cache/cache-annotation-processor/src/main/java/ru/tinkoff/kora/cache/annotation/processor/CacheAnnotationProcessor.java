@@ -17,7 +17,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -124,7 +123,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
     private Optional<DeclaredType> getCacheSuperType(TypeElement candidate) {
         final TypeElement caffeineElement = elements.getTypeElement(CAFFEINE_CACHE.canonicalName());
-        if(caffeineElement != null) {
+        if (caffeineElement != null) {
             return types.directSupertypes(candidate.asType()).stream()
                 .filter(t -> t instanceof DeclaredType)
                 .map(t -> ((DeclaredType) t))
@@ -133,7 +132,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
         }
 
         final TypeElement redisElement = elements.getTypeElement(REDIS_CACHE.canonicalName());
-        if(redisElement != null) {
+        if (redisElement != null) {
             return types.directSupertypes(candidate.asType()).stream()
                 .filter(t -> t instanceof DeclaredType)
                 .map(t -> ((DeclaredType) t))
@@ -227,7 +226,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
     private MethodSpec getCacheConstructor(TypeElement cacheContract, DeclaredType cacheType) {
         final String cacheConfigName = cacheContract.getAnnotation(Cache.class).value();
-        if(!NAME_PATTERN.matcher(cacheConfigName).find()) {
+        if (!NAME_PATTERN.matcher(cacheConfigName).find()) {
             throw new IllegalArgumentException("Cache config path doesn't match pattern: " + NAME_PATTERN);
         }
 

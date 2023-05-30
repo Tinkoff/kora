@@ -1,9 +1,7 @@
 package ru.tinkoff.kora.cache.caffeine;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.cache.Cache;
 import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 
 import javax.annotation.Nonnull;

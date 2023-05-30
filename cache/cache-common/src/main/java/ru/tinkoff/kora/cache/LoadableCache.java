@@ -9,14 +9,15 @@ public interface LoadableCache<K, V> extends ReadableCache<K, V> {
 
     /**
      * Create default loadable cache implementation
-     * @param cache Cache to store loaded value
+     *
+     * @param cache       Cache to store loaded value
      * @param cacheLoader Cache loader
+     * @param <K>         Cache key
+     * @param <V>         Cache value
      * @return default loadable cache instance
-     * @param <K> Cache key
-     * @param <V> Cache value
      */
     @Nonnull
     static <K, V> LoadableCache<K, V> create(@Nonnull Cache<K, V> cache, @Nonnull CacheLoader<K, V> cacheLoader) {
-        return new DefaultLoadableCache<>(cache, cacheLoader);
+        return new LoadableCacheImpl<>(cache, cacheLoader);
     }
 }

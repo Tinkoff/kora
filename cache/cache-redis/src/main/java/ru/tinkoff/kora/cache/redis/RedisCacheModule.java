@@ -80,8 +80,7 @@ public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
     }
 
     @DefaultComponent
-    default RedisCacheValueMapper<Integer> intRedisValueMapper() {
-        var keyMapper = intRedisKeyMapper();
+    default RedisCacheValueMapper<Integer> intRedisValueMapper(RedisCacheKeyMapper<Integer> keyMapper) {
         return new RedisCacheValueMapper<>() {
             @Override
             public byte[] write(Integer value) {
@@ -105,8 +104,7 @@ public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
     }
 
     @DefaultComponent
-    default RedisCacheValueMapper<Long> longRedisValueMapper() {
-        var keyMapper = longRedisKeyMapper();
+    default RedisCacheValueMapper<Long> longRedisValueMapper(RedisCacheKeyMapper<Long> keyMapper) {
         return new RedisCacheValueMapper<>() {
             @Override
             public byte[] write(Long value) {
@@ -130,8 +128,7 @@ public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
     }
 
     @DefaultComponent
-    default RedisCacheValueMapper<BigInteger> bigIntRedisValueMapper() {
-        var keyMapper = bigIntRedisKeyMapper();
+    default RedisCacheValueMapper<BigInteger> bigIntRedisValueMapper(RedisCacheKeyMapper<BigInteger> keyMapper) {
         return new RedisCacheValueMapper<>() {
             @Override
             public byte[] write(BigInteger value) {
@@ -146,8 +143,7 @@ public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
     }
 
     @DefaultComponent
-    default RedisCacheValueMapper<UUID> uuidRedisValueMapper() {
-        var keyMapper = uuidRedisKeyMapper();
+    default RedisCacheValueMapper<UUID> uuidRedisValueMapper(RedisCacheKeyMapper<UUID> keyMapper) {
         return new RedisCacheValueMapper<>() {
 
             @Override

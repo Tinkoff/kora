@@ -60,7 +60,8 @@ class CacheKeyImpl {
         }
     }
 
-    record CacheKeyImpl9<K1, K2, K3, K4, K5, K6, K7, K8, K9>(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, K6 key6, K7 key7, K8 key8, K9 key9) implements CacheKey.Key9<K1, K2, K3, K4, K5, K6, K7, K8, K9> {
+    record CacheKeyImpl9<K1, K2, K3, K4, K5, K6, K7, K8, K9>(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, K6 key6, K7 key7, K8 key8,
+                                                             K9 key9) implements CacheKey.Key9<K1, K2, K3, K4, K5, K6, K7, K8, K9> {
 
         @Override
         public String toString() {

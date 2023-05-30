@@ -9,12 +9,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-final class DefaultLoadableCache<K, V> implements LoadableCache<K, V> {
+final class LoadableCacheImpl<K, V> implements LoadableCache<K, V> {
 
     private final Cache<K, V> cache;
     private final CacheLoader<K, V> cacheLoader;
 
-    DefaultLoadableCache(Cache<K, V> cache, CacheLoader<K, V> cacheLoader) {
+    LoadableCacheImpl(Cache<K, V> cache, CacheLoader<K, V> cacheLoader) {
         this.cache = cache;
         this.cacheLoader = cacheLoader;
     }

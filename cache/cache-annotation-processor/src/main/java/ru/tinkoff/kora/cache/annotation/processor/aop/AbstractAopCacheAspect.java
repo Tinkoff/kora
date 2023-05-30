@@ -22,7 +22,7 @@ abstract class AbstractAopCacheAspect implements KoraAspect {
 
     List<String> getCacheFields(CacheOperation operation, ProcessingEnvironment env, AspectContext aspectContext) {
         final List<String> cacheFields = new ArrayList<>();
-        for (var cacheImpl: operation.cacheImplementations()) {
+        for (var cacheImpl : operation.cacheImplementations()) {
             var cacheElement = env.getElementUtils().getTypeElement(cacheImpl);
             var fieldCache = aspectContext.fieldFactory().constructorParam(cacheElement.asType(), List.of());
             cacheFields.add(fieldCache);

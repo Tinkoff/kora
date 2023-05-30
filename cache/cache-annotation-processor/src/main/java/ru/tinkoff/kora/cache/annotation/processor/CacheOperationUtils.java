@@ -1,15 +1,19 @@
 package ru.tinkoff.kora.cache.annotation.processor;
 
-import ru.tinkoff.kora.annotation.processor.common.AnnotationUtils;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingError;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.cache.annotation.*;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class CacheOperationUtils {
 
@@ -30,14 +34,14 @@ public final class CacheOperationUtils {
         final CacheOperation.Origin origin = new CacheOperation.Origin(className, methodName);
 
         if (!cacheables.isEmpty()) {
-            if(!puts.isEmpty() || !invalidates.isEmpty()) {
+            if (!puts.isEmpty() || !invalidates.isEmpty()) {
                 throw new ProcessingErrorException(new ProcessingError(Diagnostic.Kind.ERROR,
                     "Method must have Cache annotations with same operation type, but got multiple different operation types for " + origin, method));
             }
 
             return getOperation(method, cacheables, CacheOperation.Type.GET);
         } else if (!puts.isEmpty()) {
-            if(!invalidates.isEmpty()) {
+            if (!invalidates.isEmpty()) {
                 throw new ProcessingErrorException(new ProcessingError(Diagnostic.Kind.ERROR,
                     "Method must have Cache annotations with same operation type, but got multiple different operation types for " + origin, method));
             }
@@ -89,7 +93,7 @@ public final class CacheOperationUtils {
                     .toList();
             } else {
                 for (String parameter : parameters) {
-                    if(method.getParameters().stream().noneMatch(p -> p.getSimpleName().contentEquals(parameter))) {
+                    if (method.getParameters().stream().noneMatch(p -> p.getSimpleName().contentEquals(parameter))) {
                         throw new ProcessingErrorException(new ProcessingError(Diagnostic.Kind.ERROR,
                             "Unknown method parameter is declared: " + parameter, method));
                     }
@@ -132,7 +136,7 @@ public final class CacheOperationUtils {
             .filter(a -> a.getAnnotationType().toString().contentEquals(annotation))
             .toList();
 
-        if(!repeated.isEmpty()) {
+        if (!repeated.isEmpty()) {
             return repeated;
         }
 

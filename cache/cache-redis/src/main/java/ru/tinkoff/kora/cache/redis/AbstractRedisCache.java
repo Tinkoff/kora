@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.cache.redis;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.cache.Cache;
@@ -27,12 +26,12 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     private final Long expireAfterWriteMillis;
 
     protected AbstractRedisCache(String name,
-                       RedisCacheConfig config,
-                       SyncRedisClient syncClient,
-                       ReactiveRedisClient reactiveClient,
-                       CacheTelemetry telemetry,
-                       RedisCacheKeyMapper<K> keyMapper,
-                       RedisCacheValueMapper<V> valueMapper) {
+                                 RedisCacheConfig config,
+                                 SyncRedisClient syncClient,
+                                 ReactiveRedisClient reactiveClient,
+                                 CacheTelemetry telemetry,
+                                 RedisCacheKeyMapper<K> keyMapper,
+                                 RedisCacheValueMapper<V> valueMapper) {
         this.name = name;
         this.syncClient = syncClient;
         this.reactiveClient = reactiveClient;
