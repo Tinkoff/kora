@@ -15,11 +15,6 @@ public @interface KoraAppTest {
     enum InitializeMode {
 
         /**
-         * {@link KoraAppTest#components()} instances are initialized one time only
-         */
-        PER_RUN,
-
-        /**
          * {@link KoraAppTest#components()} instances are initialized each Test Class
          */
         PER_CLASS,

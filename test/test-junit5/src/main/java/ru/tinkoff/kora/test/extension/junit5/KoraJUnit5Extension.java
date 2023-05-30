@@ -56,7 +56,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         public Graph get() {
             return switch (meta.shareMode) {
-                case PER_RUN -> new PerRunGraph(graphSupplier, meta.components, meta.graphModifier);
                 case PER_CLASS -> new PerClassGraph(graphSupplier, meta.components, meta.graphModifier);
                 case PER_METHOD -> new PerMethodGraph(graphSupplier, meta.components, meta.graphModifier);
             };
@@ -246,20 +245,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         public PerClassGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, Collection<NodeTypeCandidate> components, KoraGraphModification graphModifier) {
             super(graphSupplier, components, graphModifier);
-        }
-    }
-
-    static class PerRunGraph extends AbstractGraph {
-
-        public PerRunGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, Collection<NodeTypeCandidate> components, KoraGraphModification graphModifier) {
-            super(graphSupplier, components, graphModifier);
-        }
-
-        @Override
-        public void initialize() {
-            if (graphInitialized == null) {
-                super.initialize();
-            }
         }
     }
 

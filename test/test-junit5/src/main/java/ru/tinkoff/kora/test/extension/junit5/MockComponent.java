@@ -5,7 +5,7 @@ import ru.tinkoff.kora.common.Component;
 import java.lang.annotation.*;
 
 /**
- * Indicate {@link Component} is expected to be injected from {@link KoraAppTest} graph as Mock Bean
+ * Indicate that {@link Component} from {@link KoraAppTest#components()} will be Mocked and injected
  */
 @Documented
 @Target({ElementType.FIELD, ElementType.PARAMETER})
