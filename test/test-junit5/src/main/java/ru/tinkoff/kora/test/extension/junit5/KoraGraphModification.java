@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -16,15 +17,15 @@ public final class KoraGraphModification {
 
     record NodeReplacement(Function<KoraAppGraph, ?> function, NodeTypeCandidate candidate) {}
 
-    record NodeMock(NodeClassCandidate candidate) {}
+    record NodeMock(NodeTypeCandidate candidate) {}
 
-    record NodeClassCandidate(Class<?> type, Class<?>[] tags) {
+    record NodeComponentCandidate(Class<?> type, Class<?>[] tags) {
 
-        NodeClassCandidate(Class<?> type) {
+        NodeComponentCandidate(Class<?> type) {
             this(type, (Class<?>[]) null);
         }
 
-        NodeClassCandidate(Class<?> type, List<Class<?>> tags) {
+        NodeComponentCandidate(Class<?> type, List<Class<?>> tags) {
             this(type, tags.toArray(Class<?>[]::new));
         }
 
@@ -155,20 +156,32 @@ public final class KoraGraphModification {
     /**
      * Component that should be Mocked with {@link org.mockito.Mockito}
      */
-    public KoraGraphModification mockComponent(@NotNull Class<?> typeToMock) {
-        mocks.add(new NodeMock(new NodeClassCandidate(typeToMock)));
+    public KoraGraphModification mockComponent(@NotNull Type typeToMock) {
+        mocks.add(new NodeMock(new NodeTypeCandidate(typeToMock)));
         return this;
     }
 
     /**
      * Component that should be Mocked with {@link org.mockito.Mockito}
      */
-    public KoraGraphModification mockComponent(@NotNull Class<?> typeToMock,
+    public KoraGraphModification mockComponent(@NotNull Type typeToMock,
                                                @NotNull List<Class<?>> tags) {
         if (tags.isEmpty()) {
             return mockComponent(typeToMock);
         } else {
-            mocks.add(new NodeMock(new NodeClassCandidate(typeToMock, tags)));
+            mocks.add(new NodeMock(new NodeTypeCandidate(typeToMock, tags)));
+            return this;
+        }
+    }
+
+    /**
+     * Component that should be Mocked with {@link org.mockito.Mockito}
+     */
+    KoraGraphModification mockComponent(@NotNull Type typeToMock, @Nullable Class<?>[] tags) {
+        if (tags == null) {
+            return mockComponent(typeToMock);
+        } else {
+            mocks.add(new NodeMock(new NodeTypeCandidate(typeToMock, tags)));
             return this;
         }
     }

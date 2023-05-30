@@ -44,7 +44,7 @@ public @interface KoraAppTest {
     /**
      * @return classes that are {@link Component} and applicable for Annotation Processing and will be included in Context initialization
      */
-    Class<?>[] components();
+    Class<?>[] components() default {};
 
     /**
      * @return classes that should be Mocked, types are matched with {@link Tag.Any} tag

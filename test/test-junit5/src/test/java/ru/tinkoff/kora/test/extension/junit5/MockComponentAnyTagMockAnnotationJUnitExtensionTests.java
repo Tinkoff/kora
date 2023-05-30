@@ -12,16 +12,8 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent23;
 
 import java.util.List;
 
-@KoraAppTest(
-    application = LifecycleApplication.class,
-    components = {LifecycleComponent23.class})
-public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions implements KoraAppTestGraph {
-
-    @Override
-    public @NotNull KoraGraphModification graph() {
-        return KoraGraphModification.of()
-            .mockComponent(LifecycleComponent.class, List.of(LifecycleComponent.class));
-    }
+@KoraAppTest(application = LifecycleApplication.class)
+public class MockComponentAnyTagMockAnnotationJUnitExtensionTests extends Assertions {
 
     @Test
     void mockWithTag1(@MockComponent Component1 component1) {
@@ -31,14 +23,14 @@ public class MockComponentAnyTagAnnotationJUnitExtensionTests extends Assertions
     }
 
     @Test
-    void mockWithTag2(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component) {
+    void mockWithTag2(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
         assertEquals("?", component.get());
     }
 
     @Test
-    void beanWithMocks(@Tag(LifecycleComponent.class) @TestComponent LifecycleComponent component,
+    void beanWithMocks(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component,
                        @TestComponent LifecycleComponent23 component23) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
