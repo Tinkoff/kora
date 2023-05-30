@@ -8,7 +8,6 @@ import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.aop.symbol.processor.AopSymbolProcessorProvider
 import ru.tinkoff.kora.cache.symbol.processor.testcache.DummyCacheManager
 import ru.tinkoff.kora.cache.symbol.processor.testdata.CacheableTargetSync
-import ru.tinkoff.kora.cache.symbol.processor.testdata.CacheableTargetSyncMany
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import java.math.BigDecimal
 
@@ -29,7 +28,7 @@ class SyncCacheAopTests : Assertions() {
         return try {
             val classLoader = symbolProcess(
                 CacheableTargetSync::class,
-                CacheKeySymbolProcessorProvider(),
+                CacheSymbolProcessorProvider(),
                 AopSymbolProcessorProvider(),
             )
             val serviceClass = classLoader.loadClass(CACHED_SERVICE) ?: throw IllegalArgumentException("Expected class not found: $CACHED_SERVICE")

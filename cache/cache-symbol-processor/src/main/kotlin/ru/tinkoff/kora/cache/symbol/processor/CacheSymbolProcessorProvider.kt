@@ -6,12 +6,11 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 
 @KspExperimental
-class CacheKeySymbolProcessorProvider : SymbolProcessorProvider {
+class CacheSymbolProcessorProvider : SymbolProcessorProvider {
 
     override fun create(
         environment: SymbolProcessorEnvironment
     ): SymbolProcessor {
-        CacheOperationManager.reset()
-        return CacheKeySymbolProcessor(environment, HashSet())
+        return CacheSymbolProcessor(environment)
     }
 }

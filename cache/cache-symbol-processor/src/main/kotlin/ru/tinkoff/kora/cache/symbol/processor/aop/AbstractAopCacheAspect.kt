@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.Cache
-import ru.tinkoff.kora.cache.symbol.processor.CacheMeta
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.common.Tag
 import ru.tinkoff.kora.ksp.common.exception.ProcessingError
@@ -119,7 +118,7 @@ abstract class AbstractAopCacheAspect : KoraAspect {
         val joiner = StringJoiner(", ")
         for (i in fieldManagers.indices) {
             val fieldManager = fieldManagers[i]
-            val manager: CacheMeta.Manager = operation.meta.managers[i]
+            val manager: CacheOperation.Manager = operation.meta.managers[i]
             joiner.add(fieldManager + ".getCache(\"" + manager.name + "\")")
         }
         return joiner.toString()

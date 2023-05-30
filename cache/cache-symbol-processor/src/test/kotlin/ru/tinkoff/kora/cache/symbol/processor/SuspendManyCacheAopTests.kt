@@ -30,7 +30,7 @@ class SuspendManyCacheAopTests : Assertions() {
         return try {
             val classLoader = symbolProcess(
                 CacheableTargetSuspendMany::class,
-                CacheKeySymbolProcessorProvider(),
+                CacheSymbolProcessorProvider(),
                 AopSymbolProcessorProvider(),
             )
             val serviceClass = classLoader.loadClass(CACHED_SERVICE) ?: throw IllegalArgumentException("Expected class not found: $CACHED_SERVICE")

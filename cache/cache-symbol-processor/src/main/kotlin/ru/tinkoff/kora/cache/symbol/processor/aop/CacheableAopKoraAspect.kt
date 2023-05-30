@@ -7,8 +7,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.annotation.Cacheable
 import ru.tinkoff.kora.cache.annotation.Cacheables
-import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
-import ru.tinkoff.kora.cache.symbol.processor.CacheOperationManager.Companion.getCacheOperation
+import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
 
 @KspExperimental

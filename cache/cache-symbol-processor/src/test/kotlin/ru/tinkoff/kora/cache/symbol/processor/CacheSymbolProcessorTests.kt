@@ -15,14 +15,14 @@ import ru.tinkoff.kora.ksp.common.CompilationErrorException
 import ru.tinkoff.kora.ksp.common.symbolProcess
 
 @KspExperimental
-class CacheKeySymbolProcessorTests : Assertions() {
+class CacheSymbolProcessorTests : Assertions() {
 
     @Test
     @Throws(Exception::class)
     fun cacheKeyRecordGeneratedForSync() {
         val classLoader = symbolProcess(
             CacheableTargetSync::class,
-            CacheKeySymbolProcessorProvider()
+            CacheSymbolProcessorProvider()
         )
         val clazz = classLoader.loadClass("ru.tinkoff.kora.cache.symbol.processor.testdata._CacheKey__sync_cache")
         assertNotNull(clazz)
@@ -33,7 +33,7 @@ class CacheKeySymbolProcessorTests : Assertions() {
     fun cacheKeyRecordGeneratedForSuspend() {
         val classLoader = symbolProcess(
             CacheableTargetSuspend::class,
-            CacheKeySymbolProcessorProvider()
+            CacheSymbolProcessorProvider()
         )
         val clazz = classLoader.loadClass("ru.tinkoff.kora.cache.symbol.processor.testdata.suspended._CacheKey__suspend_cache")
         assertNotNull(clazz)
@@ -46,7 +46,7 @@ class CacheKeySymbolProcessorTests : Assertions() {
         ) {
             symbolProcess(
                 CacheableTargetArgumentMissing::class,
-                CacheKeySymbolProcessorProvider()
+                CacheSymbolProcessorProvider()
             )
         }
     }
@@ -58,7 +58,7 @@ class CacheKeySymbolProcessorTests : Assertions() {
         ) {
             symbolProcess(
                 CacheableTargetArgumentWrongOrder::class,
-                CacheKeySymbolProcessorProvider()
+                CacheSymbolProcessorProvider()
             )
         }
     }
@@ -70,7 +70,7 @@ class CacheKeySymbolProcessorTests : Assertions() {
         ) {
             symbolProcess(
                 CacheableTargetArgumentWrongType::class,
-                CacheKeySymbolProcessorProvider()
+                CacheSymbolProcessorProvider()
             )
         }
     }
@@ -79,62 +79,62 @@ class CacheKeySymbolProcessorTests : Assertions() {
     fun cacheNamePatternMismatch() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetNameInvalid::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetNameInvalid::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cacheGetForVoidSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetGetVoid::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetGetVoid::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cachePutForVoidSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetPutVoid::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetPutVoid::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cacheGetForMonoSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetGetMono::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetGetMono::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cachePutForMonoSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetPutMono::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetPutMono::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cacheGetForFluxSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetGetFlux::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetGetFlux::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cachePutForFluxSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetPutFlux::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetPutFlux::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cacheGetForPublisherSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetGetPublisher::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetGetPublisher::class, CacheSymbolProcessorProvider()) }
     }
 
     @Test
     fun cachePutForPublisherSignature() {
         assertThrows(
             CompilationErrorException::class.java
-        ) { symbolProcess(CacheableTargetPutPublisher::class, CacheKeySymbolProcessorProvider()) }
+        ) { symbolProcess(CacheableTargetPutPublisher::class, CacheSymbolProcessorProvider()) }
     }
 }

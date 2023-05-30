@@ -25,8 +25,6 @@ public final class CacheOperationUtils {
         final List<AnnotationMirror> puts = getRepeatedAnnotations(method, CachePut.class, CachePuts.class);
         final List<AnnotationMirror> invalidates = getRepeatedAnnotations(method, CacheInvalidate.class, CacheInvalidates.class);
 
-
-
         final String className = method.getEnclosingElement().getSimpleName().toString();
         final String methodName = method.getSimpleName().toString();
         final CacheOperation.Origin origin = new CacheOperation.Origin(className, methodName);

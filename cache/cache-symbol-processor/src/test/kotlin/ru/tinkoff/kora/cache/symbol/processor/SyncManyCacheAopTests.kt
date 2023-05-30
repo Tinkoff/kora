@@ -30,7 +30,7 @@ class SyncManyCacheAopTests : Assertions() {
             val classLoader = symbolProcess(
                 CacheableTargetSyncMany::class,
                 AopSymbolProcessorProvider(),
-                CacheKeySymbolProcessorProvider()
+                CacheSymbolProcessorProvider()
             )
             val serviceClass = classLoader.loadClass(CACHED_SERVICE) ?: throw IllegalArgumentException("Expected class not found: $CACHED_SERVICE")
             val instance = serviceClass.constructors[0].newInstance(manager) as CacheableTargetSyncMany

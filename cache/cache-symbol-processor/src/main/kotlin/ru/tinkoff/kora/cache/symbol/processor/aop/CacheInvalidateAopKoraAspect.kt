@@ -7,9 +7,8 @@ import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.annotation.CacheInvalidate
 import ru.tinkoff.kora.cache.annotation.CacheInvalidates
-import ru.tinkoff.kora.cache.symbol.processor.CacheMeta
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
-import ru.tinkoff.kora.cache.symbol.processor.CacheOperationManager.Companion.getCacheOperation
+import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
 
 @KspExperimental
@@ -24,7 +23,7 @@ class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAop
         val cacheMirrors = getCacheMirrors(operation, method, resolver)
         val cacheFields = getCacheFields(operation, cacheMirrors, aspectContext)
 
-        val body = if (operation.meta.type == CacheMeta.Type.EVICT_ALL) {
+        val body = if (operation.meta.type == CacheOperation.Type.EVICT_ALL) {
             buildBodySyncAll(method, operation, superCall, cacheFields)
         } else {
             buildBodySync(method, operation, superCall, cacheFields)
