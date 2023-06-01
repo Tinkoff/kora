@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
 import org.jetbrains.annotations.NotNull;
+import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.common.Tag;
 
 import javax.annotation.Nonnull;
@@ -8,6 +9,9 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
 
+/**
+ * {@link ApplicationGraphDraw} abstraction for {@link KoraAppTest}
+ */
 public interface KoraAppGraph {
 
     @Nullable

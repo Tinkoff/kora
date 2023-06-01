@@ -19,22 +19,6 @@ public final class KoraGraphModification {
 
     record NodeMock(NodeTypeCandidate candidate) {}
 
-    record NodeComponentCandidate(Class<?> type, Class<?>[] tags) {
-
-        NodeComponentCandidate(Class<?> type) {
-            this(type, (Class<?>[]) null);
-        }
-
-        NodeComponentCandidate(Class<?> type, List<Class<?>> tags) {
-            this(type, tags.toArray(Class<?>[]::new));
-        }
-
-        @Override
-        public String toString() {
-            return "[type=" + type + ", tags=" + Arrays.toString(tags) + ']';
-        }
-    }
-
     record NodeTypeCandidate(Type type, Class<?>[] tags) {
 
         NodeTypeCandidate(Type type) {

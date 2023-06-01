@@ -36,7 +36,7 @@ public @interface KoraAppTest {
     Class<?> application();
 
     /**
-     * @return classes that are {@link Component} and applicable for Annotation Processing and will be included in Context initialization
+     * @return classes that are {@link Component} and will be included in Context initialization
      */
     Class<?>[] components() default {};
 }
