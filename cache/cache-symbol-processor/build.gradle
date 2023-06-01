@@ -15,6 +15,7 @@ dependencies {
     implementation libs.kotlinpoet.ksp
 
     testImplementation project(":internal:test-logging")
+    testImplementation project(":cache:cache-caffeine")
     testImplementation testFixtures(project(":symbol-processor-common"))
     testImplementation(libs.kotlin.stdlib.lib)
     testImplementation(libs.kotlin.coroutines.reactor)

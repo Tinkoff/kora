@@ -7,6 +7,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.annotation.Cacheable
 import ru.tinkoff.kora.cache.annotation.Cacheables
+import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
 
@@ -18,10 +19,9 @@ class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheA
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {
-        val operation = getCacheOperation(method, resolver)
-        val cacheMirrors = getCacheMirrors(operation, method, resolver)
+        val operation = getCacheOperation(method)
+        val cacheFields = getCacheFields(operation, resolver, aspectContext)
 
-        val cacheFields = getCacheFields(operation, cacheMirrors, aspectContext)
         val body = if (method.isSuspend()) {
             buildBodySync(method, operation, superCall, cacheFields)
         } else {
@@ -69,7 +69,7 @@ class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheA
         builder.append("return _value")
 
         return CodeBlock.builder()
-            .add("var _key = %L(%L)\n", operation.key.simpleName, recordParameters)
+            .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
             .add(builder.toString())
             .build()
     }

@@ -1,48 +1,32 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.validate
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName
-import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
-import ru.tinkoff.kora.cache.annotation.*
+import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeVariableName
+import com.squareup.kotlinpoet.ksp.writeTo
+import ru.tinkoff.kora.cache.annotation.Cache
+import ru.tinkoff.kora.common.Module
 import ru.tinkoff.kora.common.Tag
 import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlow
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlux
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isFuture
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isMono
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isPublisher
-import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
-import ru.tinkoff.kora.ksp.common.exception.ProcessingError
-import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
-import ru.tinkoff.kora.ksp.common.visitFunction
-import java.io.IOException
-import java.util.*
-import java.util.function.Function
-import java.util.function.Predicate
-import java.util.regex.Pattern
-import javax.annotation.processing.RoundEnvironment
-import javax.lang.model.element.Element
-import javax.lang.model.element.Modifier
-import javax.lang.model.element.TypeElement
-import javax.lang.model.type.DeclaredType
-import javax.lang.model.type.TypeMirror
+import ru.tinkoff.kora.ksp.common.CommonClassNames
+import ru.tinkoff.kora.ksp.common.KspCommonUtils.toTypeName
+import ru.tinkoff.kora.ksp.common.visitClass
 
 @KspExperimental
 class CacheSymbolProcessor(
     private val environment: SymbolProcessorEnvironment
 ) : BaseSymbolProcessor(environment) {
-
-    private val NAME_PATTERN = Pattern.compile("^[a-zA-Z][0-9a-zA-Z_]*")
 
     private val ANNOTATION_CACHE = ClassName("ru.tinkoff.kora.cache.annotation", "Cache")
 
@@ -64,196 +48,223 @@ class CacheSymbolProcessor(
     private val REDIS_CACHE_MAPPER_KEY = ClassName("ru.tinkoff.kora.cache.redis", "RedisCacheKeyMapper")
     private val REDIS_CACHE_MAPPER_VALUE = ClassName("ru.tinkoff.kora.cache.redis", "RedisCacheValueMapper")
 
-    private val cacheAnnotations = setOf(
-        Cacheable::class, Cacheables::class,
-        CachePut::class, CachePuts::class,
-        CacheInvalidate::class, CacheInvalidates::class
-    )
-
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(Cacheable::class.qualifiedName!!)
-            .plus(resolver.getSymbolsWithAnnotation(Cacheables::class.qualifiedName!!))
-            .plus(resolver.getSymbolsWithAnnotation(CachePut::class.qualifiedName!!))
-            .plus(resolver.getSymbolsWithAnnotation(CachePuts::class.qualifiedName!!))
-            .plus(resolver.getSymbolsWithAnnotation(CacheInvalidate::class.qualifiedName!!))
-            .plus(resolver.getSymbolsWithAnnotation(CacheInvalidates::class.qualifiedName!!))
+        val symbols = resolver.getSymbolsWithAnnotation(Cache::class.qualifiedName!!)
             .toList()
 
         val symbolsToProcess = symbols.filter { it.validate() }
         symbolsToProcess.forEach {
-            it.visitFunction { method ->
-                val cacheAnnotations = method.annotations
-                    .filter { a ->
-                        val canonicalName = a.annotationType.resolve().toClassName().canonicalName
-                        cacheAnnotations.any { an -> an.qualifiedName == canonicalName }
-                    }.toList()
+            it.visitClass { cacheContract ->
 
-                if (cacheAnnotations.isNotEmpty()) {
-                    try {
-                        val annotationNames = cacheAnnotations.map { a -> a.shortName.getShortName() }.toList()
-                        val operation = CacheOperationUtils.getCacheOperation(method)
+                require(cacheContract.classKind == ClassKind.INTERFACE) { "@Cache annotation is intended to be used on interfaces, but was: ${cacheContract.classKind}" }
 
-                        if (operation.type == CacheOperation.Type.GET || operation.type == CacheOperation.Type.PUT) {
-                            if (method.isVoid()) {
-                                throw IllegalArgumentException("$annotationNames annotation can't return Void type, but was for ${operation.origin}")
-                            }
-                        }
-
-                        if (method.isMono() || method.isFlux() || method.isPublisher() || method.isFuture() || method.isFlow()) {
-                            throw IllegalArgumentException("$annotationNames annotation doesn't support return type ${method.returnType} in ${operation.origin}")
-                        }
-
-
-                    } catch (e: IOException) {
-                        throw ProcessingErrorException(ProcessingError(e.message.toString(), it));
-                    }
+                val cacheContractType = getCacheSuperType(cacheContract, resolver)
+                require(cacheContractType != null) {
+                    ("@Cache is expected to be known super type "
+                        + CAFFEINE_CACHE.canonicalName
+                        + " or "
+                        + REDIS_CACHE.canonicalName
+                        + ", but was: " + cacheContract.superTypes.first())
                 }
+
+                val packageName = getPackage(cacheContract)
+                val cacheImplName = cacheContract.toClassName()
+
+                val cacheImplBase = getCacheImplBase(cacheContract, cacheContractType, resolver)
+                val implSpec = TypeSpec.classBuilder(getCacheImpl(cacheContract))
+                    .addAnnotation(
+                        AnnotationSpec.builder(CommonClassNames.generated)
+                            .addMember(CodeBlock.of("%S", CacheSymbolProcessor::class.java.canonicalName)).build()
+                    )
+                    .primaryConstructor(getCacheConstructor(cacheContract, cacheContractType))
+                    .addSuperclassConstructorParameter(getCacheSuperConstructorCall(cacheContract, cacheContractType))
+                    .superclass(cacheImplBase)
+                    .addSuperinterface(cacheContract.toTypeName())
+                    .build()
+
+                val fileImplSpec = FileSpec.builder(cacheContract.packageName.asString(), implSpec.name.toString())
+                    .addType(implSpec)
+                    .build()
+                fileImplSpec.writeTo(codeGenerator = environment.codeGenerator, aggregating = false)
+
+                val moduleSpec: TypeSpec = TypeSpec.interfaceBuilder(ClassName(packageName, "$${cacheImplName.simpleName}Module"))
+                    .addAnnotation(
+                        AnnotationSpec.builder(CommonClassNames.generated)
+                            .addMember(CodeBlock.of("%S", CacheSymbolProcessor::class.java.canonicalName)).build()
+                    )
+                    .addAnnotation(Module::class)
+                    .addFunction(getCacheMethodImpl(cacheContract, cacheContractType))
+                    .addFunction(getCacheMethodConfig(cacheContract, cacheContractType, resolver))
+                    .build()
+
+                val fileModuleSpec = FileSpec.builder(cacheContract.packageName.asString(), moduleSpec.name.toString())
+                    .addType(moduleSpec)
+                    .build()
+                fileModuleSpec.writeTo(codeGenerator = environment.codeGenerator, aggregating = false)
             }
         }
 
         return symbols.filterNot { it.validate() }.toList()
     }
 
-    private fun getCacheSuperType(candidate: TypeElement, resolver: Resolver): Optional<KSType> {
+    private fun getCacheSuperType(candidate: KSClassDeclaration, resolver: Resolver): KSTypeReference? {
         val caffeineElement = resolver.getClassDeclarationByName(CAFFEINE_CACHE.canonicalName)?.asType(listOf())
         if (caffeineElement != null) {
-            return types.directSupertypes(candidate.asType()).stream()
-                .filter { t: TypeMirror? -> t is DeclaredType }
-                .map<DeclaredType> { t: TypeMirror? -> t as DeclaredType? }
-                .filter(Predicate { t: DeclaredType -> types.isAssignable(t.asElement().asType(), caffeineElement.asType()) })
-                .findFirst()
+            val superType = candidate.superTypes.filter { t -> t.resolve().toClassName() == caffeineElement.toClassName() }
+                .firstOrNull()
+
+            if (superType != null) {
+                return superType
+            }
         }
 
         val redisElement = resolver.getClassDeclarationByName(REDIS_CACHE.canonicalName)?.asType(listOf())
-        return if (redisElement != null) {
-            types.directSupertypes(candidate.asType()).stream()
-                .filter { t: TypeMirror? -> t is DeclaredType }
-                .map<DeclaredType> { t: TypeMirror? -> t as DeclaredType? }
-                .filter(Predicate { t: DeclaredType -> types.isAssignable(t.asElement().asType(), redisElement.asType()) })
-                .findFirst()
-        } else Optional.empty()
-    }
+        if (redisElement != null) {
+            val superType = candidate.superTypes.filter { t -> t.resolve().toClassName() == redisElement.toClassName() }
+                .firstOrNull()
 
-    private fun getCacheImplBase(cacheContract: TypeElement, cacheType: DeclaredType): TypeName {
-        val impl: ClassName
-        impl = if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(CAFFEINE_CACHE.canonicalName)) {
-            CAFFEINE_CACHE_IMPL
-        } else if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(REDIS_CACHE.canonicalName)) {
-            REDIS_CACHE_IMPL
-        } else {
-            throw UnsupportedOperationException("Unknown implementation: " + cacheContract.qualifiedName)
+            if (superType != null) {
+                return superType
+            }
         }
 
-        return ParameterizedTypeName(
-            false,
-            types.getDeclaredType(
-                elements.getTypeElement(impl.canonicalName()),
-                cacheType.typeArguments[0],
-                cacheType.typeArguments[1]
-            )
-        )
+        return null
     }
 
-    private fun getCacheMethodConfig(cacheConfig: KSType, cacheType: KSType): FunSpec {
-        val configPath = cacheConfig.getAnnotationsByType(Cache::class).first().value
-        val cacheContractName = ClassName.(cacheConfig)
-        val methodName = "%sConfig".formatted(cacheContractName.simpleName)
-        val extractorType: DeclaredType
-        val returnType: TypeMirror
-        if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(CAFFEINE_CACHE.canonicalName)) {
-            returnType = elements.getTypeElement(CAFFEINE_CACHE_CONFIG.canonicalName()).asType()
-            extractorType = types.getDeclaredType(elements.getTypeElement(CLASS_CONFIG_EXTRACTOR.canonicalName()), returnType)
-        } else if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(REDIS_CACHE.canonicalName())) {
-            returnType = elements.getTypeElement(REDIS_CACHE_CONFIG.canonicalName()).asType()
-            extractorType = types.getDeclaredType(elements.getTypeElement(CLASS_CONFIG_EXTRACTOR.canonicalName()), returnType)
+    private fun getCacheImplBase(cacheContract: KSClassDeclaration, cacheType: KSTypeReference, resolver: Resolver): TypeName {
+        val resolved = cacheType.resolve()
+        return if (resolved.toClassName() == CAFFEINE_CACHE) {
+            resolver.getClassDeclarationByName(CAFFEINE_CACHE_IMPL.canonicalName)!!.asType(cacheType.resolve().arguments).toTypeName()
+        } else if (resolved.toClassName() == REDIS_CACHE) {
+            resolver.getClassDeclarationByName(REDIS_CACHE_IMPL.canonicalName)!!.asType( cacheType.resolve().arguments ).toTypeName()
         } else {
-            throw UnsupportedOperationException("Unknown implementation: " + cacheConfig.qualifiedName)
+            throw UnsupportedOperationException("Unknown implementation: " + cacheContract.toClassName())
         }
-        return MethodSpec.methodBuilder(methodName)
+    }
+
+    private fun getCacheMethodConfig(cacheContract: KSClassDeclaration, cacheType: KSTypeReference, resolver: Resolver): FunSpec {
+        val configPath = cacheContract.annotations
+            .filter { a -> a.annotationType.resolve().toClassName() == Cache::class.asClassName() }
+            .flatMap { a -> a.arguments }
+            .filter { arg -> arg.name!!.getShortName() == "value" }
+            .map { arg -> arg.value as String }
+            .first()
+
+        val cacheContractName = cacheContract.toClassName()
+        val methodName = "${cacheContractName.simpleName}Config"
+        val extractorType: ParameterizedTypeName
+        val returnType: KSClassDeclaration
+        val resolved = cacheType.resolve()
+        if (resolved.toClassName() == CAFFEINE_CACHE) {
+            returnType = resolver.getClassDeclarationByName(CAFFEINE_CACHE_CONFIG.canonicalName)!!
+            extractorType = CLASS_CONFIG_EXTRACTOR.parameterizedBy(returnType.asType(listOf()).toTypeName())
+        } else if (resolved.toClassName() == REDIS_CACHE) {
+            returnType = resolver.getClassDeclarationByName(REDIS_CACHE_CONFIG.canonicalName)!!
+            extractorType = CLASS_CONFIG_EXTRACTOR.parameterizedBy(returnType.asType(listOf()).toTypeName())
+        } else {
+            throw UnsupportedOperationException("Unknown implementation: $cacheContract")
+        }
+
+        return FunSpec.builder(methodName)
             .addAnnotation(
-                AnnotationSpec.builder(Tag::class.java)
-                    .addMember("value", cacheContractName.simpleName() + ".class")
+                AnnotationSpec.builder(Tag::class)
+                    .addMember(cacheContractName.simpleName + "::class")
                     .build()
             )
-            .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
-            .addParameter(CLASS_CONFIG, "config")
-            .addParameter(TypeName.get(extractorType), "extractor")
-            .addStatement("return extractor.extract(config.getValue(\$S))", "cache.$configPath")
-            .returns(TypeName.get(returnType))
+            .addModifiers(KModifier.PUBLIC)
+            .addParameter("config", CLASS_CONFIG)
+            .addParameter("extractor", extractorType)
+            .addStatement("return extractor.extract(config.getValue(%S))", "cache.$configPath")
+            .returns(returnType.asType(listOf()).toTypeName())
             .build()
     }
 
-    private fun getCacheImpl(cacheContract: KSType): ClassName {
-        val cacheImplName: ClassName = ClassName.get(cacheContract)
-        return ClassName.get(cacheImplName.packageName(), "$%sImpl".formatted(cacheImplName.simpleName()))
+    private fun getCacheImpl(cacheContract: KSClassDeclaration): ClassName {
+        val cacheImplName = cacheContract.toClassName()
+        return ClassName(cacheImplName.packageName, "$${cacheImplName.simpleName}Impl")
     }
 
-    private fun getCacheMethodImpl(cacheContract: TypeElement, cacheType: DeclaredType): FunSpec {
-        val cacheImplName: ClassName = getCacheImpl(cacheContract)
-        val methodName = "%sImpl".formatted(cacheImplName.simpleName())
-        return if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(CAFFEINE_CACHE.canonicalName())) {
-            MethodSpec.methodBuilder(methodName)
-                .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
-                .addParameter(CAFFEINE_CACHE_CONFIG, "config")
-                .addParameter(CAFFEINE_CACHE_FACTORY, "factory")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
-                .addStatement("return new \$L(config, factory, telemetry)", cacheImplName)
-                .returns(TypeName.get(cacheContract.asType()))
+    private fun getCacheMethodImpl(cacheContract: KSClassDeclaration, cacheType: KSTypeReference): FunSpec {
+        val cacheImplName = getCacheImpl(cacheContract)
+        val methodName = "${cacheImplName.simpleName}Impl"
+        val resolved = cacheType.resolve()
+        return if (resolved.toClassName() == CAFFEINE_CACHE) {
+            FunSpec.builder(methodName)
+                .addModifiers(KModifier.PUBLIC)
+                .addParameter("config", CAFFEINE_CACHE_CONFIG)
+                .addParameter("factory", CAFFEINE_CACHE_FACTORY)
+                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addStatement("return %T(config, factory, telemetry)", cacheImplName)
+                .returns(cacheContract.toTypeName())
                 .build()
-        } else if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(REDIS_CACHE.canonicalName())) {
-            val keyType = cacheType.typeArguments[0]
-            val valueType = cacheType.typeArguments[1]
-            val keyMapperType: DeclaredType = types.getDeclaredType(elements.getTypeElement(REDIS_CACHE_MAPPER_KEY.canonicalName()), keyType)
-            val valueMapperType: DeclaredType = types.getDeclaredType(elements.getTypeElement(REDIS_CACHE_MAPPER_VALUE.canonicalName()), valueType)
-            MethodSpec.methodBuilder(methodName)
-                .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
-                .addParameter(REDIS_CACHE_CONFIG, "config")
-                .addParameter(REDIS_CACHE_CLIENT_SYNC, "syncClient")
-                .addParameter(REDIS_CACHE_CLIENT_REACTIVE, "reactiveClient")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
-                .addParameter(TypeName.get(keyMapperType), "keyMapper")
-                .addParameter(TypeName.get(valueMapperType), "valueMapper")
-                .addStatement("return new \$L(config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", methodName)
-                .returns(TypeName.get(cacheContract.asType()))
+        } else if (resolved.toClassName() == REDIS_CACHE) {
+            val keyType = cacheContract.typeParameters[0]
+            val valueType = cacheContract.typeParameters[1]
+            val keyMapperType = REDIS_CACHE_MAPPER_KEY.parameterizedBy(keyType.toTypeVariableName())
+            val valueMapperType = REDIS_CACHE_MAPPER_VALUE.parameterizedBy(valueType.toTypeVariableName())
+            FunSpec.builder(methodName)
+                .addModifiers(KModifier.PUBLIC)
+                .addParameter("config", REDIS_CACHE_CONFIG)
+                .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
+                .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
+                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("keyMapper", keyMapperType)
+                .addParameter("valueMapper", valueMapperType)
+                .addStatement("return new %L(config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", methodName)
+                .returns(cacheContract.toTypeName())
                 .build()
         } else {
-            throw UnsupportedOperationException("Unknown implementation: " + cacheContract.qualifiedName)
+            throw UnsupportedOperationException("Unknown implementation: $cacheContract")
         }
     }
 
-    private fun getCacheConstructor(cacheContract: KSType, cacheType: KSType): FunSpec {
-        val cacheConfigName = cacheContract.getAnnotation(Cache::class.java).value
-        require(NAME_PATTERN.matcher(cacheConfigName).find()) { "Cache config path doesn't match pattern: " + NAME_PATTERN }
-        return if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(CAFFEINE_CACHE.canonicalName)) {
-            FunSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
-                .addParameter(CAFFEINE_CACHE_CONFIG, "config")
-                .addParameter(CAFFEINE_CACHE_FACTORY, "factory")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
-                .addStatement("super(\$S, config, factory, telemetry)", cacheConfigName)
+
+    private fun getCacheConstructor(cacheContract: KSClassDeclaration, cacheType: KSTypeReference): FunSpec {
+        val resolved = cacheType.resolve()
+        return if (resolved.toClassName() == CAFFEINE_CACHE) {
+            return FunSpec.constructorBuilder()
+                .addParameter("config", CAFFEINE_CACHE_CONFIG)
+                .addParameter("factory", CAFFEINE_CACHE_FACTORY)
+                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
                 .build()
-        } else if ((cacheType.asElement() as TypeElement).qualifiedName.contentEquals(REDIS_CACHE.canonicalName)) {
-            val keyType = (cacheContract.asType() as DeclaredType).typeArguments[0]
-            val valueType = (cacheContract.asType() as DeclaredType).typeArguments[1]
-            val keyMapperType: DeclaredType = types.getDeclaredType(elements.getTypeElement(REDIS_CACHE_MAPPER_KEY.canonicalName), keyType)
-            val valueMapperType: DeclaredType = types.getDeclaredType(elements.getTypeElement(REDIS_CACHE_MAPPER_VALUE.canonicalName), valueType)
-            FunSpec.constructorBuilder()
-                .addModifiers(Modifier.PROTECTED)
-                .addParameter(REDIS_CACHE_CONFIG, "config")
-                .addParameter(REDIS_CACHE_CLIENT_SYNC, "syncClient")
-                .addParameter(REDIS_CACHE_CLIENT_REACTIVE, "reactiveClient")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
-                .addParameter(TypeName.get(keyMapperType), "keyMapper")
-                .addParameter(TypeName.get(valueMapperType), "valueMapper")
-                .addStatement("super(\$S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", cacheConfigName)
+        } else if (resolved.toClassName() == REDIS_CACHE) {
+            val keyType = cacheContract.typeParameters[0]
+            val valueType = cacheContract.typeParameters[1]
+            val keyMapperType = REDIS_CACHE_MAPPER_KEY.parameterizedBy(keyType.toTypeVariableName())
+            val valueMapperType = REDIS_CACHE_MAPPER_VALUE.parameterizedBy(valueType.toTypeVariableName())
+            return FunSpec.constructorBuilder()
+                .addParameter("config", REDIS_CACHE_CONFIG)
+                .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
+                .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
+                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("keyMapper", keyMapperType)
+                .addParameter("valueMapper", valueMapperType)
                 .build()
         } else {
-            throw UnsupportedOperationException("Unknown implementation: " + cacheContract.qualifiedName)
+            throw UnsupportedOperationException("Unknown implementation: $cacheContract")
+        }
+    }
+
+    private fun getCacheSuperConstructorCall(cacheContract: KSClassDeclaration, cacheType: KSTypeReference): CodeBlock {
+        val configPath = cacheContract.annotations
+            .filter { a -> a.annotationType.resolve().toClassName() == Cache::class.asClassName() }
+            .flatMap { a -> a.arguments }
+            .filter { arg -> arg.name!!.getShortName() == "value" }
+            .map { arg -> arg.value as String }
+            .first()
+
+        val resolved = cacheType.resolve()
+        return if (resolved.toClassName() == CAFFEINE_CACHE) {
+            return CodeBlock.of("%S, config, factory, telemetry", configPath)
+        } else if (resolved.toClassName() == REDIS_CACHE) {
+            return CodeBlock.of("%S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper", configPath)
+        } else {
+            throw UnsupportedOperationException("Unknown implementation: $cacheContract")
         }
     }
 
     private fun getPackage(element: KSAnnotated): String {
-        return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString()
+        return element.toString()
     }
 }
 

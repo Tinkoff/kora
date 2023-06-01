@@ -19,11 +19,10 @@ class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAop
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {
-        val operation = getCacheOperation(method, resolver)
-        val cacheMirrors = getCacheMirrors(operation, method, resolver)
-        val cacheFields = getCacheFields(operation, cacheMirrors, aspectContext)
+        val operation = getCacheOperation(method)
+        val cacheFields = getCacheFields(operation, resolver, aspectContext)
 
-        val body = if (operation.meta.type == CacheOperation.Type.EVICT_ALL) {
+        val body = if (operation.type == CacheOperation.Type.EVICT_ALL) {
             buildBodySyncAll(method, operation, superCall, cacheFields)
         } else {
             buildBodySync(method, operation, superCall, cacheFields)
@@ -61,7 +60,7 @@ class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAop
         }
 
         return CodeBlock.builder()
-            .add("var _key = %L(%L)\n", operation.key.simpleName, recordParameters)
+            .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
             .add(builder.toString())
             .build()
     }
