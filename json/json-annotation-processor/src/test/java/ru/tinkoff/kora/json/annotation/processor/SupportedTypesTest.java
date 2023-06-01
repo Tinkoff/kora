@@ -463,5 +463,4 @@ public class SupportedTypesTest extends AbstractJsonAnnotationProcessorTest {
         mapper.verify(newObject("TestRecord", new Object[]{null}), "{}");
         mapper.verifyRead("{\"value\":null}", newObject("TestRecord", new Object[]{null}));
     }
-
 }
