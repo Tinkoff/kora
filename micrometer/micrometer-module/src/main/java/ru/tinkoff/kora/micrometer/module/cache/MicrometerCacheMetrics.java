@@ -9,6 +9,7 @@ import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public final class MicrometerCacheMetrics implements CacheMetrics {
@@ -35,14 +36,14 @@ public final class MicrometerCacheMetrics implements CacheMetrics {
     public void recordSuccess(@Nonnull CacheTelemetry.Operation operation, long durationInNanos, @Nullable Object valueFromCache) {
         final Timer timer = meterRegistry.timer(METRIC_CACHE_DURATION, Tags.of(
             TAG_CACHE_NAME, operation.cacheName(),
-            TAG_OPERATION, operation.type().name(),
+            TAG_OPERATION, operation.name(),
             TAG_ORIGIN, operation.origin(),
             TAG_STATUS, STATUS_SUCCESS
         ));
         timer.record(durationInNanos, TimeUnit.NANOSECONDS);
 
-        if (CacheTelemetry.Operation.Type.GET == operation.type()) {
-            final String metricName = (valueFromCache == null)
+        if ("GET".startsWith(operation.name())) {
+            final String metricName = (valueFromCache == null || valueFromCache instanceof Collection<?> vc && !vc.isEmpty())
                 ? METRIC_CACHE_MISS
                 : METRIC_CACHE_HIT;
 
@@ -58,7 +59,7 @@ public final class MicrometerCacheMetrics implements CacheMetrics {
     public void recordFailure(@Nonnull CacheTelemetry.Operation operation, long durationInNanos, @Nullable Throwable throwable) {
         final Timer timer = meterRegistry.timer(METRIC_CACHE_DURATION, Tags.of(
             TAG_CACHE_NAME, operation.cacheName(),
-            TAG_OPERATION, operation.type().name(),
+            TAG_OPERATION, operation.name(),
             TAG_ORIGIN, operation.origin(),
             TAG_STATUS, STATUS_FAILED
         ));
