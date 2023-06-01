@@ -45,35 +45,31 @@ public class CachePutAopKoraAspect extends AbstractAopCacheAspect {
         final String superMethod = getSuperMethod(method, superCall);
 
         // cache variables
-        final StringBuilder builder = new StringBuilder();
+        final CodeBlock.Builder builder = CodeBlock.builder();
 
         // cache super method
-        builder.append("var _value = ").append(superMethod).append(";\n");
+        builder.add("var _value = ").add(superMethod).add(";\n");
+
+        if (operation.parameters().size() == 1) {
+            builder.add("""
+                    var _key = $L;
+                    """,
+                operation.parameters().get(0));
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            builder.add("""
+                    var _key = $T.of($L);
+                    """,
+                getCacheKey(operation), recordParameters);
+        }
 
         // cache put
         for (var cache : cacheFields) {
-            builder.append(cache).append(".put(_key, _value);\n");
+            builder.add(cache).add(".put(_key, _value);\n");
         }
-        builder.append("return _value;");
+        builder.add("return _value;");
 
-        if (operation.parameters().size() == 1) {
-            return CodeBlock.builder()
-                .add("""
-                        var _key = $L;
-                        """,
-                    operation.parameters().get(0))
-                .add(builder.toString())
-                .build();
-        } else {
-            final String recordParameters = getKeyRecordParameters(operation, method);
-            return CodeBlock.builder()
-                .add("""
-                        var _key = $T.of($L);
-                        """,
-                    getCacheKey(operation), recordParameters)
-                .add(builder.toString())
-                .build();
-        }
+        return builder.build();
     }
 
     private CodeBlock buildBodyMono(ExecutableElement method,

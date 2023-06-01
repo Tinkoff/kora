@@ -39,30 +39,42 @@ class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAop
     ): CodeBlock {
         val recordParameters = getKeyRecordParameters(operation, method)
         val superMethod = getSuperMethod(method, superCall)
-        val builder = StringBuilder()
+        val builder = CodeBlock.builder()
+        val isSingleNullableParam = operation.parameters.size == 1 && operation.parameters[0].type.resolve().isMarkedNullable
 
         // cache super method
         if (method.isVoid()) {
-            builder.append(superMethod).append("\n")
+            builder.add(superMethod).add("\n")
         } else {
-            builder.append("var value = ").append(superMethod).append("\n")
+            builder.add("var value = %L\n", superMethod)
         }
 
         // cache invalidate
         for (cache in cacheFields) {
-            builder.append(cache).append(".invalidate(_key)\n")
+            if (isSingleNullableParam) {
+                builder.add("_key?.let { %L.invalidate(it) }\n", cache)
+            } else {
+                builder.add("%L.invalidate(_key)\n", cache)
+            }
         }
 
         if (method.isVoid()) {
-            builder.append("return")
+            builder.add("return")
         } else {
-            builder.append("return value")
+            builder.add("return value")
         }
 
-        return CodeBlock.builder()
-            .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
-            .add(builder.toString())
-            .build()
+        return if (operation.parameters.size == 1) {
+            CodeBlock.builder()
+                .add("val _key = %L\n", operation.parameters[0])
+                .add(builder.build())
+                .build()
+        } else {
+            CodeBlock.builder()
+                .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
+                .add(builder.build())
+                .build()
+        }
     }
 
     private fun buildBodySyncAll(

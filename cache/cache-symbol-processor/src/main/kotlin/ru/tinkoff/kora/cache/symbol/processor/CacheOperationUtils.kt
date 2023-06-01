@@ -60,7 +60,7 @@ class CacheOperationUtils {
             } else if (invalidates.isNotEmpty()) {
                 val invalidateAlls = invalidates.asSequence()
                     .flatMap { a -> a.arguments.asSequence() }
-                    .filter { a -> a.name!!.getQualifier() == "invalidateAll" }
+                    .filter { a -> a.name!!.getShortName() == "invalidateAll" }
                     .map { a -> a.value as Boolean }
                     .toList()
 
@@ -77,7 +77,7 @@ class CacheOperationUtils {
                     )
                 }
 
-                val type = if(allInvalidateAll) CacheOperation.Type.EVICT_ALL else CacheOperation.Type.EVICT
+                val type = if (allInvalidateAll) CacheOperation.Type.EVICT_ALL else CacheOperation.Type.EVICT
                 return getCacheOperation(method, type, invalidates)
             }
 
@@ -129,7 +129,11 @@ class CacheOperationUtils {
                 cacheImpls.add(cacheImpl.toClassName().canonicalName)
             }
 
-            return CacheOperation(type, cacheImpls, parameters[0], origin)
+            val parameterResult = method.parameters.asSequence()
+                .filter { p -> parameters[0].any { param -> param == p.name!!.getShortName() } }
+                .toList()
+
+            return CacheOperation(type, cacheImpls, parameterResult, origin)
         }
 
         private fun getCacheableAnnotations(method: KSFunctionDeclaration): List<KSAnnotation> {

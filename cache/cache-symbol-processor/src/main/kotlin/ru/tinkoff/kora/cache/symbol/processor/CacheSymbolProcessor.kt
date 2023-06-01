@@ -136,7 +136,7 @@ class CacheSymbolProcessor(
         return if (resolved.toClassName() == CAFFEINE_CACHE) {
             resolver.getClassDeclarationByName(CAFFEINE_CACHE_IMPL.canonicalName)!!.asType(cacheType.resolve().arguments).toTypeName()
         } else if (resolved.toClassName() == REDIS_CACHE) {
-            resolver.getClassDeclarationByName(REDIS_CACHE_IMPL.canonicalName)!!.asType( cacheType.resolve().arguments ).toTypeName()
+            resolver.getClassDeclarationByName(REDIS_CACHE_IMPL.canonicalName)!!.asType(cacheType.resolve().arguments).toTypeName()
         } else {
             throw UnsupportedOperationException("Unknown implementation: " + cacheContract.toClassName())
         }

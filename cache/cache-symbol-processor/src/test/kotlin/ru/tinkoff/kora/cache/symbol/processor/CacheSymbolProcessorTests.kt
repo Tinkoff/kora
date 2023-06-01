@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import ru.tinkoff.kora.aop.symbol.processor.AopSymbolProcessorProvider
 import ru.tinkoff.kora.cache.symbol.processor.testdata.*
@@ -15,7 +15,7 @@ import ru.tinkoff.kora.ksp.common.CompilationErrorException
 import ru.tinkoff.kora.ksp.common.symbolProcess
 
 @KspExperimental
-class CacheSymbolProcessorTests : Assertions() {
+class CacheSymbolProcessorTests {
 
     @Test
     fun cacheKeyArgumentMissing() {

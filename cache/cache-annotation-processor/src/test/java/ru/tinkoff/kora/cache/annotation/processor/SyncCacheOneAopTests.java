@@ -6,32 +6,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.aop.annotation.processor.AopAnnotationProcessor;
-import ru.tinkoff.kora.cache.annotation.processor.testcache.DummyCache2;
-import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.mono.CacheableMono;
+import ru.tinkoff.kora.cache.annotation.processor.testcache.DummyCache1;
+import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.CacheableSyncOne;
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig;
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
+class SyncCacheOneAopTests extends Assertions implements CaffeineCacheModule {
 
-    private static final String CACHED_IMPL = "ru.tinkoff.kora.cache.annotation.processor.testcache.$DummyCache2Impl";
-    private static final String CACHED_SERVICE = "ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.mono.$CacheableMono__AopProxy";
+    private static final String CACHED_IMPL = "ru.tinkoff.kora.cache.annotation.processor.testcache.$DummyCache1Impl";
+    private static final String CACHED_SERVICE = "ru.tinkoff.kora.cache.annotation.processor.testdata.sync.$CacheableSyncOne__AopProxy";
 
-    private DummyCache2 cache = null;
-    private CacheableMono service = null;
+    private DummyCache1 cache = null;
+    private CacheableSyncOne service = null;
 
-    private CacheableMono getService() {
+    private CacheableSyncOne getService() {
         if (service != null) {
             return service;
         }
 
         try {
-            var classLoader = TestUtils.annotationProcess(List.of(DummyCache2.class, CacheableMono.class),
+            var classLoader = TestUtils.annotationProcess(List.of(DummyCache1.class, CacheableSyncOne.class),
                 new AopAnnotationProcessor(), new CacheAnnotationProcessor());
 
             var cacheClass = classLoader.loadClass(CACHED_IMPL);
@@ -41,7 +40,7 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
 
             final Constructor<?> cacheConstructor = cacheClass.getDeclaredConstructors()[0];
             cacheConstructor.setAccessible(true);
-            cache = (DummyCache2) cacheConstructor.newInstance(new CaffeineCacheConfig(null, null, null, null),
+            cache = (DummyCache1) cacheConstructor.newInstance(new CaffeineCacheConfig(null, null, null, null),
                 caffeineCacheFactory(), defaultCacheTelemetry(null, null));
 
             var serviceClass = classLoader.loadClass(CACHED_SERVICE);
@@ -51,7 +50,7 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
 
             final Constructor<?> serviceConstructor = serviceClass.getDeclaredConstructors()[0];
             serviceConstructor.setAccessible(true);
-            service = (CacheableMono) serviceConstructor.newInstance(cache);
+            service = (CacheableSyncOne) serviceConstructor.newInstance(cache);
             return service;
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -73,11 +72,11 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String notCached = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String notCached = service.getValue("1");
         service.value = "2";
 
         // then
-        final String fromCache = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("1");
         assertEquals(notCached, fromCache);
         assertNotEquals("2", fromCache);
     }
@@ -90,13 +89,13 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String initial = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
-        final String cached = service.putValue(BigDecimal.ZERO, "5", "1").block(Duration.ofMinutes(1));
+        final String initial = service.getValue("1");
+        final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
         service.value = "2";
 
         // then
-        final String fromCache = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("1");
         assertEquals(cached, fromCache);
     }
 
@@ -108,13 +107,13 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String initial = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
-        final String cached = service.putValue(BigDecimal.ZERO, "5", "1").block(Duration.ofMinutes(1));
+        final String initial = service.getValue("1");
+        final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
         service.value = "2";
 
         // then
-        final String fromCache = service.getValue("2", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("2");
         assertNotEquals(cached, fromCache);
         assertEquals(service.value, fromCache);
     }
@@ -127,13 +126,13 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String cached = service.putValue(BigDecimal.ZERO, "5", "1").block(Duration.ofMinutes(1));
+        final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         service.value = "2";
-        final String initial = service.getValue("2", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String initial = service.getValue("2");
         assertNotEquals(cached, initial);
 
         // then
-        final String fromCache = service.getValue("2", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("2");
         assertNotEquals(cached, fromCache);
         assertEquals(initial, fromCache);
     }
@@ -146,14 +145,14 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String initial = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
-        final String cached = service.putValue(BigDecimal.ZERO, "5", "1").block(Duration.ofMinutes(1));
+        final String initial = service.getValue("1");
+        final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
         service.value = "2";
-        service.evictValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        service.evictValue("1");
 
         // then
-        final String fromCache = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("1");
         assertNotEquals(cached, fromCache);
     }
 
@@ -165,14 +164,14 @@ class MonoCacheAopTests extends Assertions implements CaffeineCacheModule {
         assertNotNull(service);
 
         // when
-        final String initial = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
-        final String cached = service.putValue(BigDecimal.ZERO, "5", "1").block(Duration.ofMinutes(1));
+        final String initial = service.getValue("1");
+        final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
         service.value = "2";
-        service.evictAll().block(Duration.ofMinutes(1));
+        service.evictAll();
 
         // then
-        final String fromCache = service.getValue("1", BigDecimal.ZERO).block(Duration.ofMinutes(1));
+        final String fromCache = service.getValue("1");
         assertNotEquals(cached, fromCache);
     }
 }

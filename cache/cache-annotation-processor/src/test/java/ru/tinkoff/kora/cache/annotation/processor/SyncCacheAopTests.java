@@ -59,7 +59,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
 
     @BeforeEach
     void cleanup() {
-        if(cache != null) {
+        if (cache != null) {
             cache.invalidateAll();
         }
     }
@@ -67,7 +67,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWhenWasCacheEmpty() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -84,7 +84,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWhenCacheFilled() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -102,7 +102,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWrongKeyWhenCacheFilled() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -121,7 +121,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWhenCacheFilledOtherKey() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -140,7 +140,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWhenCacheInvalidate() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 
@@ -159,7 +159,7 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
     @Test
     void getFromCacheWhenCacheInvalidateAll() {
         // given
-        final CacheableSync service = getService();
+        var service = getService();
         service.value = "1";
         assertNotNull(service);
 

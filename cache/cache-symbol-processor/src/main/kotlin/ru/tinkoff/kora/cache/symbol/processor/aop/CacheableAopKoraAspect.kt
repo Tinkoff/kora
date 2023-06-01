@@ -39,38 +39,57 @@ class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheA
     ): CodeBlock {
         val recordParameters = getKeyRecordParameters(operation, method)
         val superMethod = getSuperMethod(method, superCall)
-        val builder = StringBuilder()
+        val builder = CodeBlock.builder()
+        val isSingleNullableParam = operation.parameters.size == 1 && operation.parameters[0].type.resolve().isMarkedNullable
 
         // cache get
         for (i in cacheFields.indices) {
             val cache = cacheFields[i]
             val prefix = if (i == 0) "var _value = " else "_value = "
-            builder.append(prefix)
-                .append(cache).append(".get(_key)\n")
-                .append("if(_value != null) {\n");
+
+            if (isSingleNullableParam) {
+                builder.add(prefix)
+                    .add("_key?.let { %L.get(it) }\n", cache)
+                    .add("if(_value != null) {\n");
+            } else {
+                builder.add(prefix)
+                    .add("%L.get(_key)\n", cache)
+                    .add("if(_value != null) {\n");
+            }
 
             for (j in 0 until i) {
                 val prevCache = cacheFields[j]
-                builder.append("\t").append(prevCache).append(".put(_key, _value)\n")
+                builder.add("\t%L.put(_key, _value)\n", prevCache)
             }
 
             builder
-                .append("\treturn _value\n")
-                .append("}\n\n")
+                .add("\treturn _value\n")
+                .add("}\n\n")
         }
 
         // cache super method
-        builder.append("_value = ").append(superMethod).append("\n")
+        builder.add("_value = %L\n", superMethod)
 
         // cache put
         for (cache in cacheFields) {
-            builder.append(cache).append(".put(_key, _value)\n")
+            if (isSingleNullableParam) {
+                builder.add("_key?.let { %L.put(it, _value) }\n", cache)
+            } else {
+                builder.add("%L.put(_key, _value)\n", cache)
+            }
         }
-        builder.append("return _value")
+        builder.add("return _value")
 
-        return CodeBlock.builder()
-            .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
-            .add(builder.toString())
-            .build()
+        return if (operation.parameters.size == 1) {
+            CodeBlock.builder()
+                .add("val _key = %L\n", operation.parameters[0])
+                .add(builder.build())
+                .build()
+        } else {
+            CodeBlock.builder()
+                .add("val _key = %T.of(%L)\n", getCacheKey(operation), recordParameters)
+                .add(builder.build())
+                .build()
+        }
     }
 }

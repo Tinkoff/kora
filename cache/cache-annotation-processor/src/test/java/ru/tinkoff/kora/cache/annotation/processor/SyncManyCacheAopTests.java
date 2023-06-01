@@ -13,10 +13,8 @@ import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.CacheableSyncMan
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig;
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 
-import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -75,7 +73,7 @@ class SyncManyCacheAopTests extends Assertions implements CaffeineCacheModule {
 
     @BeforeEach
     void cleanup() {
-        if(cache1 != null && cache2 != null) {
+        if (cache1 != null && cache2 != null) {
             cache1.invalidateAll();
             cache2.invalidateAll();
         }

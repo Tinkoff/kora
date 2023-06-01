@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -12,13 +12,12 @@ import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule
 import ru.tinkoff.kora.cache.symbol.processor.testcache.DummyCache2
 import ru.tinkoff.kora.cache.symbol.processor.testcache.DummyCache22
 import ru.tinkoff.kora.cache.symbol.processor.testdata.CacheableSyncMany
-import ru.tinkoff.kora.cache.symbol.processor.testdata.suspended.CacheableSuspendMany
 import ru.tinkoff.kora.ksp.common.symbolProcess
 import java.math.BigDecimal
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KspExperimental
-class SyncManyCacheAopTests : Assertions(), CaffeineCacheModule {
+class SyncManyCacheAopTests : CaffeineCacheModule {
 
     private val CACHE1_CLASS = "ru.tinkoff.kora.cache.symbol.processor.testcache.\$DummyCache2Impl"
     private val CACHE2_CLASS = "ru.tinkoff.kora.cache.symbol.processor.testcache.\$DummyCache22Impl"
@@ -29,7 +28,7 @@ class SyncManyCacheAopTests : Assertions(), CaffeineCacheModule {
     private var cachedService: CacheableSyncMany? = null
 
     private fun getService(): CacheableSyncMany {
-        if(cachedService != null) {
+        if (cachedService != null) {
             return cachedService as CacheableSyncMany;
         }
 

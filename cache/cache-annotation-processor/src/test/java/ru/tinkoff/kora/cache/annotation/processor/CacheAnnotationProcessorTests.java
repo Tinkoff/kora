@@ -2,18 +2,19 @@ package ru.tinkoff.kora.cache.annotation.processor;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils.CompilationErrorException;
 import ru.tinkoff.kora.aop.annotation.processor.AopAnnotationProcessor;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.flux.CacheableFluxWrongGet;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.flux.CacheableWrongFluxPut;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.mono.CacheableMonoWrongGetVoid;
-import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.mono.CacheableMono;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.mono.CacheableMonoWrongPutVoid;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.publisher.CacheableWrongPublisherGet;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.reactive.publisher.CacheableWrongPublisherPut;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CacheAnnotationProcessorTests extends Assertions {
 
     @Test

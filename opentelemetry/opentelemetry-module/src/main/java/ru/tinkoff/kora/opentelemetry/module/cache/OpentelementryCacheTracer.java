@@ -48,7 +48,7 @@ public final class OpentelementryCacheTracer implements CacheTracer {
         var span = this.tracer.spanBuilder("cache.call")
             .setSpanKind(SpanKind.INTERNAL)
             .setParent(traceContext.getContext())
-            .setAttribute(TAG_OPERATION, operation.type().name())
+            .setAttribute(TAG_OPERATION, operation.name())
             .setAttribute(TAG_CACHE_NAME, operation.cacheName())
             .setAttribute(TAG_ORIGIN, operation.origin())
             .startSpan();

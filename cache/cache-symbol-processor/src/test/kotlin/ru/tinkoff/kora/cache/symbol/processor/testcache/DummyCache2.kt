@@ -4,7 +4,6 @@ import ru.tinkoff.kora.cache.CacheKey
 import ru.tinkoff.kora.cache.annotation.Cache
 import ru.tinkoff.kora.cache.caffeine.CaffeineCache
 import java.math.BigDecimal
-import java.math.BigInteger
 
 @Cache("dummy2")
 interface DummyCache2 : CaffeineCache<CacheKey.Key2<String?, BigDecimal?>, String>
