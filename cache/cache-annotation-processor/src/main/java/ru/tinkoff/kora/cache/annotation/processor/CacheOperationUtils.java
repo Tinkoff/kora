@@ -114,8 +114,8 @@ public final class CacheOperationUtils {
             cacheImpls.add(cacheImpl);
         }
 
-        final List<VariableElement> parameterResult = method.getParameters().stream()
-            .filter(p -> cacheKeyArguments.get(0).stream().anyMatch(param -> p.getSimpleName().contentEquals(param)))
+        final List<VariableElement> parameterResult = cacheKeyArguments.get(0).stream()
+            .flatMap(param -> method.getParameters().stream().filter(p -> p.getSimpleName().contentEquals(param)))
             .map(p -> ((VariableElement) p))
             .toList();
 

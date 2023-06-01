@@ -129,8 +129,8 @@ class CacheOperationUtils {
                 cacheImpls.add(cacheImpl.toClassName().canonicalName)
             }
 
-            val parameterResult = method.parameters.asSequence()
-                .filter { p -> parameters[0].any { param -> param == p.name!!.getShortName() } }
+            val parameterResult = parameters[0].asSequence()
+                .flatMap { param -> method.parameters.filter { p -> p.name!!.getShortName() == param } }
                 .toList()
 
             return CacheOperation(type, cacheImpls, parameterResult, origin)
