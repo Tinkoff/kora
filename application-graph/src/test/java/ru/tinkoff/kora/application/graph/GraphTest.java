@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -358,6 +359,28 @@ class GraphTest {
         var subgraphDraw = graph.draw.subgraph(graph.object4Node);
         assertThat(subgraphDraw.getNodes()).hasSize(5);
         var subgraph = subgraphDraw.init().block();
+    }
+
+    @Test
+    void replaceNodeTest() {
+        var graph = ReferenceGraph.graph();
+        var draw = graph.draw.copy();
+        var mock = Mockito.mock(TestObject.class);
+        Mockito.when(mock.init()).thenReturn(Mono.empty());
+        Mockito.when(mock.release()).thenReturn(Mono.empty());
+
+        draw.replaceNode(graph.object2Node, g -> mock);
+        var newGraph = draw.init().block();
+
+        @SuppressWarnings("unchecked")
+        var object5Node = (Node<TestObject>) draw.getNodes().stream()
+            .filter(n -> n.factory == graph.object5Factory)
+            .findFirst()
+            .get();
+
+        Mockito.verify(mock).init();
+        var o5 = newGraph.get(object5Node);
+        assertThat(o5.dependencies.get(0)).isSameAs(mock);
     }
 
     /**

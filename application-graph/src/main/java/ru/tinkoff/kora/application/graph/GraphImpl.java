@@ -29,6 +29,7 @@ final class GraphImpl implements RefreshableGraph, Lifecycle {
         this.objects = new AtomicReferenceArray<>(this.draw.size());
     }
 
+    @Override
     public ApplicationGraphDraw draw() {
         return this.draw;
     }
@@ -48,7 +49,7 @@ final class GraphImpl implements RefreshableGraph, Lifecycle {
 
     @Override
     public <T> ValueOf<T> valueOf(final Node<? extends T> node) {
-        if (node.index >= 0 && node.graphDraw != this.draw) {
+        if (node.graphDraw != this.draw) {
             throw new IllegalArgumentException("Node is from another graph");
         }
         return new ValueOf<>() {

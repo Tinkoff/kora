@@ -87,9 +87,12 @@ public class ApplicationGraphDraw {
         for (var node : this.graphNodes) {
             class T {
                 static <T> void addNode(ApplicationGraphDraw draw, Node<T> node) {
-                    draw.addNode0(
-                        node.type(), node.tags(), node.factory, node.getInterceptors(), node.getDependencyNodes().toArray(new Node<?>[0])
-                    );
+                    var dependencies = new Node<?>[node.getDependencyNodes().size()];
+                    for (int i = 0; i < dependencies.length; i++) {
+                        var dependency = node.getDependencyNodes().get(i);
+                        dependencies[i] = draw.graphNodes.get(dependency.index);
+                    }
+                    draw.addNode0(node.type(), node.tags(), node.factory, node.getInterceptors(), dependencies);
                 }
             }
             T.addNode(draw, node);
