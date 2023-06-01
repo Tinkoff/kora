@@ -181,7 +181,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
             .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
             .addParameter(CLASS_CONFIG, "config")
             .addParameter(TypeName.get(extractorType), "extractor")
-            .addStatement("return extractor.extract(config.getValue($S))", "cache." + configPath)
+            .addStatement("return extractor.extract(config.getValue($S))", configPath)
             .returns(TypeName.get(returnType))
             .build();
     }
