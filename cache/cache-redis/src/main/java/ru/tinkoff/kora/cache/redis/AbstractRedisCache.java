@@ -53,6 +53,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public V get(@Nonnull K key) {
+        if(key == null) {
+            return null;
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET", name, origin());
         telemetryContext.startRecording();
 
@@ -74,6 +78,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Map<K, V> get(@Nonnull Collection<K> keys) {
+        if(keys == null || keys.isEmpty()) {
+            return null;
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET_MANY", name, origin());
 
         try {
@@ -107,6 +115,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public V put(@Nonnull K key, @Nonnull V value) {
+        if(key == null || value == null) {
+            return null;
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("PUT", name, origin());
         telemetryContext.startRecording();
 
@@ -128,32 +140,36 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public void invalidate(@Nonnull K key) {
-        final byte[] keyAsBytes = keyMapper.apply(key);
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE", name, origin());
+        if(key != null) {
+            final byte[] keyAsBytes = keyMapper.apply(key);
+            final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE", name, origin());
 
-        try {
-            telemetryContext.startRecording();
-            syncClient.del(keyAsBytes);
-            telemetryContext.recordSuccess();
-        } catch (Exception e) {
-            telemetryContext.recordFailure(e);
+            try {
+                telemetryContext.startRecording();
+                syncClient.del(keyAsBytes);
+                telemetryContext.recordSuccess();
+            } catch (Exception e) {
+                telemetryContext.recordFailure(e);
+            }
         }
     }
 
     @Override
     public void invalidate(@Nonnull Collection<K> keys) {
-        final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_MANY", name, origin());
+        if(keys != null && !keys.isEmpty()) {
+            final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_MANY", name, origin());
 
-        try {
-            final byte[][] keysAsBytes = keys.stream()
-                .map(keyMapper)
-                .toArray(byte[][]::new);
+            try {
+                final byte[][] keysAsBytes = keys.stream()
+                    .map(keyMapper)
+                    .toArray(byte[][]::new);
 
-            telemetryContext.startRecording();
-            syncClient.del(keysAsBytes);
-            telemetryContext.recordSuccess();
-        } catch (Exception e) {
-            telemetryContext.recordFailure(e);
+                telemetryContext.startRecording();
+                syncClient.del(keysAsBytes);
+                telemetryContext.recordSuccess();
+            } catch (Exception e) {
+                telemetryContext.recordFailure(e);
+            }
         }
     }
 
@@ -173,6 +189,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<V> getAsync(@Nonnull K key) {
+        if(key == null) {
+            return Mono.empty();
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
@@ -195,6 +215,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<Map<K, V>> getAsync(@Nonnull Collection<K> keys) {
+        if(keys == null || keys.isEmpty()) {
+            return Mono.just(Collections.emptyMap());
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("GET_MANY", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
@@ -230,6 +254,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<V> putAsync(@Nonnull K key, @Nonnull V value) {
+        if(key == null) {
+            return Mono.justOrEmpty(value);
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("PUT", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
@@ -253,6 +281,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
     @Nonnull
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull K key) {
+        if(key == null) {
+            return Mono.just(false);
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();
@@ -269,6 +301,10 @@ public abstract class AbstractRedisCache<K, V> implements Cache<K, V> {
 
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull Collection<K> keys) {
+        if(keys == null || keys.isEmpty()) {
+            return Mono.just(false);
+        }
+
         final CacheTelemetry.TelemetryContext telemetryContext = telemetry.create("INVALIDATE_MANY", name, origin());
         return Mono.defer(() -> {
                 telemetryContext.startRecording();

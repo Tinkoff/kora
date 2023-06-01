@@ -45,6 +45,25 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
                                     String superCall) {
         final String superMethod = getSuperMethod(method, superCall);
 
+        final CodeBlock keyBlock;
+        if (operation.parameters().size() == 1) {
+            keyBlock = CodeBlock.builder()
+                .add("""
+                        var _key = $L;
+                        """,
+                    operation.parameters().get(0))
+                .build();
+        } else {
+            final String recordParameters = getKeyRecordParameters(operation, method);
+            keyBlock = CodeBlock.builder()
+                .add("""
+                        var _key = $T.of($L);
+                        """,
+                    getCacheKey(operation), recordParameters)
+                .build();
+
+        }
+
         final StringBuilder builder = new StringBuilder();
 
         // cache get
@@ -80,25 +99,10 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
         }
         builder.append("return _value;");
 
-        if (operation.parameters().size() == 1) {
-            return CodeBlock.builder()
-                .add("""
-                        var _key = $L;
-                        """,
-                    operation.parameters().get(0))
-                .add(builder.toString())
-                .build();
-        } else {
-            final String recordParameters = getKeyRecordParameters(operation, method);
-            return CodeBlock.builder()
-                .add("""
-                        var _key = $T.of($L);
-                        """,
-                    getCacheKey(operation), recordParameters)
-                .add(builder.toString())
-                .build();
-
-        }
+        return CodeBlock.builder()
+            .add(keyBlock)
+            .add(builder.toString())
+            .build();
     }
 
     private CodeBlock buildBodyMono(ExecutableElement method,

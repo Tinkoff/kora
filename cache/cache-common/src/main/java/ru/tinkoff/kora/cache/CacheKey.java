@@ -7,9 +7,14 @@ import java.util.List;
 /**
  * Represent CacheKey interface that is used by the implementation that represents method arguments as key for Cache
  *
- * @see Object#toString() generates string where all values are separated with '-' according to contract for CacheKey
+ * @see CacheKey#joined() generates string where all values are separated with '-' according to contract for CacheKey
  */
 public interface CacheKey {
+
+    /**
+     * @return {@link Boolean#TRUE} if all sub keys are nullable
+     */
+    boolean isEmpty();
 
     @Nonnull
     String joined();
@@ -66,6 +71,11 @@ public interface CacheKey {
 
         K2 key2();
 
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null;
+        }
+
         @Nonnull
         @Override
         default List<Object> values() {
@@ -86,6 +96,11 @@ public interface CacheKey {
         K2 key2();
 
         K3 key3();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null;
+        }
 
         @Nonnull
         @Override
@@ -109,6 +124,11 @@ public interface CacheKey {
         K3 key3();
 
         K4 key4();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null;
+        }
 
         @Nonnull
         @Override
@@ -134,6 +154,11 @@ public interface CacheKey {
         K4 key4();
 
         K5 key5();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null && key5() == null;
+        }
 
         @Nonnull
         @Override
@@ -161,6 +186,11 @@ public interface CacheKey {
         K5 key5();
 
         K6 key6();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null && key5() == null && key6() == null;
+        }
 
         @Nonnull
         @Override
@@ -190,6 +220,11 @@ public interface CacheKey {
         K6 key6();
 
         K7 key7();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null && key5() == null && key6() == null && key7() == null;
+        }
 
         @Nonnull
         @Override
@@ -221,6 +256,11 @@ public interface CacheKey {
         K7 key7();
 
         K8 key8();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null && key5() == null && key6() == null && key7() == null && key8() == null;
+        }
 
         @Nonnull
         @Override
@@ -254,6 +294,11 @@ public interface CacheKey {
         K8 key8();
 
         K9 key9();
+
+        @Override
+        default boolean isEmpty() {
+            return key1() == null && key2() == null && key3() == null && key4() == null && key5() == null && key6() == null && key7() == null && key8() == null && key9() == null;
+        }
 
         @Nonnull
         @Override

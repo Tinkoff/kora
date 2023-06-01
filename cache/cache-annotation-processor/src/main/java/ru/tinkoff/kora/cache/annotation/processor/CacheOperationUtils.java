@@ -4,10 +4,7 @@ import ru.tinkoff.kora.annotation.processor.common.ProcessingError;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.cache.annotation.*;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.*;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -117,7 +114,12 @@ public final class CacheOperationUtils {
             cacheImpls.add(cacheImpl);
         }
 
-        return new CacheOperation(type, cacheImpls, cacheKeyArguments.get(0), origin);
+        final List<VariableElement> parameterResult = method.getParameters().stream()
+            .filter(p -> cacheKeyArguments.get(0).stream().anyMatch(param -> p.getSimpleName().contentEquals(param)))
+            .map(p -> ((VariableElement) p))
+            .toList();
+
+        return new CacheOperation(type, cacheImpls, parameterResult, origin);
     }
 
     private static List<AnnotationMirror> getRepeatedAnnotations(Element element,

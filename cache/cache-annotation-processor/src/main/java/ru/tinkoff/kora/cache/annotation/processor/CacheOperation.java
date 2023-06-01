@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public record CacheOperation(Type type, List<String> cacheImplementations, List<String> parameters, Origin origin) {
+public record CacheOperation(Type type, List<String> cacheImplementations, List<VariableElement> parameters, Origin origin) {
 
     public record Origin(String className, String methodName) {
 
@@ -35,12 +35,11 @@ public record CacheOperation(Type type, List<String> cacheImplementations, List<
                 .filter(this::isParameterSupported)
                 .map(p -> ((VariableElement) p))
                 .toList();
-
         } else {
             final List<VariableElement> methodParameters = new ArrayList<>();
-            for (String parameter : parameters) {
+            for (var parameter : parameters) {
                 final Optional<? extends VariableElement> arg = method.getParameters().stream()
-                    .filter(p -> p.getSimpleName().contentEquals(parameter))
+                    .filter(p -> p.getSimpleName().contentEquals(parameter.getSimpleName()))
                     .findFirst();
 
                 if (arg.isPresent()) {
@@ -55,6 +54,6 @@ public record CacheOperation(Type type, List<String> cacheImplementations, List<
     }
 
     public boolean isParameterSupported(VariableElement parameter) {
-        return parameters.isEmpty() || parameters.contains(parameter.toString());
+        return parameters.isEmpty() || parameters.stream().anyMatch(p -> p.getSimpleName().contentEquals(parameter.toString()));
     }
 }

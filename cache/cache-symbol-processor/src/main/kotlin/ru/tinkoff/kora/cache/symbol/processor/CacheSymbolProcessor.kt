@@ -174,7 +174,7 @@ class CacheSymbolProcessor(
             .addModifiers(KModifier.PUBLIC)
             .addParameter("config", CLASS_CONFIG)
             .addParameter("extractor", extractorType)
-            .addStatement("return extractor.extract(config.getValue(%S))", "cache.$configPath")
+            .addStatement("return extractor.extract(config.getValue(%S))", configPath)
             .returns(returnType.asType(listOf()).toTypeName())
             .build()
     }
@@ -191,7 +191,13 @@ class CacheSymbolProcessor(
         return if (resolved.toClassName() == CAFFEINE_CACHE) {
             FunSpec.builder(methodName)
                 .addModifiers(KModifier.PUBLIC)
-                .addParameter("config", CAFFEINE_CACHE_CONFIG)
+                .addParameter(ParameterSpec.builder("config", CAFFEINE_CACHE_CONFIG)
+                    .addAnnotation(
+                        AnnotationSpec.builder(Tag::class)
+                            .addMember("${cacheContract.simpleName.getShortName()}::class")
+                            .build()
+                    )
+                    .build())
                 .addParameter("factory", CAFFEINE_CACHE_FACTORY)
                 .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
                 .addStatement("return %T(config, factory, telemetry)", cacheImplName)
@@ -204,7 +210,13 @@ class CacheSymbolProcessor(
             val valueMapperType = REDIS_CACHE_MAPPER_VALUE.parameterizedBy(valueType.toTypeVariableName())
             FunSpec.builder(methodName)
                 .addModifiers(KModifier.PUBLIC)
-                .addParameter("config", REDIS_CACHE_CONFIG)
+                .addParameter(ParameterSpec.builder("config", REDIS_CACHE_CONFIG)
+                    .addAnnotation(
+                        AnnotationSpec.builder(Tag::class)
+                            .addMember("${cacheContract.simpleName.getShortName()}::class")
+                            .build()
+                    )
+                    .build())
                 .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
                 .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
                 .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
@@ -218,11 +230,10 @@ class CacheSymbolProcessor(
         }
     }
 
-
     private fun getCacheConstructor(cacheContract: KSClassDeclaration, cacheType: KSTypeReference): FunSpec {
         val resolved = cacheType.resolve()
         return if (resolved.toClassName() == CAFFEINE_CACHE) {
-            return FunSpec.constructorBuilder()
+            FunSpec.constructorBuilder()
                 .addParameter("config", CAFFEINE_CACHE_CONFIG)
                 .addParameter("factory", CAFFEINE_CACHE_FACTORY)
                 .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
@@ -232,7 +243,7 @@ class CacheSymbolProcessor(
             val valueType = cacheContract.typeParameters[1]
             val keyMapperType = REDIS_CACHE_MAPPER_KEY.parameterizedBy(keyType.toTypeVariableName())
             val valueMapperType = REDIS_CACHE_MAPPER_VALUE.parameterizedBy(valueType.toTypeVariableName())
-            return FunSpec.constructorBuilder()
+            FunSpec.constructorBuilder()
                 .addParameter("config", REDIS_CACHE_CONFIG)
                 .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
                 .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
@@ -255,9 +266,9 @@ class CacheSymbolProcessor(
 
         val resolved = cacheType.resolve()
         return if (resolved.toClassName() == CAFFEINE_CACHE) {
-            return CodeBlock.of("%S, config, factory, telemetry", configPath)
+            CodeBlock.of("%S, config, factory, telemetry", configPath)
         } else if (resolved.toClassName() == REDIS_CACHE) {
-            return CodeBlock.of("%S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper", configPath)
+            CodeBlock.of("%S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper", configPath)
         } else {
             throw UnsupportedOperationException("Unknown implementation: $cacheContract")
         }
