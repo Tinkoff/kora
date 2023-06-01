@@ -1,11 +1,13 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.tinkoff.kora.aop.symbol.processor.AopSymbolProcessorProvider
+import ru.tinkoff.kora.cache.CacheKey
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule
 import ru.tinkoff.kora.cache.symbol.processor.testcache.DummyCache2
@@ -139,10 +141,17 @@ class SyncCacheAopTests : CaffeineCacheModule {
         val initial = service.getValue("1", BigDecimal.ZERO)
         val cached = service.putValue(BigDecimal.ZERO, "5", "1")
         assertEquals(initial, cached)
+
+        val cached2 = service.putValue(BigDecimal.ZERO, "5", "2")
+        assertEquals(initial, cached2)
+
         service.value = "2"
         service.evictValue("1", BigDecimal.ZERO)
 
         // then
+        assertNull(cache!!.get(CacheKey.of("1", BigDecimal.ZERO)))
+        assertEquals(cached2, cache!!.get(CacheKey.of("2", BigDecimal.ZERO)))
+
         val fromCache = service.getValue("1", BigDecimal.ZERO)
         assertNotEquals(cached, fromCache)
     }
@@ -158,10 +167,17 @@ class SyncCacheAopTests : CaffeineCacheModule {
         val initial = service.getValue("1", BigDecimal.ZERO)
         val cached = service.putValue(BigDecimal.ZERO, "5", "1")
         assertEquals(initial, cached)
+
+        val cached2 = service.putValue(BigDecimal.ZERO, "5", "2")
+        assertEquals(initial, cached2)
+
         service.value = "2"
         service.evictAll()
 
         // then
+        assertNull(cache!!.get(CacheKey.of("1", BigDecimal.ZERO)))
+        assertNull(cache!!.get(CacheKey.of("2", BigDecimal.ZERO)))
+
         val fromCache = service.getValue("1", BigDecimal.ZERO)
         assertNotEquals(cached, fromCache)
     }

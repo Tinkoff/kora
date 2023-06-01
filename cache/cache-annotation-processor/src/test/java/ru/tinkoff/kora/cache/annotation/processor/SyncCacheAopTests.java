@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.annotation.processor.common.TestUtils;
 import ru.tinkoff.kora.aop.annotation.processor.AopAnnotationProcessor;
+import ru.tinkoff.kora.cache.CacheKey;
 import ru.tinkoff.kora.cache.annotation.processor.testcache.DummyCache2;
 import ru.tinkoff.kora.cache.annotation.processor.testdata.sync.CacheableSync;
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig;
@@ -13,6 +14,7 @@ import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -148,10 +150,17 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
         final String initial = service.getValue("1", BigDecimal.ZERO);
         final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
+
+        final String cached2 = service.putValue(BigDecimal.ZERO, "5", "2");
+        assertEquals(initial, cached2);
+
         service.value = "2";
         service.evictValue("1", BigDecimal.ZERO);
 
         // then
+        assertNull(cache.get(CacheKey.of("1", BigDecimal.ZERO)));
+        assertEquals(cached2, cache.get(CacheKey.of("2", BigDecimal.ZERO)));
+
         final String fromCache = service.getValue("1", BigDecimal.ZERO);
         assertNotEquals(cached, fromCache);
     }
@@ -167,10 +176,17 @@ class SyncCacheAopTests extends Assertions implements CaffeineCacheModule {
         final String initial = service.getValue("1", BigDecimal.ZERO);
         final String cached = service.putValue(BigDecimal.ZERO, "5", "1");
         assertEquals(initial, cached);
+
+        final String cached2 = service.putValue(BigDecimal.ZERO, "5", "2");
+        assertEquals(initial, cached2);
+
         service.value = "2";
         service.evictAll();
 
         // then
+        assertNull(cache.get(CacheKey.of("1", BigDecimal.ZERO)));
+        assertNull(cache.get(CacheKey.of("2", BigDecimal.ZERO)));
+
         final String fromCache = service.getValue("1", BigDecimal.ZERO);
         assertNotEquals(cached, fromCache);
     }

@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.cache.annotation.processor.aop;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -11,10 +12,14 @@ import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import java.util.List;
 import java.util.Set;
 
 public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
+
+    private static final ClassName CAFFEINE_CACHE = ClassName.get("ru.tinkoff.kora.cache.caffeine", "CaffeineCache");
 
     private final ProcessingEnvironment env;
 
@@ -62,6 +67,18 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
                     getCacheKey(operation), recordParameters)
                 .build();
 
+        }
+
+        if(operation.cacheImplementations().size() == 1) {
+            var superTypes = env.getTypeUtils().directSupertypes(env.getElementUtils().getTypeElement(operation.cacheImplementations().get(0)).asType());
+            if(superTypes.stream().anyMatch(t -> t instanceof DeclaredType dt && dt.asElement().toString().equals(CAFFEINE_CACHE.canonicalName()))) {
+                return CodeBlock.builder()
+                    .add(keyBlock)
+                    .add(CodeBlock.of("""
+                        return $L.putIfAbsent(_key, _k -> $L);
+                        """, cacheFields.get(0), superMethod))
+                    .build();
+            }
         }
 
         final StringBuilder builder = new StringBuilder();

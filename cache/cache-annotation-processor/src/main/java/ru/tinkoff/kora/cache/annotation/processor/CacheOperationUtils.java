@@ -51,8 +51,8 @@ public final class CacheOperationUtils {
                 .map(e -> ((boolean) e.getValue().getValue()))
                 .toList();
 
-            final boolean anyInvalidateAll = invalidateAlls.stream().anyMatch(v -> v);
-            final boolean allInvalidateAll = invalidateAlls.stream().allMatch(v -> v);
+            final boolean anyInvalidateAll = !invalidateAlls.isEmpty() && invalidateAlls.stream().anyMatch(v -> v);
+            final boolean allInvalidateAll = !invalidateAlls.isEmpty() && invalidateAlls.stream().allMatch(v -> v);
 
             if (anyInvalidateAll && !allInvalidateAll) {
                 throw new ProcessingErrorException(new ProcessingError(Diagnostic.Kind.ERROR,

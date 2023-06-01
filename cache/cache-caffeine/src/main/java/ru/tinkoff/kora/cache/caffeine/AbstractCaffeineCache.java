@@ -30,7 +30,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
 
     @Override
     public V get(@Nonnull K key) {
-        if(key == null) {
+        if (key == null) {
             return null;
         }
 
@@ -44,7 +44,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
     @Nonnull
     @Override
     public Map<K, V> get(@Nonnull Collection<K> keys) {
-        if(keys == null || keys.isEmpty()) {
+        if (keys == null || keys.isEmpty()) {
             return Collections.emptyMap();
         }
 
@@ -56,8 +56,8 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
     }
 
     @Override
-    public V getOrCompute(@Nonnull K key, @Nonnull Function<K, V> mappingFunction) {
-        if(key == null) {
+    public V putIfAbsent(@Nonnull K key, @Nonnull Function<K, V> mappingFunction) {
+        if (key == null) {
             return null;
         }
 
@@ -70,7 +70,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
 
     @Nonnull
     public V put(@Nonnull K key, @Nonnull V value) {
-        if(key == null || value == null) {
+        if (key == null || value == null) {
             return value;
         }
 
@@ -83,7 +83,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
 
     @Override
     public void invalidate(@Nonnull K key) {
-        if(key != null) {
+        if (key != null) {
             var telemetryContext = telemetry.create("INVALIDATE", name, ORIGIN);
             telemetryContext.startRecording();
             caffeine.invalidate(key);
@@ -93,7 +93,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
 
     @Override
     public void invalidate(@Nonnull Collection<K> keys) {
-        if(keys != null && !keys.isEmpty()) {
+        if (keys != null && !keys.isEmpty()) {
             var telemetryContext = telemetry.create("INVALIDATE_MANY", name, ORIGIN);
             telemetryContext.startRecording();
             caffeine.invalidateAll(keys);
@@ -138,7 +138,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
     @Nonnull
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull K key) {
-        if(key == null) {
+        if (key == null) {
             return Mono.just(false);
         }
 
@@ -150,7 +150,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
 
     @Override
     public Mono<Boolean> invalidateAsync(@Nonnull Collection<K> keys) {
-        if(keys == null || keys.isEmpty()) {
+        if (keys == null || keys.isEmpty()) {
             return Mono.just(false);
         }
 

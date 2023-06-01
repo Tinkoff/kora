@@ -7,5 +7,10 @@ import java.util.function.Function;
 
 public interface CaffeineCache<K, V> extends Cache<K, V> {
 
-    V getOrCompute(@Nonnull K key, @Nonnull Function<K, V> mappingFunction);
+    /**
+     * @param key             to look for value or compute and put if absent
+     * @param mappingFunction to use for value computing
+     * @return existing or computed value
+     */
+    V putIfAbsent(@Nonnull K key, @Nonnull Function<K, V> mappingFunction);
 }
