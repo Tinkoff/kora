@@ -43,7 +43,7 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
         compileResult.assertSuccess();
         var module = compileResult.loadClass("KafkaListenerModule");
         var container = module.getMethod("kafkaListenerProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
-        var valueDeserializer = container.getParameters()[2];
+        var valueDeserializer = container.getParameters()[3];
 
         var valueTag = valueDeserializer.getAnnotation(Tag.class);
 
@@ -86,7 +86,7 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
         var module = compileResult.loadClass("KafkaListenerModule");
         var container = module.getMethod("kafkaListenerProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
         var keyDeserializer = container.getParameters()[2];
-        var valueDeserializer = container.getParameters()[2];
+        var valueDeserializer = container.getParameters()[3];
 
         var keyTag = keyDeserializer.getAnnotation(Tag.class);
         var valueTag = valueDeserializer.getAnnotation(Tag.class);

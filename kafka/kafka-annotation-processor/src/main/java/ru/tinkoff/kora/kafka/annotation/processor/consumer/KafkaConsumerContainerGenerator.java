@@ -2,6 +2,7 @@ package ru.tinkoff.kora.kafka.annotation.processor.consumer;
 
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
+import ru.tinkoff.kora.annotation.processor.common.TagUtils;
 import ru.tinkoff.kora.kafka.annotation.processor.consumer.KafkaConsumerHandlerGenerator.HandlerMethod;
 
 import javax.lang.model.element.ExecutableElement;
@@ -34,8 +35,20 @@ public class KafkaConsumerContainerGenerator {
             .build();
         methodBuilder.addParameter(handlerParameter);
 
-        methodBuilder.addParameter(ParameterizedTypeName.get(deserializer, handlerMethod.keyType()), "keyDeserializer");
-        methodBuilder.addParameter(ParameterizedTypeName.get(deserializer, handlerMethod.valueType()), "valueDeserializer");
+        var keyDeserializer = ParameterSpec.builder(ParameterizedTypeName.get(deserializer, handlerMethod.keyType()), "keyDeserializer");
+        if (!handlerMethod.keyTag().isEmpty()) {
+            var keyTag = TagUtils.makeAnnotationSpec(handlerMethod.keyTag());
+            keyDeserializer.addAnnotation(keyTag);
+        }
+
+        var valueDeserializer = ParameterSpec.builder(ParameterizedTypeName.get(deserializer, handlerMethod.valueType()), "valueDeserializer");
+        if (!handlerMethod.valueTag().isEmpty()) {
+            var valueTag = TagUtils.makeAnnotationSpec(handlerMethod.valueTag());
+            valueDeserializer.addAnnotation(valueTag);
+        }
+
+        methodBuilder.addParameter(keyDeserializer.build());
+        methodBuilder.addParameter(valueDeserializer.build());
         methodBuilder.addParameter(ParameterizedTypeName.get(kafkaConsumerTelemetry, handlerMethod.keyType(), handlerMethod.valueType()), "telemetry");
 
 

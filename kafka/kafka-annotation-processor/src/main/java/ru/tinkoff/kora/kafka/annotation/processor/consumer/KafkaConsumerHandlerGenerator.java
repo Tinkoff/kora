@@ -3,12 +3,14 @@ package ru.tinkoff.kora.kafka.annotation.processor.consumer;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
+import ru.tinkoff.kora.annotation.processor.common.TagUtils;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.*;
 import java.util.List;
+import java.util.Set;
 
 import static ru.tinkoff.kora.kafka.annotation.processor.KafkaClassNames.*;
 import static ru.tinkoff.kora.kafka.annotation.processor.utils.KafkaUtils.prepareMethodName;
@@ -40,7 +42,7 @@ public class KafkaConsumerHandlerGenerator {
         }
     }
 
-    record HandlerMethod(MethodSpec method, TypeName keyType, TypeName valueType) {}
+    record HandlerMethod(MethodSpec method, TypeName keyType, Set<String> keyTag, TypeName valueType, Set<String> valueTag) {}
 
     private HandlerMethod generateRecord(ExecutableElement executableElement, List<ConsumerParameter> parameters, MethodSpec.Builder methodBuilder) {
         var b = CodeBlock.builder();
@@ -113,9 +115,11 @@ public class KafkaConsumerHandlerGenerator {
         }
         b.add(");");
         b.add("$<\n};\n");
+        var keyTag = TagUtils.parseTagValue(keyTypeMirror);
+        var valueTag = TagUtils.parseTagValue(valueTypeMirror);
 
         methodBuilder.addCode(b.build());
-        return new HandlerMethod(methodBuilder.build(), keyType, valueType);
+        return new HandlerMethod(methodBuilder.build(), keyType, keyTag, valueType, valueTag);
     }
 
     private HandlerMethod generateKeyValue(ExecutableElement executableElement, List<ConsumerParameter> parameters, MethodSpec.Builder methodBuilder) {
@@ -213,9 +217,11 @@ public class KafkaConsumerHandlerGenerator {
         }
         b.add(");");
         b.add("$<\n};\n");
+        var keyTag = keyParameter == null ? Set.<String>of() : TagUtils.parseTagValue(keyParameter.element());
+        var valueTag = TagUtils.parseTagValue(valueParameter.element());
 
         methodBuilder.addCode(b.build());
-        return new HandlerMethod(methodBuilder.build(), keyType, valueType);
+        return new HandlerMethod(methodBuilder.build(), keyType, keyTag, valueType, valueTag);
     }
 
     private HandlerMethod generateRecords(ExecutableElement executableElement, List<ConsumerParameter> parameters, MethodSpec.Builder methodBuilder) {
@@ -258,8 +264,10 @@ public class KafkaConsumerHandlerGenerator {
         }
         b.add(");");
         b.add("$<\n};\n");
+        var keyTag = TagUtils.parseTagValue(keyTypeMirror);
+        var valueTag = TagUtils.parseTagValue(valueTypeMirror);
 
         methodBuilder.addCode(b.build());
-        return new HandlerMethod(methodBuilder.build(), keyType, valueType);
+        return new HandlerMethod(methodBuilder.build(), keyType, keyTag, valueType, valueTag);
     }
 }
