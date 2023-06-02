@@ -1,6 +1,14 @@
 package ru.tinkoff.kora.kafka.annotation.processor.consumer;
 
+import org.apache.kafka.common.serialization.Deserializer;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
+import ru.tinkoff.kora.common.Tag;
+import ru.tinkoff.kora.kafka.common.config.KafkaConsumerConfig;
+import ru.tinkoff.kora.kafka.common.consumer.containers.handlers.KafkaRecordsHandler;
+import ru.tinkoff.kora.kafka.common.consumer.telemetry.KafkaConsumerTelemetry;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class KafkaIncomingRecordsTest extends AbstractKafkaIncomingAnnotationProcessorTest {
     @Test
@@ -38,6 +46,34 @@ public class KafkaIncomingRecordsTest extends AbstractKafkaIncomingAnnotationPro
                 .hasValueError()
             )
         );
+    }
+
+    @Test
+    public void testProcessRecordsWithTag() throws NoSuchMethodException {
+        compile("""
+            public class KafkaListener {
+                @KafkaIncoming("test.config.path")
+                public void process(ConsumerRecords<@Tag(KafkaListener.class) byte[], @Tag(String.class) String> event) {
+                }
+            }
+            """)
+            .recordsHandler(byte[].class, String.class);
+
+        compileResult.assertSuccess();
+        var module = compileResult.loadClass("KafkaListenerModule");
+        var container = module.getMethod("kafkaListenerProcessContainer", KafkaConsumerConfig.class, KafkaRecordsHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
+        var keyDeserializer = container.getParameters()[2];
+        var valueDeserializer = container.getParameters()[2];
+
+        var keyTag = keyDeserializer.getAnnotation(Tag.class);
+        var valueTag = valueDeserializer.getAnnotation(Tag.class);
+
+        assertThat(keyTag).isNotNull()
+            .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
+            .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListener")});
+        assertThat(valueTag).isNotNull()
+            .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
+            .isEqualTo(new Class<?>[]{String.class});
     }
 
     @Test

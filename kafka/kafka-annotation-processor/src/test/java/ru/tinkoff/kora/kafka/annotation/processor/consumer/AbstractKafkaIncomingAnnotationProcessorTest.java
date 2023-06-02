@@ -149,7 +149,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
 
     @Override
     protected String commonImports() {
-        return """
+        return super.commonImports() + """
             import ru.tinkoff.kora.kafka.common.annotation.KafkaIncoming;
             import org.apache.kafka.clients.consumer.ConsumerRecords;
             import org.apache.kafka.clients.consumer.ConsumerRecord;
