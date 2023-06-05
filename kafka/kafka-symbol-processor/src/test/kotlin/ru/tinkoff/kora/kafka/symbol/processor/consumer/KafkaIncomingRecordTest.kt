@@ -23,6 +23,18 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     }
 
     @Test
+    fun testProcessRecordSuspend() {
+        compile("""
+            class KafkaListener {
+                @KafkaIncoming("test.config.path")
+                suspend fun process(event: ConsumerRecord<String, String>) {
+                }
+            }
+            
+            """.trimIndent())
+    }
+
+    @Test
     @Disabled("Is not supported by ksp yet")
     fun testProcessRecordWithTags() {
         compile("""

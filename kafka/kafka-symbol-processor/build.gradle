@@ -9,6 +9,7 @@ dependencies {
     testImplementation project(':kafka:kafka')
     testImplementation project(':config:config-common')
     testImplementation testFixtures(project(':symbol-processor-common'))
+    testImplementation(libs.kotlin.coroutines.reactor)
 }
 
 apply from:'../../in-test-generated.gradle'

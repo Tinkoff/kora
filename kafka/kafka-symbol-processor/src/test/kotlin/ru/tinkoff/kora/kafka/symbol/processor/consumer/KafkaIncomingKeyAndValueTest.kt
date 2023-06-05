@@ -22,6 +22,18 @@ class KafkaIncomingKeyAndValueTest : AbstractKafkaIncomingAnnotationProcessorTes
     }
 
     @Test
+    fun testProcessValueSuspend() {
+        compile("""
+            class KafkaListener {
+                @KafkaIncoming("test.config.path")
+                suspend fun process(value: String) {
+                }
+            }
+            
+            """.trimIndent())
+    }
+
+    @Test
     fun testProcessValueWithTag() {
         compile("""
             class KafkaListener {

@@ -4,6 +4,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -20,6 +21,8 @@ import ru.tinkoff.kora.ksp.common.TagUtils.toTagAnnotation
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 
 class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver) {
+    val dispatchers = ClassName("kotlinx.coroutines", "Dispatchers")
+    val context = ClassName("ru.tinkoff.kora.common", "Context")
 
     fun generate(functionDeclaration: KSFunctionDeclaration, parameters: List<ConsumerParameter>): HandlerFunction {
         val controller = functionDeclaration.parentDeclaration as KSClassDeclaration
@@ -81,6 +84,9 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
                 }
             }
 
+            if (function.modifiers.contains(Modifier.SUSPEND)) {
+                b.beginControlFlow("kotlinx.coroutines.runBlocking(%T.Kotlin.inject(%T.Unconfined, %T.current()))", context, dispatchers, context)
+            }
 
             addCode("controller.%N(", function.simpleName.asString())
             for ((i, it) in parameters.withIndex()) {
@@ -98,6 +104,9 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
                 })
             }
             addCode(")\n")
+            if (function.modifiers.contains(Modifier.SUSPEND)) {
+                b.endControlFlow()
+            }
         }
         val keyTag = recordParameter.key.parseTags()
         val valueTag = recordParameter.key.parseTags()
@@ -124,6 +133,9 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
         val handlerType = recordsHandler.parameterizedBy(keyTypeName, valueTypeName)
         b.returns(handlerType)
         b.controlFlow("return %T { consumer, tctx, records ->", handlerType) {
+            if (function.modifiers.contains(Modifier.SUSPEND)) {
+                b.beginControlFlow("kotlinx.coroutines.runBlocking(%T.Kotlin.inject(%T.Unconfined, %T.current()))", context, dispatchers, context)
+            }
             addCode("controller.%N(", function.simpleName.asString())
             for ((i, it) in parameters.withIndex()) {
                 if (i > 0) addCode(", ")
@@ -138,8 +150,10 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
                 })
             }
             addCode(")\n")
+            if (function.modifiers.contains(Modifier.SUSPEND)) {
+                b.endControlFlow()
+            }
         }
-            .build()
         return HandlerFunction(b.build(), keyTypeName, setOf(), valueTypeName, setOf())
     }
 
@@ -210,6 +224,10 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
             if (catchesKeyException || catchesValueException) {
                 endControlFlow()
             }
+            if (functionDeclaration.modifiers.contains(Modifier.SUSPEND)) {
+                beginControlFlow("kotlinx.coroutines.runBlocking(%T.Kotlin.inject(%T.Unconfined, %T.current()))", context, dispatchers, context)
+            }
+
             add("controller.%N(", functionDeclaration.simpleName.asString())
             var keySeen = false
             for ((i, parameter) in parameters.withIndex()) {
@@ -234,6 +252,9 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
             }
 
             add(")\n")
+            if (functionDeclaration.modifiers.contains(Modifier.SUSPEND)) {
+                endControlFlow()
+            }
         }.build())
         val keyTag = keyParameter?.parameter?.parseTags() ?: setOf()
         val valueTag = valueParameter.parameter.parseTags()
