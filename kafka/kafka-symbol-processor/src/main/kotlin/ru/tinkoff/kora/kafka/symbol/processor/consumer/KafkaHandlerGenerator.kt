@@ -15,6 +15,7 @@ import ru.tinkoff.kora.kafka.symbol.processor.KafkaClassNames.recordsHandler
 import ru.tinkoff.kora.kafka.symbol.processor.KafkaUtils.handlerFunName
 import ru.tinkoff.kora.kafka.symbol.processor.KafkaUtils.tagTypeName
 import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.controlFlow
+import ru.tinkoff.kora.ksp.common.TagUtils.parseTags
 import ru.tinkoff.kora.ksp.common.TagUtils.toTagAnnotation
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 
@@ -37,7 +38,7 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
         }
     }
 
-    data class HandlerFunction(val funSpec: FunSpec, val keyType: TypeName, val valueType: TypeName)
+    data class HandlerFunction(val funSpec: FunSpec, val keyType: TypeName, val keyTag: Set<String>, val valueType: TypeName, val valueTag: Set<String>)
 
     fun generateRecord(b: FunSpec.Builder, function: KSFunctionDeclaration, parameters: List<ConsumerParameter>): HandlerFunction {
         val recordParameter = parameters.first { it is ConsumerParameter.Record } as ConsumerParameter.Record
@@ -98,7 +99,10 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
             }
             addCode(")\n")
         }
-        return HandlerFunction(b.build(), keyType, valueType)
+        val keyTag = recordParameter.key.parseTags()
+        val valueTag = recordParameter.key.parseTags()
+
+        return HandlerFunction(b.build(), keyType, keyTag, valueType, valueTag)
     }
 
     fun generateRecords(b: FunSpec.Builder, function: KSFunctionDeclaration, parameters: List<ConsumerParameter>): HandlerFunction {
@@ -136,7 +140,7 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
             addCode(")\n")
         }
             .build()
-        return HandlerFunction(b.build(), keyTypeName, valueTypeName)
+        return HandlerFunction(b.build(), keyTypeName, setOf(), valueTypeName, setOf())
     }
 
     private fun generateKeyValue(b: FunSpec.Builder, functionDeclaration: KSFunctionDeclaration, parameters: List<ConsumerParameter>): HandlerFunction {
@@ -231,7 +235,10 @@ class KafkaHandlerGenerator(private val kspLogger: KSPLogger, resolver: Resolver
 
             add(")\n")
         }.build())
-        return HandlerFunction(b.build(), keyType, valueType)
+        val keyTag = keyParameter?.parameter?.parseTags() ?: setOf()
+        val valueTag = valueParameter.parameter.parseTags()
+
+        return HandlerFunction(b.build(), keyType, keyTag, valueType, valueTag)
     }
 
 }

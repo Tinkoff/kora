@@ -6,7 +6,7 @@ import java.util.*
 
 abstract class AbstractKafkaIncomingAnnotationProcessorTest : AbstractSymbolProcessorTest() {
     override fun commonImports(): String {
-        return """
+        return super.commonImports() + """
             import ru.tinkoff.kora.kafka.common.annotation.KafkaIncoming;
             import org.apache.kafka.clients.consumer.ConsumerRecords;
             import org.apache.kafka.clients.consumer.ConsumerRecord;

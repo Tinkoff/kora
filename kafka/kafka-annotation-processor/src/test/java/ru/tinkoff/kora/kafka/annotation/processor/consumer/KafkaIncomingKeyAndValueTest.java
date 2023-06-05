@@ -50,8 +50,6 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
         assertThat(valueTag).isNotNull()
             .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
             .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListener")});
-
-
     }
 
     @Test

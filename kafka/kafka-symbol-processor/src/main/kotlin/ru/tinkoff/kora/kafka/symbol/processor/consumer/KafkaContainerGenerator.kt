@@ -11,6 +11,7 @@ import ru.tinkoff.kora.kafka.symbol.processor.KafkaUtils.tagTypeName
 import ru.tinkoff.kora.kafka.symbol.processor.consumer.KafkaHandlerGenerator.HandlerFunction
 import ru.tinkoff.kora.ksp.common.CommonClassNames
 import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.controlFlow
+import ru.tinkoff.kora.ksp.common.TagUtils.tag
 import ru.tinkoff.kora.ksp.common.TagUtils.toTagAnnotation
 
 class KafkaContainerGenerator {
@@ -25,8 +26,8 @@ class KafkaContainerGenerator {
         val funBuilder = FunSpec.builder(functionDeclaration.containerFunName())
             .addParameter(ParameterSpec.builder("config", KafkaClassNames.kafkaConsumerConfig).addAnnotation(tagAnnotation).build())
             .addParameter(ParameterSpec.builder("handler", handlerType).addAnnotation(tagAnnotation).build())
-            .addParameter("keyDeserializer", KafkaClassNames.deserializer.parameterizedBy(keyType))
-            .addParameter("valueDeserializer", KafkaClassNames.deserializer.parameterizedBy(valueType))
+            .addParameter(ParameterSpec.builder("keyDeserializer", KafkaClassNames.deserializer.parameterizedBy(keyType)).tag(handler.keyTag).build())
+            .addParameter(ParameterSpec.builder("valueDeserializer", KafkaClassNames.deserializer.parameterizedBy(valueType)).tag(handler.valueTag).build())
             .addParameter("telemetry", KafkaClassNames.kafkaConsumerTelemetry.parameterizedBy(keyType, valueType))
             .addAnnotation(CommonClassNames.root)
             .returns(CommonClassNames.lifecycle)
