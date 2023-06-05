@@ -204,16 +204,34 @@ void processKeyValue(String key, CustomEvent value) {}
 ```java
 @KafkaIncoming("kafka.first")
 public void process(@Nullable String key, @Nullable String value, @Nullable Exception exception) {
-    if (exception != null) {
-      //handle exception
-    } else {
-      //handle key/value
+    if(exception!=null){
+    //handle exception
+    }else{
+    //handle key/value
     }
-}
+    }
 ```
 
 Обратите внимание, что все аргументы становятся необязательными, то есть мы ожидаем что у нас либо будут ключ и значение, либо исключение
 
+### Настройка key/value deserializer
+
+Для более точной настройки десериализаторов поддерживаются теги.
+Теги можно установить на параметре-ключе, параметре-значении, а так же на параметрах типа `ConsumerRecord` и `ConsumerRecords`.
+Эти теги будут установлены на зависимостях контейнера.
+Примеры:
+
+```java
+@KafkaIncoming("kafka.first")
+void process1(@Tag(Sometag1.class) String key,@Tag(Sometag2.class) String value){}
+
+@KafkaIncoming("kafka.first")
+void process2(ConsumerRecord<@Tag(Sometag1.class) String, @Tag(Sometag2.class) String> record){}
+
+@KafkaIncoming("kafka.first")
+void process2(ConsumerRecords<@Tag(Sometag1.class) String, @Tag(Sometag2.class) String> record){}
+
+```
 
 ### Прочее
 
