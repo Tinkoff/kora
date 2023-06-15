@@ -36,6 +36,11 @@ public final class PostgresTestContainer implements TestExecutionListener, Param
         }
         container = new PostgreSQLContainer<>("postgres:14");
         container.start();
+        try (var con = container.createConnection("?")) {
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         params = new PostgresParams(container.getHost(), container.getMappedPort(5432), container.getDatabaseName(), container.getUsername(), container.getPassword());
     }
 
