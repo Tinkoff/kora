@@ -19,8 +19,7 @@ public class PathTemplateMatcher<T> {
      *
      * @author Stuart Douglas
      */
-    public record PathTemplateMatch<T>(String
-                                           matchedTemplate, Map<String, String> parameters, T value) {}
+    public record PathTemplateMatch<T>(String matchedTemplate, Map<String, String> parameters, T value) {}
 
 
     public PathTemplateMatch<T> match(final String path) {

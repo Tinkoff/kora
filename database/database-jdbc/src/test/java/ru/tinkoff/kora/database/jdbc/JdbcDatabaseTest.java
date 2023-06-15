@@ -14,7 +14,6 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -76,26 +75,6 @@ class JdbcDatabaseTest {
                     var rs = stmt.executeQuery();
                     while (rs.next()) {
                         r.add(new Entity(rs.getInt(1), rs.getString(2)));
-                    }
-                }
-
-                try (var stmt = Objects.requireNonNull(db.currentConnection()).prepareStatement("INSERT INTO %s(value) VALUES (?)".formatted(tableName), new String[]{"id"})) {
-                    stmt.setString(1, "test1");
-                    stmt.addBatch();
-                    stmt.setString(1, "test2");
-                    stmt.addBatch();
-                    stmt.setString(1, "test3");
-                    stmt.addBatch();
-                    stmt.setString(1, "test4");
-                    stmt.executeBatch();
-
-                    try (var rs = stmt.getGeneratedKeys()) {
-                        var next = false;
-                        while (next = rs.next()) {
-                            System.out.println(next);
-                            System.out.println(rs.getObject(1));
-                        }
-                        System.out.println(next);
                     }
                 }
                 return r;
