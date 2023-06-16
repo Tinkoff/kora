@@ -4,6 +4,9 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +33,53 @@ public class TagUtils {
                         .stream()
                         .map(TypeMirror::toString)
                         .collect(Collectors.toSet());
+                }
+            }
+        }
+        if (element.getEnclosingElement().getKind() == ElementKind.RECORD) {
+            if (element.getKind() == ElementKind.FIELD) {
+                for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
+                    if (enclosedElement.getKind() == ElementKind.RECORD_COMPONENT && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
+                        var recordComponent = (RecordComponentElement) enclosedElement;
+                        var tag = parseTagValue(recordComponent);
+                        if (tag.isEmpty()) {
+                            return parseTagValue(recordComponent.getAccessor());
+                        } else {
+                            return tag;
+                        }
+                    }
+                }
+            }
+            if (element.getKind() == ElementKind.RECORD_COMPONENT) {
+                var recordComponent = (RecordComponentElement) element;
+                for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
+                    if (enclosedElement.getKind() == ElementKind.FIELD && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
+                        var tag = parseTagValue(enclosedElement);
+                        if (!tag.isEmpty()) {
+                            return tag;
+                        }
+                    }
+                }
+                return parseTagValue(recordComponent.getAccessor());
+            }
+            if (element.getKind() == ElementKind.METHOD) {
+                var method = (ExecutableElement) element;
+                if (!method.getParameters().isEmpty()) {
+                    return Set.of();
+                }
+                for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
+                    if (enclosedElement.getKind() == ElementKind.FIELD && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
+                        var tag = parseTagValue(enclosedElement);
+                        if (!tag.isEmpty()) {
+                            return tag;
+                        }
+                    }
+                    if (enclosedElement.getKind() == ElementKind.RECORD_COMPONENT && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
+                        var tag = parseTagValue(enclosedElement);
+                        if (!tag.isEmpty()) {
+                            return tag;
+                        }
+                    }
                 }
             }
         }
