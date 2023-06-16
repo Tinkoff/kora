@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class TagUtils {
 
-    public static Set<String> parseTagValue(Element element) {
+    private static Set<String> parseTagValue0(Element element) {
         for (var annotationMirror : element.getAnnotationMirrors()) {
             var type = annotationMirror.getAnnotationType();
             if (type.toString().equals(CommonClassNames.tag.canonicalName())) {
@@ -36,14 +36,22 @@ public class TagUtils {
                 }
             }
         }
+        return Set.of();
+    }
+
+    public static Set<String> parseTagValue(Element element) {
+        var tag = parseTagValue0(element);
+        if (!tag.isEmpty()) {
+            return tag;
+        }
         if (element.getEnclosingElement().getKind() == ElementKind.RECORD) {
             if (element.getKind() == ElementKind.FIELD) {
                 for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
                     if (enclosedElement.getKind() == ElementKind.RECORD_COMPONENT && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
                         var recordComponent = (RecordComponentElement) enclosedElement;
-                        var tag = parseTagValue(recordComponent);
+                        tag = parseTagValue0(recordComponent);
                         if (tag.isEmpty()) {
-                            return parseTagValue(recordComponent.getAccessor());
+                            return parseTagValue0(recordComponent.getAccessor());
                         } else {
                             return tag;
                         }
@@ -54,13 +62,13 @@ public class TagUtils {
                 var recordComponent = (RecordComponentElement) element;
                 for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
                     if (enclosedElement.getKind() == ElementKind.FIELD && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
-                        var tag = parseTagValue(enclosedElement);
+                        tag = parseTagValue0(enclosedElement);
                         if (!tag.isEmpty()) {
                             return tag;
                         }
                     }
                 }
-                return parseTagValue(recordComponent.getAccessor());
+                return parseTagValue0(recordComponent.getAccessor());
             }
             if (element.getKind() == ElementKind.METHOD) {
                 var method = (ExecutableElement) element;
@@ -69,13 +77,13 @@ public class TagUtils {
                 }
                 for (var enclosedElement : element.getEnclosingElement().getEnclosedElements()) {
                     if (enclosedElement.getKind() == ElementKind.FIELD && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
-                        var tag = parseTagValue(enclosedElement);
+                        tag = parseTagValue0(enclosedElement);
                         if (!tag.isEmpty()) {
                             return tag;
                         }
                     }
                     if (enclosedElement.getKind() == ElementKind.RECORD_COMPONENT && enclosedElement.getSimpleName().contentEquals(element.getSimpleName())) {
-                        var tag = parseTagValue(enclosedElement);
+                        tag = parseTagValue0(enclosedElement);
                         if (!tag.isEmpty()) {
                             return tag;
                         }
