@@ -59,7 +59,7 @@ public class AbstractClassTest extends AbstractJdbcRepositoryTest {
             }
             """);
         compileResult.assertSuccess();
-        assertThat(compileResult.loadClass("AbstractClassRepository_Impl")).isFinal();
+        assertThat(compileResult.loadClass("$TestRepository_Impl")).isFinal();
 
     }
 }
