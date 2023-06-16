@@ -9,6 +9,8 @@ import ru.tinkoff.kora.kora.app.annotation.processor.KoraAppProcessor;
 import java.sql.SQLException;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AbstractClassTest extends AbstractJdbcRepositoryTest {
     @Test
     public void testAbstractClassRepository() throws SQLException {
@@ -51,13 +53,13 @@ public class AbstractClassTest extends AbstractJdbcRepositoryTest {
             @KoraApp
             public interface TestApp {
                 default ru.tinkoff.kora.database.jdbc.JdbcConnectionFactory factory() { return null; }
-                default String someString() { return null; }
                 
                 @Root
                 default Integer someRoot(TestRepository repository) { return 1; }
             }
             """);
         compileResult.assertSuccess();
+        assertThat(compileResult.loadClass("AbstractClassRepository_Impl")).isFinal();
 
     }
 }
