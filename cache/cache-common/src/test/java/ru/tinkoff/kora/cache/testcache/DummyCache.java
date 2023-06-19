@@ -2,7 +2,6 @@ package ru.tinkoff.kora.cache.testcache;
 
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.cache.Cache;
-import ru.tinkoff.kora.cache.LoadableCache;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
