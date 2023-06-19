@@ -7,7 +7,6 @@ apply from: "${project.rootDir}/kotlin-plugin.gradle"
 
 dependencies {
     implementation project(":aop:aop-symbol-processor")
-    implementation project(":cache:cache-common")
 
     implementation libs.ksp.api
     implementation libs.kotlin.reflect

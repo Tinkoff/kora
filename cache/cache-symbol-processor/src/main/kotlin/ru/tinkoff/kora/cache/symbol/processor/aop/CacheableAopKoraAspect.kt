@@ -8,8 +8,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ksp.toClassName
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
-import ru.tinkoff.kora.cache.annotation.Cacheable
-import ru.tinkoff.kora.cache.annotation.Cacheables
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
@@ -18,9 +16,11 @@ import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
 class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheAspect() {
 
     private val CAFFEINE_CACHE = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCache")
+    private val ANNOTATION_CACHEABLE = ClassName("ru.tinkoff.kora.cache.annotation", "Cacheable")
+    private val ANNOTATION_CACHEABLES = ClassName("ru.tinkoff.kora.cache.annotation", "Cacheables")
 
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(Cacheable::class.java.canonicalName, Cacheables::class.java.canonicalName)
+        return setOf(ANNOTATION_CACHEABLE.canonicalName, ANNOTATION_CACHEABLES.canonicalName)
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {

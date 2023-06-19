@@ -1,13 +1,11 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ksp.toClassName
-import ru.tinkoff.kora.cache.annotation.*
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlow
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlux
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isFuture
@@ -23,10 +21,17 @@ class CacheOperationUtils {
 
     companion object {
 
+        private val ANNOTATION_CACHEABLE = ClassName("ru.tinkoff.kora.cache.annotation", "Cacheable")
+        private val ANNOTATION_CACHEABLES = ClassName("ru.tinkoff.kora.cache.annotation", "Cacheables")
+        private val ANNOTATION_CACHE_PUT = ClassName("ru.tinkoff.kora.cache.annotation", "CachePut")
+        private val ANNOTATION_CACHE_PUTS = ClassName("ru.tinkoff.kora.cache.annotation", "CachePuts")
+        private val ANNOTATION_CACHE_INVALIDATE = ClassName("ru.tinkoff.kora.cache.annotation", "CacheInvalidate")
+        private val ANNOTATION_CACHE_INVALIDATES = ClassName("ru.tinkoff.kora.cache.annotation", "CacheInvalidates")
+
         private val ANNOTATIONS = setOf(
-            Cacheable::class.java, Cacheables::class.java,
-            CachePut::class.java, CachePuts::class.java,
-            CacheInvalidate::class.java, CacheInvalidates::class.java
+            ANNOTATION_CACHEABLE.canonicalName, ANNOTATION_CACHEABLES.canonicalName,
+            ANNOTATION_CACHE_PUT.canonicalName, ANNOTATION_CACHE_PUTS.canonicalName,
+            ANNOTATION_CACHE_INVALIDATE.canonicalName, ANNOTATION_CACHE_INVALIDATES.canonicalName
         )
 
         fun getCacheOperation(method: KSFunctionDeclaration): CacheOperation {
@@ -70,7 +75,7 @@ class CacheOperationUtils {
                 if (anyInvalidateAll && !allInvalidateAll) {
                     throw ProcessingErrorException(
                         ProcessingError(
-                            CacheInvalidate::class.java.toString() + " not all annotations are marked 'invalidateAll' out of all for " + origin,
+                            "${ANNOTATION_CACHE_INVALIDATE.canonicalName} not all annotations are marked 'invalidateAll' out of all for " + origin,
                             method,
                             Diagnostic.Kind.ERROR,
                         )
@@ -138,40 +143,48 @@ class CacheOperationUtils {
 
         private fun getCacheableAnnotations(method: KSFunctionDeclaration): List<KSAnnotation> {
             method.annotations
-                .filter { a -> a.annotationType.resolve().toClassName() == Cacheables::class.asClassName() }
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHEABLES }
                 .map { a -> a.arguments[0] }
                 .map { arg -> arg.value }
                 .toList()
 
-            val annotationAggregate = method.getAnnotationsByType(Cacheables::class).firstOrNull()
+            val annotationAggregate = method.annotations
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHEABLES }
+                .firstOrNull()
             if (annotationAggregate != null) {
                 return emptyList()
             }
 
             return method.annotations
-                .filter { a -> a.annotationType.resolve().toClassName() == Cacheable::class.asClassName() }
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHEABLE }
                 .toList()
         }
 
         private fun getCachePutAnnotations(method: KSFunctionDeclaration): List<KSAnnotation> {
-            val annotationAggregate = method.getAnnotationsByType(CachePuts::class).firstOrNull()
+            val annotationAggregate = method.annotations
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE_PUTS }
+                .firstOrNull()
+
             if (annotationAggregate != null) {
                 return emptyList()
             }
 
             return method.annotations
-                .filter { a -> a.annotationType.resolve().toClassName() == CachePut::class.asClassName() }
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE_PUT }
                 .toList()
         }
 
         private fun getCacheInvalidateAnnotations(method: KSFunctionDeclaration): List<KSAnnotation> {
-            val annotationAggregate = method.getAnnotationsByType(CacheInvalidates::class).firstOrNull()
+            val annotationAggregate = method.annotations
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE_INVALIDATES }
+                .firstOrNull()
+
             if (annotationAggregate != null) {
                 return emptyList()
             }
 
             return method.annotations
-                .filter { a -> a.annotationType.resolve().toClassName() == CacheInvalidate::class.asClassName() }
+                .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE_INVALIDATE }
                 .toList()
         }
     }

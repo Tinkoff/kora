@@ -3,7 +3,6 @@ package ru.tinkoff.kora.cache.annotation.processor;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.AbstractKoraProcessor;
 import ru.tinkoff.kora.annotation.processor.common.CommonClassNames;
-import ru.tinkoff.kora.cache.annotation.Cache;
 import ru.tinkoff.kora.common.Module;
 import ru.tinkoff.kora.common.Tag;
 
@@ -16,12 +15,10 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
@@ -47,8 +44,8 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
     private static final ClassName REDIS_CACHE_MAPPER_KEY = ClassName.get("ru.tinkoff.kora.cache.redis", "RedisCacheKeyMapper");
     private static final ClassName REDIS_CACHE_MAPPER_VALUE = ClassName.get("ru.tinkoff.kora.cache.redis", "RedisCacheValueMapper");
 
-    private static Set<Class<? extends Annotation>> getSupportedAnnotations() {
-        return Set.of(Cache.class);
+    private static Set<String> getSupportedAnnotations() {
+        return Set.of(ANNOTATION_CACHE.canonicalName());
     }
 
     @Override
@@ -58,9 +55,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return getSupportedAnnotations().stream()
-            .map(Class::getCanonicalName)
-            .collect(Collectors.toSet());
+        return getSupportedAnnotations();
     }
 
     @Override
@@ -158,9 +153,20 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
             cacheType.getTypeArguments().get(1)));
     }
 
-    private MethodSpec getCacheMethodConfig(TypeElement cacheConfig, DeclaredType cacheType) {
-        final String configPath = cacheConfig.getAnnotation(Cache.class).value();
-        final ClassName cacheContractName = ClassName.get(cacheConfig);
+    private static String getCacheTypeConfigPath(TypeElement cacheContract) {
+        return cacheContract.getAnnotationMirrors().stream()
+            .filter(a -> ANNOTATION_CACHE.canonicalName().equals(a.getAnnotationType().asElement().toString()))
+            .flatMap(a -> a.getElementValues().entrySet().stream())
+            .filter(e -> e.getKey().getSimpleName().contentEquals("value"))
+            .map(e -> e.getValue().getValue().toString())
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("@Cache annotation config path not found!"));
+    }
+
+    private MethodSpec getCacheMethodConfig(TypeElement cacheContract, DeclaredType cacheType) {
+        final String configPath = getCacheTypeConfigPath(cacheContract);
+
+        final ClassName cacheContractName = ClassName.get(cacheContract);
         final String methodName = "%sConfig".formatted(cacheContractName.simpleName());
         final DeclaredType extractorType;
         final TypeMirror returnType;
@@ -171,7 +177,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
             returnType = elements.getTypeElement(REDIS_CACHE_CONFIG.canonicalName()).asType();
             extractorType = types.getDeclaredType(elements.getTypeElement(CLASS_CONFIG_EXTRACTOR.canonicalName()), returnType);
         } else {
-            throw new UnsupportedOperationException("Unknown implementation: " + cacheConfig.getQualifiedName());
+            throw new UnsupportedOperationException("Unknown implementation: " + cacheContract.getQualifiedName());
         }
 
         return MethodSpec.methodBuilder(methodName)
@@ -233,8 +239,8 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
     }
 
     private MethodSpec getCacheConstructor(TypeElement cacheContract, DeclaredType cacheType) {
-        final String cacheConfigName = cacheContract.getAnnotation(Cache.class).value();
-        if (!NAME_PATTERN.matcher(cacheConfigName).find()) {
+        final String configPath = getCacheTypeConfigPath(cacheContract);
+        if (!NAME_PATTERN.matcher(configPath).find()) {
             throw new IllegalArgumentException("Cache config path doesn't match pattern: " + NAME_PATTERN);
         }
 
@@ -244,7 +250,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                 .addParameter(CAFFEINE_CACHE_CONFIG, "config")
                 .addParameter(CAFFEINE_CACHE_FACTORY, "factory")
                 .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
-                .addStatement("super($S, config, factory, telemetry)", cacheConfigName)
+                .addStatement("super($S, config, factory, telemetry)", configPath)
                 .build();
         } else if (((TypeElement) cacheType.asElement()).getQualifiedName().contentEquals(REDIS_CACHE.canonicalName())) {
             final TypeMirror keyType = ((DeclaredType) cacheContract.asType()).getTypeArguments().get(0);
@@ -259,16 +265,19 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                 .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
                 .addParameter(TypeName.get(keyMapperType), "keyMapper")
                 .addParameter(TypeName.get(valueMapperType), "valueMapper")
-                .addStatement("super($S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", cacheConfigName)
+                .addStatement("super($S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", configPath)
                 .build();
         } else {
             throw new UnsupportedOperationException("Unknown implementation: " + cacheContract.getQualifiedName());
         }
     }
 
-    private static List<TypeElement> getAnnotatedElements(RoundEnvironment roundEnv) {
+    private List<TypeElement> getAnnotatedElements(RoundEnvironment roundEnv) {
         return getSupportedAnnotations().stream()
-            .flatMap(a -> roundEnv.getElementsAnnotatedWith(a).stream())
+            .flatMap(a -> {
+                var annotationType = elements.getTypeElement(a);
+                return roundEnv.getElementsAnnotatedWith(annotationType).stream();
+            })
             .filter(a -> a instanceof TypeElement)
             .map(a -> ((TypeElement) a))
             .toList();

@@ -1,8 +1,8 @@
 package ru.tinkoff.kora.cache.annotation.processor;
 
+import com.squareup.javapoet.ClassName;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingError;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
-import ru.tinkoff.kora.cache.annotation.*;
 
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic;
@@ -14,17 +14,25 @@ import java.util.Set;
 
 public final class CacheOperationUtils {
 
-    private static final Set<Class<? extends Annotation>> CACHE_ANNOTATIONS = Set.of(
-        Cacheable.class, Cacheables.class,
-        CachePut.class, CachePuts.class,
-        CacheInvalidate.class, CacheInvalidates.class);
+    private static final ClassName ANNOTATION_CACHEABLE = ClassName.get("ru.tinkoff.kora.cache.annotation", "Cacheable");
+    private static final ClassName ANNOTATION_CACHEABLES = ClassName.get("ru.tinkoff.kora.cache.annotation", "Cacheables");
+    private static final ClassName ANNOTATION_CACHE_PUT = ClassName.get("ru.tinkoff.kora.cache.annotation", "CachePut");
+    private static final ClassName ANNOTATION_CACHE_PUTS = ClassName.get("ru.tinkoff.kora.cache.annotation", "CachePuts");
+    private static final ClassName ANNOTATION_CACHE_INVALIDATE = ClassName.get("ru.tinkoff.kora.cache.annotation", "CacheInvalidate");
+    private static final ClassName ANNOTATION_CACHE_INVALIDATES = ClassName.get("ru.tinkoff.kora.cache.annotation", "CacheInvalidates");
+
+    private static final Set<String> CACHE_ANNOTATIONS = Set.of(
+        ANNOTATION_CACHEABLE.canonicalName(), ANNOTATION_CACHEABLES.canonicalName(),
+        ANNOTATION_CACHE_PUT.canonicalName(), ANNOTATION_CACHE_PUTS.canonicalName(),
+        ANNOTATION_CACHE_INVALIDATE.canonicalName(), ANNOTATION_CACHE_INVALIDATES.canonicalName()
+    );
 
     private CacheOperationUtils() {}
 
     public static CacheOperation getCacheMeta(ExecutableElement method) {
-        final List<AnnotationMirror> cacheables = getRepeatedAnnotations(method, Cacheable.class, Cacheables.class);
-        final List<AnnotationMirror> puts = getRepeatedAnnotations(method, CachePut.class, CachePuts.class);
-        final List<AnnotationMirror> invalidates = getRepeatedAnnotations(method, CacheInvalidate.class, CacheInvalidates.class);
+        final List<AnnotationMirror> cacheables = getRepeatedAnnotations(method, ANNOTATION_CACHEABLE.canonicalName(), ANNOTATION_CACHEABLES.canonicalName());
+        final List<AnnotationMirror> puts = getRepeatedAnnotations(method, ANNOTATION_CACHE_PUT.canonicalName(), ANNOTATION_CACHE_PUTS.canonicalName());
+        final List<AnnotationMirror> invalidates = getRepeatedAnnotations(method, ANNOTATION_CACHE_INVALIDATE.canonicalName(), ANNOTATION_CACHE_INVALIDATES.canonicalName());
 
         final String className = method.getEnclosingElement().getSimpleName().toString();
         final String methodName = method.getSimpleName().toString();
@@ -56,7 +64,7 @@ public final class CacheOperationUtils {
 
             if (anyInvalidateAll && !allInvalidateAll) {
                 throw new ProcessingErrorException(new ProcessingError(Diagnostic.Kind.ERROR,
-                    CacheInvalidate.class + " not all annotations are marked 'invalidateAll' out of all for " + origin, method));
+                    ANNOTATION_CACHE_INVALIDATE.canonicalName() + " not all annotations are marked 'invalidateAll' out of all for " + origin, method));
             }
 
             final CacheOperation.Type type = (allInvalidateAll) ? CacheOperation.Type.EVICT_ALL : CacheOperation.Type.EVICT;

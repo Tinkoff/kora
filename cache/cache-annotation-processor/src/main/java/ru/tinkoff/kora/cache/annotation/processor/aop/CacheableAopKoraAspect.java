@@ -5,21 +5,20 @@ import com.squareup.javapoet.CodeBlock;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
-import ru.tinkoff.kora.cache.annotation.Cacheable;
-import ru.tinkoff.kora.cache.annotation.Cacheables;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import java.util.List;
 import java.util.Set;
 
 public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
 
     private static final ClassName CAFFEINE_CACHE = ClassName.get("ru.tinkoff.kora.cache.caffeine", "CaffeineCache");
+    private static final ClassName ANNOTATION_CACHEABLE = ClassName.get("ru.tinkoff.kora.cache.annotation", "Cacheable");
+    private static final ClassName ANNOTATION_CACHEABLES = ClassName.get("ru.tinkoff.kora.cache.annotation", "Cacheables");
 
     private final ProcessingEnvironment env;
 
@@ -29,7 +28,7 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(Cacheable.class.getCanonicalName(), Cacheables.class.getCanonicalName());
+        return Set.of(ANNOTATION_CACHEABLE.canonicalName(), ANNOTATION_CACHEABLES.canonicalName());
     }
 
     @Override
@@ -69,9 +68,9 @@ public class CacheableAopKoraAspect extends AbstractAopCacheAspect {
 
         }
 
-        if(operation.cacheImplementations().size() == 1) {
+        if (operation.cacheImplementations().size() == 1) {
             var superTypes = env.getTypeUtils().directSupertypes(env.getElementUtils().getTypeElement(operation.cacheImplementations().get(0)).asType());
-            if(superTypes.stream().anyMatch(t -> t instanceof DeclaredType dt && dt.asElement().toString().equals(CAFFEINE_CACHE.canonicalName()))) {
+            if (superTypes.stream().anyMatch(t -> t instanceof DeclaredType dt && dt.asElement().toString().equals(CAFFEINE_CACHE.canonicalName()))) {
                 return CodeBlock.builder()
                     .add(keyBlock)
                     .add(CodeBlock.of("""

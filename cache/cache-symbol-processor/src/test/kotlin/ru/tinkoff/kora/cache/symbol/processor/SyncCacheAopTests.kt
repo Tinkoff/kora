@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.cache.symbol.processor
 
 import com.google.devtools.ksp.KspExperimental
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

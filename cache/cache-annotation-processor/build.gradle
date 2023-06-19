@@ -1,8 +1,4 @@
 dependencies {
-    implementation project(":common")
-    implementation project(":cache:cache-common")
-
-    implementation project(":annotation-processor-common")
     implementation project(":aop:aop-annotation-processor")
 
     implementation libs.javapoet

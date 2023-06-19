@@ -1,10 +1,9 @@
 package ru.tinkoff.kora.cache.annotation.processor.aop;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import reactor.core.publisher.Flux;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
-import ru.tinkoff.kora.cache.annotation.CachePut;
-import ru.tinkoff.kora.cache.annotation.CachePuts;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
@@ -15,6 +14,9 @@ import java.util.Set;
 
 public class CachePutAopKoraAspect extends AbstractAopCacheAspect {
 
+    private static final ClassName ANNOTATION_CACHE_PUT = ClassName.get("ru.tinkoff.kora.cache.annotation", "CachePut");
+    private static final ClassName ANNOTATION_CACHE_PUTS = ClassName.get("ru.tinkoff.kora.cache.annotation", "CachePuts");
+
     private final ProcessingEnvironment env;
 
     public CachePutAopKoraAspect(ProcessingEnvironment env) {
@@ -23,7 +25,7 @@ public class CachePutAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(CachePut.class.getCanonicalName(), CachePuts.class.getCanonicalName());
+        return Set.of(ANNOTATION_CACHE_PUT.canonicalName(), ANNOTATION_CACHE_PUTS.canonicalName());
     }
 
     @Override

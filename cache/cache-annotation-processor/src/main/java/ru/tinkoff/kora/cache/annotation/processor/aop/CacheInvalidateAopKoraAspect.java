@@ -1,9 +1,8 @@
 package ru.tinkoff.kora.cache.annotation.processor.aop;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
-import ru.tinkoff.kora.cache.annotation.CacheInvalidate;
-import ru.tinkoff.kora.cache.annotation.CacheInvalidates;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
@@ -14,6 +13,9 @@ import java.util.Set;
 
 public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
+    private static final ClassName ANNOTATION_CACHE_INVALIDATE = ClassName.get("ru.tinkoff.kora.cache.annotation", "CacheInvalidate");
+    private static final ClassName ANNOTATION_CACHE_INVALIDATES = ClassName.get("ru.tinkoff.kora.cache.annotation", "CacheInvalidates");
+
     private final ProcessingEnvironment env;
 
     public CacheInvalidateAopKoraAspect(ProcessingEnvironment env) {
@@ -22,7 +24,7 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(CacheInvalidate.class.getCanonicalName(), CacheInvalidates.class.getCanonicalName());
+        return Set.of(ANNOTATION_CACHE_INVALIDATE.canonicalName(), ANNOTATION_CACHE_INVALIDATES.canonicalName());
     }
 
     @Override

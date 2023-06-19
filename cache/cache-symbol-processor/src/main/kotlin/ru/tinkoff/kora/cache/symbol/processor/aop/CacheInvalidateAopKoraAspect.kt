@@ -3,10 +3,9 @@ package ru.tinkoff.kora.cache.symbol.processor.aop
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
-import ru.tinkoff.kora.cache.annotation.CacheInvalidate
-import ru.tinkoff.kora.cache.annotation.CacheInvalidates
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
@@ -14,8 +13,11 @@ import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
 @KspExperimental
 class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheAspect() {
 
+    private val ANNOTATION_CACHE_INVALIDATE = ClassName("ru.tinkoff.kora.cache.annotation", "CacheInvalidate")
+    private val ANNOTATION_CACHE_INVALIDATES = ClassName("ru.tinkoff.kora.cache.annotation", "CacheInvalidates")
+
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(CacheInvalidate::class.java.canonicalName, CacheInvalidates::class.java.canonicalName)
+        return setOf(ANNOTATION_CACHE_INVALIDATE.canonicalName, ANNOTATION_CACHE_INVALIDATES.canonicalName)
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {

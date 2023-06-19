@@ -3,10 +3,9 @@ package ru.tinkoff.kora.cache.symbol.processor.aop
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
-import ru.tinkoff.kora.cache.annotation.CachePut
-import ru.tinkoff.kora.cache.annotation.CachePuts
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
@@ -14,8 +13,11 @@ import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
 @KspExperimental
 class CachePutAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheAspect() {
 
+    private val ANNOTATION_CACHE_PUT = ClassName("ru.tinkoff.kora.cache.annotation", "CachePut")
+    private val ANNOTATION_CACHE_PUTS = ClassName("ru.tinkoff.kora.cache.annotation", "CachePuts")
+
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(CachePut::class.java.canonicalName, CachePuts::class.java.canonicalName)
+        return setOf(ANNOTATION_CACHE_PUT.canonicalName, ANNOTATION_CACHE_PUTS.canonicalName)
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {

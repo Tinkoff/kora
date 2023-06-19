@@ -15,7 +15,6 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 import com.squareup.kotlinpoet.ksp.writeTo
-import ru.tinkoff.kora.cache.annotation.Cache
 import ru.tinkoff.kora.common.Module
 import ru.tinkoff.kora.common.Tag
 import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
@@ -49,8 +48,7 @@ class CacheSymbolProcessor(
     private val REDIS_CACHE_MAPPER_VALUE = ClassName("ru.tinkoff.kora.cache.redis", "RedisCacheValueMapper")
 
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(Cache::class.qualifiedName!!)
-            .toList()
+        val symbols = resolver.getSymbolsWithAnnotation(ANNOTATION_CACHE.canonicalName).toList()
 
         val symbolsToProcess = symbols.filter { it.validate() }
         symbolsToProcess.forEach {
@@ -144,7 +142,7 @@ class CacheSymbolProcessor(
 
     private fun getCacheMethodConfig(cacheContract: KSClassDeclaration, cacheType: KSTypeReference, resolver: Resolver): FunSpec {
         val configPath = cacheContract.annotations
-            .filter { a -> a.annotationType.resolve().toClassName() == Cache::class.asClassName() }
+            .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE }
             .flatMap { a -> a.arguments }
             .filter { arg -> arg.name!!.getShortName() == "value" }
             .map { arg -> arg.value as String }
@@ -191,13 +189,15 @@ class CacheSymbolProcessor(
         return if (resolved.toClassName() == CAFFEINE_CACHE) {
             FunSpec.builder(methodName)
                 .addModifiers(KModifier.PUBLIC)
-                .addParameter(ParameterSpec.builder("config", CAFFEINE_CACHE_CONFIG)
-                    .addAnnotation(
-                        AnnotationSpec.builder(Tag::class)
-                            .addMember("${cacheContract.simpleName.getShortName()}::class")
-                            .build()
-                    )
-                    .build())
+                .addParameter(
+                    ParameterSpec.builder("config", CAFFEINE_CACHE_CONFIG)
+                        .addAnnotation(
+                            AnnotationSpec.builder(Tag::class)
+                                .addMember("${cacheContract.simpleName.getShortName()}::class")
+                                .build()
+                        )
+                        .build()
+                )
                 .addParameter("factory", CAFFEINE_CACHE_FACTORY)
                 .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
                 .addStatement("return %T(config, factory, telemetry)", cacheImplName)
@@ -210,13 +210,15 @@ class CacheSymbolProcessor(
             val valueMapperType = REDIS_CACHE_MAPPER_VALUE.parameterizedBy(valueType.toTypeVariableName())
             FunSpec.builder(methodName)
                 .addModifiers(KModifier.PUBLIC)
-                .addParameter(ParameterSpec.builder("config", REDIS_CACHE_CONFIG)
-                    .addAnnotation(
-                        AnnotationSpec.builder(Tag::class)
-                            .addMember("${cacheContract.simpleName.getShortName()}::class")
-                            .build()
-                    )
-                    .build())
+                .addParameter(
+                    ParameterSpec.builder("config", REDIS_CACHE_CONFIG)
+                        .addAnnotation(
+                            AnnotationSpec.builder(Tag::class)
+                                .addMember("${cacheContract.simpleName.getShortName()}::class")
+                                .build()
+                        )
+                        .build()
+                )
                 .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
                 .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
                 .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
@@ -258,7 +260,7 @@ class CacheSymbolProcessor(
 
     private fun getCacheSuperConstructorCall(cacheContract: KSClassDeclaration, cacheType: KSTypeReference): CodeBlock {
         val configPath = cacheContract.annotations
-            .filter { a -> a.annotationType.resolve().toClassName() == Cache::class.asClassName() }
+            .filter { a -> a.annotationType.resolve().toClassName() == ANNOTATION_CACHE }
             .flatMap { a -> a.arguments }
             .filter { arg -> arg.name!!.getShortName() == "value" }
             .map { arg -> arg.value as String }
