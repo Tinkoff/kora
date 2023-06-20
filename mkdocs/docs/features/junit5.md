@@ -22,8 +22,6 @@ test {
 Предположим есть класс `@Component`:
 
 ```java
-import java.util.function.Supplier;
-
 @Component
 final class Component1 implements Supplier<String> {
 
@@ -55,8 +53,6 @@ final class Component12 implements Lifecycle, Supplier<String> {
 Также `@KoraApp` класс:
 
 ```java
-import java.util.function.Supplier;
-
 @KoraApp
 public interface ApplicationModules {
 
@@ -247,8 +243,6 @@ class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
 Пример замены компонента в графе:
 ```java
-import java.util.function.Supplier;
-
 @KoraAppTest(application = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
@@ -269,8 +263,6 @@ class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
 Пример замены компонента в графе:
 ```java
-import java.util.function.Supplier;
-
 @KoraAppTest(application = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
