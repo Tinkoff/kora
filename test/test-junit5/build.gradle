@@ -1,12 +1,12 @@
 dependencies {
-    api testFixtures(project(":annotation-processor-common"))
     api libs.junit.jupiter
-    api "org.mockito:mockito-core:5.1.1"
+    api "org.mockito:mockito-core:5.4.0"
 
     implementation project(":common")
     implementation project(":config:config-common")
     implementation project(":kora-app-annotation-processor")
     implementation libs.jetbrains.annotations
+    implementation testFixtures(project(":annotation-processor-common"))
 
     testAnnotationProcessor project(":annotation-processors")
     testImplementation project(":annotation-processors")
