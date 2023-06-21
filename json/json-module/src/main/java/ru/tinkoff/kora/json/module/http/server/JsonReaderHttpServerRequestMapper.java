@@ -19,7 +19,12 @@ public class JsonReaderHttpServerRequestMapper<T> implements HttpServerRequestMa
         return ReactorUtils.toByteArrayMono(request.body())
             .handle((bytes, sink) -> {
                 try {
-                    sink.next(this.reader.read(bytes));
+                    var body = this.reader.read(bytes);
+                    if (body != null) {
+                        sink.next(body);
+                    } else {
+                        sink.complete();
+                    }
                 } catch (Exception e) {
                     var httpException = HttpServerResponseException.of(e, 400, e.getMessage());
                     sink.error(httpException);
