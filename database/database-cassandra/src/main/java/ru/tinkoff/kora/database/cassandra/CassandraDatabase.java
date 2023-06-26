@@ -21,7 +21,6 @@ public final class CassandraDatabase implements CassandraConnectionFactory, Life
         this.telemetry = telemetryFactory.get(
             Objects.requireNonNullElse(config.basic().sessionName(), "cassandra"),
             "cassandra",
-            "cassandra",
             Optional.ofNullable(config.auth()).map(CassandraConfig.CassandraCredentials::login).orElse("anonymous")
         );
     }

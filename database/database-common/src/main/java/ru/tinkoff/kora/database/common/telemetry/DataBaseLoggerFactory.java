@@ -2,12 +2,12 @@ package ru.tinkoff.kora.database.common.telemetry;
 
 public interface DataBaseLoggerFactory {
 
-    DataBaseLogger get(String poolName, String dbType, String driverType);
+    DataBaseLogger get(String poolName);
 
     final class DefaultDataBaseLoggerFactory implements DataBaseLoggerFactory {
         @Override
-        public DataBaseLogger get(String poolName, String dbType, String driverType) {
-            return new DefaultDataBaseLogger(poolName, dbType, driverType);
+        public DataBaseLogger get(String poolName) {
+            return new DefaultDataBaseLogger(poolName);
         }
     }
 }

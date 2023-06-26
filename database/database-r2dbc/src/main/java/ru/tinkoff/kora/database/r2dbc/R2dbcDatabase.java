@@ -41,7 +41,6 @@ public class R2dbcDatabase implements R2dbcConnectionFactory, Lifecycle {
         this.connectionFactory = r2dbcConnectionFactory(config, customizers);
         this.telemetry = telemetryFactory.get(config.poolName(),
             config.r2dbcUrl().substring(5, config.r2dbcUrl().indexOf(":", 6)),
-            "r2dbc",
             config.username());
     }
 

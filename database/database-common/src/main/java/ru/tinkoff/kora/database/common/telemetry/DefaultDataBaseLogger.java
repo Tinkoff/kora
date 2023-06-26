@@ -11,14 +11,10 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
 
     private final Logger log;
     private final String poolName;
-    private final String dbType;
-    private final String driverType;
 
-    public DefaultDataBaseLogger(String poolName, String dbType, String driverType) {
+    public DefaultDataBaseLogger(String poolName) {
         this.poolName = poolName;
-        this.dbType = dbType;
-        this.driverType = driverType;
-        this.log = LoggerFactory.getLogger("ru.tinkoff.kora.database." + driverType + "." + dbType + "." + poolName + ".query");
+        this.log = LoggerFactory.getLogger("ru.tinkoff.kora.database." + poolName + ".query");
     }
 
     @Override
@@ -31,8 +27,6 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
         var marker = StructuredArgument.marker("sqlQuery", gen -> {
             gen.writeStartObject();
             gen.writeStringField("pool", this.poolName);
-            gen.writeStringField("database", this.dbType);
-            gen.writeStringField("driver", this.driverType);
             gen.writeStringField("queryId", queryContext.queryId());
             gen.writeEndObject();
         });
@@ -49,8 +43,6 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
         var marker = StructuredArgument.marker("sqlQuery", gen -> {
             gen.writeStartObject();
             gen.writeStringField("pool", this.poolName);
-            gen.writeStringField("database", this.dbType);
-            gen.writeStringField("driver", this.driverType);
             gen.writeStringField("queryId", queryContext.queryId());
             gen.writeNumberField("processingTime", duration / 1_000_000);
             gen.writeEndObject();
