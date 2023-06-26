@@ -40,7 +40,7 @@ public class KafkaConsumerModuleGenerator {
                 continue;
             }
             var method = (ExecutableElement) element;
-            var annotation = AnnotationUtils.findAnnotation(method, KafkaClassNames.kafkaIncoming);
+            var annotation = AnnotationUtils.findAnnotation(method, KafkaClassNames.kafkaListener);
             if (annotation == null) {
                 continue;
             }

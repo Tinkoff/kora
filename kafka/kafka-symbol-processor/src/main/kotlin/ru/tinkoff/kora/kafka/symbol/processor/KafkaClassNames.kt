@@ -10,7 +10,7 @@ object KafkaClassNames {
     val commonClientConfigs = ClassName("org.apache.kafka.clients", "CommonClientConfigs")
 
 
-    val kafkaIncoming = ClassName("ru.tinkoff.kora.kafka.common.annotation", "KafkaIncoming")
+    val kafkaListener = ClassName("ru.tinkoff.kora.kafka.common.annotation", "KafkaListener")
     val kafkaConsumerConfig = ClassName("ru.tinkoff.kora.kafka.common.config", "KafkaConsumerConfig")
     val kafkaSubscribeConsumerContainer = ClassName("ru.tinkoff.kora.kafka.common.consumer.containers", "KafkaSubscribeConsumerContainer")
     val kafkaAssignConsumerContainer = ClassName("ru.tinkoff.kora.kafka.common.consumer.containers", "KafkaAssignConsumerContainer")

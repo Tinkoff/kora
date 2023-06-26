@@ -11,17 +11,17 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class KafkaIncomingAnnotationProcessor extends AbstractKoraProcessor {
+public class KafkaListenerAnnotationProcessor extends AbstractKoraProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(KafkaClassNames.kafkaIncoming.canonicalName());
+        return Set.of(KafkaClassNames.kafkaListener.canonicalName());
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        var kafkaIncoming = this.elements.getTypeElement(KafkaClassNames.kafkaIncoming.canonicalName());
-        var typeElements = roundEnv.getElementsAnnotatedWith(kafkaIncoming)
+        var kafkaListener = this.elements.getTypeElement(KafkaClassNames.kafkaListener.canonicalName());
+        var typeElements = roundEnv.getElementsAnnotatedWith(kafkaListener)
             .stream()
             .map(Element::getEnclosingElement)
             .map(TypeElement.class::cast)

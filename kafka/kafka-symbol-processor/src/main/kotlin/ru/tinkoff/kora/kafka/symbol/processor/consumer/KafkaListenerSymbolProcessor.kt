@@ -10,13 +10,13 @@ import ru.tinkoff.kora.ksp.common.BaseSymbolProcessor
 import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
 import ru.tinkoff.kora.ksp.common.visitFunction
 
-class KafkaIncomingSymbolProcessor(private val environment: SymbolProcessorEnvironment) : BaseSymbolProcessor(environment) {
+class KafkaListenerSymbolProcessor(private val environment: SymbolProcessorEnvironment) : BaseSymbolProcessor(environment) {
     lateinit var resolver: Resolver
 
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
         this.resolver = resolver
         val controllers = hashSetOf<KSClassDeclaration>()
-        for (it in resolver.getSymbolsWithAnnotation(KafkaClassNames.kafkaIncoming.canonicalName)) {
+        for (it in resolver.getSymbolsWithAnnotation(KafkaClassNames.kafkaListener.canonicalName)) {
             it.visitFunction { ksFunctionDeclaration ->
                 controllers.add(ksFunctionDeclaration.parentDeclaration as KSClassDeclaration)
             }

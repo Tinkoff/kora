@@ -12,12 +12,12 @@ import ru.tinkoff.kora.kafka.common.exceptions.RecordValueDeserializationExcepti
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotationProcessorTest {
+public class KafkaListenerKeyAndValueTest extends AbstractKafkaListenerAnnotationProcessorTest {
     @Test
     public void testProcessValue() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(String value) {
                 }
             }
@@ -34,29 +34,29 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessValueWithTag() throws NoSuchMethodException {
         compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
-                public void process(@Tag(KafkaListener.class) String value) {
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
+                public void process(@Tag(KafkaListenerClass.class) String value) {
                 }
             }
             """);
         compileResult.assertSuccess();
-        var module = compileResult.loadClass("KafkaListenerModule");
-        var container = module.getMethod("kafkaListenerProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
+        var module = compileResult.loadClass("KafkaListenerClassModule");
+        var container = module.getMethod("kafkaListenerClassProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
         var valueDeserializer = container.getParameters()[3];
 
         var valueTag = valueDeserializer.getAnnotation(Tag.class);
 
         assertThat(valueTag).isNotNull()
             .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
-            .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListener")});
+            .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListenerClass")});
     }
 
     @Test
     public void testProcessKeyAndValue() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(String key, String value) {
                 }
             }
@@ -75,14 +75,14 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessKeyAndValueWithTag() throws NoSuchMethodException {
         compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
-                public void process(@Tag(KafkaListener.class) String key, @Tag(String.class) String value) {
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
+                public void process(@Tag(KafkaListenerClass.class) String key, @Tag(String.class) String value) {
                 }
             }
             """);
-        var module = compileResult.loadClass("KafkaListenerModule");
-        var container = module.getMethod("kafkaListenerProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
+        var module = compileResult.loadClass("KafkaListenerClassModule");
+        var container = module.getMethod("kafkaListenerClassProcessContainer", KafkaConsumerConfig.class, KafkaRecordHandler.class, Deserializer.class, Deserializer.class, KafkaConsumerTelemetry.class);
         var keyDeserializer = container.getParameters()[2];
         var valueDeserializer = container.getParameters()[3];
 
@@ -91,7 +91,7 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
 
         assertThat(keyTag).isNotNull()
             .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
-            .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListener")});
+            .isEqualTo(new Class<?>[]{compileResult.loadClass("KafkaListenerClass")});
         assertThat(valueTag).isNotNull()
             .extracting(Tag::value, InstanceOfAssertFactories.array(Class[].class))
             .isEqualTo(new Class<?>[]{String.class});
@@ -100,8 +100,8 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessValueAndValueException() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(String value, RecordValueDeserializationException exception) {
                 }
             }
@@ -127,8 +127,8 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessValueAndException() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(String value, Exception exception) {
                 }
             }
@@ -154,8 +154,8 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessKeyValueAndException() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(String key, String value, Exception exception) {
                 }
             }
@@ -184,8 +184,8 @@ public class KafkaIncomingKeyAndValueTest extends AbstractKafkaIncomingAnnotatio
     @Test
     public void testProcessValueAndConsumer() {
         var handler = compile("""
-            public class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            public class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 public void process(Consumer<?, ?> consumer, String value, Exception exception) {
                 }
             }

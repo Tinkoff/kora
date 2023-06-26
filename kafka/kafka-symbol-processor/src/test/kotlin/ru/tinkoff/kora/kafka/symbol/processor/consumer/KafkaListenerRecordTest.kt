@@ -9,12 +9,12 @@ import ru.tinkoff.kora.kafka.common.config.KafkaConsumerConfig
 import ru.tinkoff.kora.kafka.common.consumer.containers.handlers.KafkaRecordHandler
 import ru.tinkoff.kora.kafka.common.consumer.telemetry.KafkaConsumerTelemetry
 
-class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
+class KafkaListenerRecordTest : AbstractKafkaListenerAnnotationProcessorTest() {
     @Test
     fun testProcessRecord() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<String, String>) {
                 }
             }
@@ -25,8 +25,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordSuspend() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 suspend fun process(event: ConsumerRecord<String, String>) {
                 }
             }
@@ -38,8 +38,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Disabled("Is not supported by ksp yet")
     fun testProcessRecordWithTags() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<@Tag(KafkaListener::class) String, @Tag(String::class) String>) {
                 }
             }
@@ -62,8 +62,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAnyKeyType() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<*, String>) {
                 }
             }
@@ -74,8 +74,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAndConsumer() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(consumer: Consumer<String, String>, event: ConsumerRecord<String, String>) {
                 }
             }
@@ -86,8 +86,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAndKeyParseException() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<String, String>?, exception: RecordKeyDeserializationException?) {
                 }
             }
@@ -98,8 +98,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAndValueParseException() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<String, String>?, exception: RecordValueDeserializationException?) {
                 }
             }
@@ -110,8 +110,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAndParseException() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<String, String>?, exception: Exception?) {
                 }
             }
@@ -122,8 +122,8 @@ class KafkaIncomingRecordTest : AbstractKafkaIncomingAnnotationProcessorTest() {
     @Test
     fun testProcessRecordAndParseThrowable() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecord<String, String>?, exception: Throwable?) {
                 }
             }

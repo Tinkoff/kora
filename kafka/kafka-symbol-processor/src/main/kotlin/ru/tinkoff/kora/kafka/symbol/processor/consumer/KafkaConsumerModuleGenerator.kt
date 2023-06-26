@@ -22,11 +22,11 @@ class KafkaConsumerModuleGenerator(
             .generated(KafkaConsumerModuleGenerator::class)
         classBuilder.addAnnotation(AnnotationSpec.builder(CommonClassNames.module).build())
         for (function in declaration.getDeclaredFunctions()) {
-            val kafkaIncoming = function.findAnnotation(KafkaClassNames.kafkaIncoming)
-            if (kafkaIncoming == null) {
+            val kafkaListener = function.findAnnotation(KafkaClassNames.kafkaListener)
+            if (kafkaListener == null) {
                 continue
             }
-            val configTagData = kafkaConfigGenerator.generate(function, kafkaIncoming)
+            val configTagData = kafkaConfigGenerator.generate(function, kafkaListener)
             classBuilder.addFunction(configTagData.configFunction)
             classBuilder.addType(configTagData.tag)
 

@@ -91,11 +91,11 @@ kafka {
 
 ### Генерация по аннотации
 
-В большинстве случаев проще всего будет воспользоваться аннотацией `@KafkaIncoming`, например, как в коде ниже:
+В большинстве случаев проще всего будет воспользоваться аннотацией `@KafkaListener`, например, как в коде ниже:
 ```java
 @Component
 final class Consumers {
-    @KafkaIncoming("kafka.first")
+    @KafkaListener("kafka.first")
     void processRecord(ConsumerRecord<String, String> record) { 
         //some handler code
     }
@@ -132,11 +132,11 @@ public interface ConsumersModule {
 ```java
 @Component
 final class Consumers {
-    @KafkaIncoming("kafka.first")
+    @KafkaListener("kafka.first")
     void processRecord(ConsumerRecord<String, String> record) { 
         //some handler code
     }
-    @KafkaIncoming("kafka.other")
+    @KafkaListener("kafka.other")
     void processRecords(ConsumerRecords<String, String> records, Consumer<String,String> consumer) {
         //some handler code
         consumer.commitAsync();
@@ -147,45 +147,46 @@ final class Consumers {
 
 ### Поддерживаемые сигнатуры:
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void processRecordsWithConsumer(ConsumerRecords<String, CustomEvent> records, Consumer<String, CustomEvent> consumer) {}
 ```
 Принимает `ConsumerRecords` и `Consumer`, коммитить оффсет нужно вручную.
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void processRecordWithConsumer(ConsumerRecord<String, String> records, Consumer<String, String> consumer) {}
 ```
 Принимает `ConsumerRecord` и `Consumer`. Как и в предыдущем случае, `commit` нужно вызывать вручную. Вызывается для каждого `ConsumerRecord` полученного при вызове `poll()`
 
 ```java
-@KafkaIncoming("kafka.first"
+@KafkaListener("kafka.first"
 void processRecords(ConsumerRecords<String, String> records) {}
 ```
 Принимает `ConsumerRecords`, после вызова обработчика вызывается `commitSync()`.
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void processRecord(ConsumerRecord<String, String> record) {}
 ```
 Принимает `ConsumerRecord`, после обработки всех `ConsumerRecord` вызывается `commitSync()`.
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void processValue(CustomEvent value) {}
 ```
 
 Принимает `ConsumerRecord.value`, после обработки всех событий вызывается `commitSync()`.
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void processKeyValue(String key, CustomEvent value) {}
 ```
 То же, что и предыдущий кейс, но добавляется key из `ConsumerRecord`
 
 ### Исключения в обработчике
 
-Если метод помеченный `@KafkaIncoming` выбросит исключение, то Consumer будет перезапущен, потому что нет общего решения, как реагировать на это и разработчик **должен** сам решить как эту ситуацию обрабатывать.
+Если метод помеченный `@KafkaListener` выбросит исключение, то Consumer будет перезапущен, потому что нет общего решения, как реагировать на это и разработчик **должен** сам решить как эту ситуацию
+обрабатывать.
 
 ### Обработка ошибок десериализации
 
@@ -202,7 +203,7 @@ void processKeyValue(String key, CustomEvent value) {}
 или `RecordValueDeserializationException`.
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 public void process(@Nullable String key, @Nullable String value, @Nullable Exception exception) {
     if(exception!=null){
     //handle exception
@@ -222,13 +223,13 @@ public void process(@Nullable String key, @Nullable String value, @Nullable Exce
 Примеры:
 
 ```java
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void process1(@Tag(Sometag1.class) String key,@Tag(Sometag2.class) String value){}
 
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void process2(ConsumerRecord<@Tag(Sometag1.class) String, @Tag(Sometag2.class) String> record){}
 
-@KafkaIncoming("kafka.first")
+@KafkaListener("kafka.first")
 void process2(ConsumerRecords<@Tag(Sometag1.class) String, @Tag(Sometag2.class) String> record){}
 
 ```

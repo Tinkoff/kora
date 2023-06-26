@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
-public @interface KafkaIncoming {
+public @interface KafkaListener {
 
     /**
      * @return topic name to subscribe to

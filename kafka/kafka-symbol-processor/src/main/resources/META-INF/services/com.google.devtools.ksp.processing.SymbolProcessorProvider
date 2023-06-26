@@ -1,1 +1,1 @@
-ru.tinkoff.kora.kafka.symbol.processor.consumer.KafkaIncomingSymbolProcessorProvider
+ru.tinkoff.kora.kafka.symbol.processor.consumer.KafkaListenerSymbolProcessorProvider

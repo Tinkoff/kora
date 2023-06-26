@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends AbstractAnnotationProcessorTest {
+public abstract class AbstractKafkaListenerAnnotationProcessorTest extends AbstractAnnotationProcessorTest {
     protected Consumer consumer = Mockito.mock(Consumer.class);
     protected KafkaConsumerTelemetry.KafkaConsumerRecordTelemetryContext recordTelemetry = Mockito.mock(KafkaConsumerTelemetry.KafkaConsumerRecordTelemetryContext.class);
     protected KafkaConsumerTelemetry.KafkaConsumerRecordsTelemetryContext recordsTelemetry = Mockito.mock(KafkaConsumerTelemetry.KafkaConsumerRecordsTelemetryContext.class);
@@ -150,7 +150,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
     @Override
     protected String commonImports() {
         return super.commonImports() + """
-            import ru.tinkoff.kora.kafka.common.annotation.KafkaIncoming;
+            import ru.tinkoff.kora.kafka.common.annotation.KafkaListener;
             import org.apache.kafka.clients.consumer.ConsumerRecords;
             import org.apache.kafka.clients.consumer.ConsumerRecord;
             import org.apache.kafka.clients.consumer.Consumer;
@@ -161,7 +161,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
     }
 
     protected ListenerModule compile(@Language("java") String... sources) {
-        super.compile(List.of(new KafkaIncomingAnnotationProcessor()), sources);
+        super.compile(List.of(new KafkaListenerAnnotationProcessor()), sources);
         compileResult.assertSuccess();
         return new ListenerModule(compileResult);
     }
@@ -174,9 +174,9 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
 
         protected ListenerModule(CompileResult compileResult) {
             this.compileResult = compileResult;
-            this.controllerClass = Objects.requireNonNull(compileResult.loadClass("KafkaListener"));
-            this.moduleClass = Objects.requireNonNull(compileResult.loadClass("KafkaListenerModule"));
-            this.tagValue = new Class<?>[]{compileResult.loadClass("KafkaListenerModule$KafkaListenerProcessTag")};
+            this.controllerClass = Objects.requireNonNull(compileResult.loadClass("KafkaListenerClass"));
+            this.moduleClass = Objects.requireNonNull(compileResult.loadClass("KafkaListenerClassModule"));
+            this.tagValue = new Class<?>[]{compileResult.loadClass("KafkaListenerClassModule$KafkaListenerClassProcessTag")};
         }
 
         protected <K, V> ListenerModuleAssertions<K, V>.RecordHandlerAssertions handler(Class<K> keyType, Class<V> valueType) {
@@ -204,7 +204,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
 
 
             public ListenerModuleAssertions<K, V> verifyConfig() {
-                var configMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerProcessConfig")).findFirst().orElseThrow();
+                var configMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerClassProcessConfig")).findFirst().orElseThrow();
                 assertThat(configMethod.getReturnType()).isEqualTo(KafkaConsumerConfig.class);
                 assertThat(configMethod.getParameters()[0].getType()).isEqualTo(Config.class);
                 assertThat(configMethod.getParameters()[1].getParameterizedType()).isEqualTo(TypeRef.of(ConfigValueExtractor.class, KafkaConsumerConfig.class));
@@ -214,7 +214,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
             }
 
             private Method assertContainer() {
-                var containerMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerProcessContainer")).findFirst().orElseThrow();
+                var containerMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerClassProcessContainer")).findFirst().orElseThrow();
                 assertThat(containerMethod.getReturnType()).isEqualTo(Lifecycle.class);
                 assertThat(containerMethod.getParameters()[0].getType()).isEqualTo(KafkaConsumerConfig.class);
                 assertThat(containerMethod.getParameters()[0].getAnnotation(Tag.class).value()).isEqualTo(tagValue);
@@ -263,7 +263,7 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
                             return invocation.callRealMethod();
                         }
                     });
-                    this.handlerMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerProcessHandler")).findFirst().orElseThrow();
+                    this.handlerMethod = Arrays.stream(moduleClass.getMethods()).filter(m -> m.getName().equals("kafkaListenerClassProcessHandler")).findFirst().orElseThrow();
                     assertThat(handlerMethod.getAnnotation(Tag.class).value()).isEqualTo(tagValue);
                     this.module = Proxy.newProxyInstance(moduleClass.getClassLoader(), new Class[]{moduleClass}, (proxy, method, args) -> MethodHandles.privateLookupIn(moduleClass, MethodHandles.lookup())
                         .in(moduleClass)
@@ -342,13 +342,13 @@ public abstract class AbstractKafkaIncomingAnnotationProcessorTest extends Abstr
                 }
 
                 public RecordAssert<K, V> assertRecord(int i) {
-                    return AbstractKafkaIncomingAnnotationProcessorTest.assertRecord(invocation, i);
+                    return AbstractKafkaListenerAnnotationProcessorTest.assertRecord(invocation, i);
                 }
 
                 @SuppressWarnings("unchecked")
                 public RecordsAssert<K, V> assertRecords(int i) {
                     var records = (ConsumerRecords<K, V>) invocation.getArgument(i, ConsumerRecords.class);
-                    return AbstractKafkaIncomingAnnotationProcessorTest.assertRecords(invocation, i);
+                    return AbstractKafkaListenerAnnotationProcessorTest.assertRecords(invocation, i);
                 }
 
                 public InvocationAssertions<K, V> assertConsumer(int i) {

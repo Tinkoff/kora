@@ -10,7 +10,7 @@ public class KafkaClassNames {
     public static final ClassName commonClientConfigs = ClassName.get("org.apache.kafka.clients", "CommonClientConfigs");
 
 
-    public static final ClassName kafkaIncoming = ClassName.get("ru.tinkoff.kora.kafka.common.annotation", "KafkaIncoming");
+    public static final ClassName kafkaListener = ClassName.get("ru.tinkoff.kora.kafka.common.annotation", "KafkaListener");
     public static final ClassName kafkaConsumerConfig = ClassName.get("ru.tinkoff.kora.kafka.common.config", "KafkaConsumerConfig");
     public static final ClassName kafkaSubscribeConsumerContainer = ClassName.get("ru.tinkoff.kora.kafka.common.consumer.containers", "KafkaSubscribeConsumerContainer");
     public static final ClassName kafkaAssignConsumerContainer = ClassName.get("ru.tinkoff.kora.kafka.common.consumer.containers", "KafkaAssignConsumerContainer");

@@ -9,12 +9,12 @@ import ru.tinkoff.kora.kafka.common.config.KafkaConsumerConfig
 import ru.tinkoff.kora.kafka.common.consumer.containers.handlers.KafkaRecordsHandler
 import ru.tinkoff.kora.kafka.common.consumer.telemetry.KafkaConsumerTelemetry
 
-class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() {
+class KafkaListenerRecordsTest : AbstractKafkaListenerAnnotationProcessorTest() {
     @Test
     fun testProcessRecords() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecords<ByteArray, String>) {
                 }
             }
@@ -25,8 +25,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Test
     fun testProcessRecordsSuspend() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 suspend fun process(event: ConsumerRecords<ByteArray, String>) {
                 }
             }
@@ -38,8 +38,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Disabled("Is not supported by ksp yet")
     fun testProcessRecordsWithTags() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecords<@Tag(KafkaListener::class) String, @Tag(String::class) String>) {
                 }
             }
@@ -62,8 +62,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Test
     fun testProcessRecordsAnyKeyType() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(event: ConsumerRecords<*, String>) {
                 }
             }
@@ -74,8 +74,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Test
     fun testProcessRecordsAndConsumer() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(consumer: Consumer<*, *>, event: ConsumerRecords<String, String>) {
                 }
             }
@@ -86,8 +86,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Test
     fun testProcessRecordsAndConsumerAndTelemetry() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(consumer: Consumer<*, *>, event: ConsumerRecords<ByteArray, String>, telemetry: KafkaConsumerTelemetry.KafkaConsumerRecordsTelemetryContext<*, *>) {
                 }
             }
@@ -98,8 +98,8 @@ class KafkaIncomingRecordsTest : AbstractKafkaIncomingAnnotationProcessorTest() 
     @Test
     fun testProcessRecordsAndTelemetry() {
         compile("""
-            class KafkaListener {
-                @KafkaIncoming("test.config.path")
+            class KafkaListenerClass {
+                @KafkaListener("test.config.path")
                 fun process(telemetry: KafkaConsumerTelemetry.KafkaConsumerRecordsTelemetryContext<*, *>, event: ConsumerRecords<ByteArray, String>) {
                 }
             }
