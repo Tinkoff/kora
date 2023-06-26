@@ -39,7 +39,12 @@ public final class Slf4jHttpServerLogger implements HttpServerLogger {
     }
 
     @Override
-    public void logEnd(String operation, Integer statusCode, HttpResultCode resultCode, long processingTime, @Nullable HttpHeaders headers, @Nullable Throwable exception) {
+    public void logEnd(String operation,
+                       Integer statusCode,
+                       HttpResultCode resultCode,
+                       long processingTime,
+                       @Nullable HttpHeaders headers,
+                       @Nullable Throwable exception) {
         if (!log.isInfoEnabled()) {
             return;
         }

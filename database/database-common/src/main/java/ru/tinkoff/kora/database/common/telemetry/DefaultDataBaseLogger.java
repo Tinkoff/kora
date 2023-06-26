@@ -39,12 +39,12 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
     }
 
     @Override
-    public void logQueryEnd(long duration, QueryContext queryContext, @Nullable Throwable ex) {
+    public void logQueryEnd(long processingTime, QueryContext queryContext, @Nullable Throwable ex) {
         var marker = StructuredArgument.marker("sqlQuery", gen -> {
             gen.writeStartObject();
             gen.writeStringField("pool", this.poolName);
             gen.writeStringField("queryId", queryContext.queryId());
-            gen.writeNumberField("processingTime", duration / 1_000_000);
+            gen.writeNumberField("processingTime", processingTime / 1_000_000);
             gen.writeEndObject();
         });
 

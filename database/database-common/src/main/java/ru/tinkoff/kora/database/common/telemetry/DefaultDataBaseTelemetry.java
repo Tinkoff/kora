@@ -46,10 +46,16 @@ public class DefaultDataBaseTelemetry implements DataBaseTelemetry {
         }
 
         return exception -> {
-            var duration = System.nanoTime() - start;
-            if (metricWriter != null) metricWriter.recordQuery(start, query, exception);
-            if (logger != null) logger.logQueryEnd(duration, query, exception);
-            if (span != null) span.close(exception);
+            var processingTime = System.nanoTime() - start;
+            if (metricWriter != null) {
+                metricWriter.recordQuery(start, query, exception);
+            }
+            if (logger != null) {
+                logger.logQueryEnd(processingTime, query, exception);
+            }
+            if (span != null) {
+                span.close(exception);
+            }
         };
     }
 }

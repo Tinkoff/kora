@@ -48,7 +48,12 @@ public class Sl4fjHttpClientLogger implements HttpClientLogger {
     }
 
     @Override
-    public void logRequest(String authority, String method, String operation, String resolvedUri, @Nullable HttpHeaders headers, @Nullable String body) {
+    public void logRequest(String authority,
+                           String method,
+                           String operation,
+                           String resolvedUri,
+                           @Nullable HttpHeaders headers,
+                           @Nullable String body) {
         var marker = StructuredArgument.marker("httpResponse", gen -> {
             gen.writeStartObject();
             gen.writeStringField("authority", authority);
@@ -69,7 +74,14 @@ public class Sl4fjHttpClientLogger implements HttpClientLogger {
     }
 
     @Override
-    public void logResponse(String authority, String operation, long processingTime, @Nullable Integer statusCode, HttpResultCode resultCode, @Nullable Throwable exception, @Nullable HttpHeaders headers, @Nullable String body) {
+    public void logResponse(String authority,
+                            String operation,
+                            long processingTime,
+                            @Nullable Integer statusCode,
+                            HttpResultCode resultCode,
+                            @Nullable Throwable exception,
+                            @Nullable HttpHeaders headers,
+                            @Nullable String body) {
         var exceptionTypeString = exception != null
             ? exception.getClass().getCanonicalName()
             : statusCode != null ? null : CancellationException.class.getCanonicalName();
@@ -79,7 +91,7 @@ public class Sl4fjHttpClientLogger implements HttpClientLogger {
             gen.writeStringField("authority", authority);
             gen.writeStringField("operation", operation);
             gen.writeStringField("resultCode", resultCode.name().toLowerCase());
-            gen.writeNumberField("processingTime", processingTime);
+            gen.writeNumberField("processingTime", processingTime / 1_000_000);
             if (statusCode != null) {
                 gen.writeFieldName("statusCode");
                 gen.writeNumber(statusCode);

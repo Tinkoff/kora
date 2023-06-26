@@ -12,5 +12,10 @@ public interface HttpServerLogger {
 
     void logStart(String operation, @Nullable HttpHeaders headers);
 
-    void logEnd(String operation, Integer statusCode, HttpResultCode resultCode, long processingTime, @Nullable HttpHeaders headers, @Nullable Throwable exception);
+    void logEnd(String operation,
+                Integer statusCode,
+                HttpResultCode resultCode,
+                long processingTime,
+                @Nullable HttpHeaders headers,
+                @Nullable Throwable exception);
 }
