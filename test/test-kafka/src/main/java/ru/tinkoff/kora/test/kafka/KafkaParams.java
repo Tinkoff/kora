@@ -21,6 +21,9 @@ public record KafkaParams(String bootstrapServers, String topicPrefix, Set<Strin
     private static Logger logger = LoggerFactory.getLogger(KafkaParams.class);
 
     public String topic(String name) {
+        if (name.startsWith(topicPrefix)) {
+            return name;
+        }
         return topicPrefix + name;
     }
 
@@ -58,7 +61,12 @@ public record KafkaParams(String bootstrapServers, String topicPrefix, Set<Strin
             try {
                 admin.createTopics(List.of(new NewTopic(realName, partitions, (short) 1)), new CreateTopicsOptions().timeoutMs(2000)).all().get();
                 logger.info("Created : {}", admin.describeTopics(List.of(realName)).allTopicNames().get());
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof org.apache.kafka.common.errors.TopicExistsException te) {
+                    return;
+                }
+                throw new RuntimeException(e.getCause());
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -87,5 +95,9 @@ public record KafkaParams(String bootstrapServers, String topicPrefix, Set<Strin
         return new KafkaParams(
             bootstrapServers, topicPrefix, new HashSet<>()
         );
+    }
+
+    public <K, V> ProducerRecord<K, V> producerRecord(String topic, K key, V value) {
+        return new ProducerRecord<>(topic(topic), key, value);
     }
 }
