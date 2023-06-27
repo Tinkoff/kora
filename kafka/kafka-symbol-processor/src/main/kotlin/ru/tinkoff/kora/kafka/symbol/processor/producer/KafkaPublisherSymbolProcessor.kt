@@ -28,12 +28,12 @@ import ru.tinkoff.kora.ksp.common.generatedClassName
 import ru.tinkoff.kora.ksp.common.parseTags
 import java.util.*
 
-class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSymbolProcessor(env) {
+class KafkaPublisherSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSymbolProcessor(env) {
 
     override fun processRound(resolver: Resolver): List<KSAnnotated> {
         val producers = mutableListOf<KSAnnotated>()
         val deferred = mutableListOf<KSAnnotated>()
-        for (it in resolver.getSymbolsWithAnnotation(KafkaClassNames.kafkaProducerAnnotation.canonicalName)) {
+        for (it in resolver.getSymbolsWithAnnotation(KafkaClassNames.kafkaPublisherAnnotation.canonicalName)) {
             if (it.validate()) {
                 producers.add(it)
             } else {
@@ -42,18 +42,18 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
         }
         for (producer in producers) {
             if (producer !is KSClassDeclaration || producer.classKind != ClassKind.INTERFACE) {
-                env.logger.error("@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
+                env.logger.error("@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
                 continue
             }
             val supertypes = producer.superTypes.toList()
             if (supertypes.size != 1) {
-                env.logger.error("@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
+                env.logger.error("@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
                 continue
             }
             val supertype = supertypes[0].resolve()
             val supertypeName = supertype.toTypeName()
             if (supertypeName !is ParameterizedTypeName) {
-                env.logger.error("@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
+                env.logger.error("@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
                 continue
             }
             if (supertypeName.rawType == KafkaClassNames.producer) {
@@ -67,7 +67,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
                 this.generateProducerModule(producer, supertype, supertypeName, keyType, valueType)
                 this.generateTransactionalProducerImplementation(resolver, producer, keyType, valueType)
             } else {
-                env.logger.error("@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
+                env.logger.error("@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer)
                 continue
             }
 
@@ -84,7 +84,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
         val module = TypeSpec.interfaceBuilder(moduleName)
             .addOriginatingKSFile(producer.containingFile!!)
             .addAnnotation(CommonClassNames.module)
-            .generated(KafkaProducerSymbolProcessor::class)
+            .generated(KafkaPublisherSymbolProcessor::class)
 
         val implementationName = ClassName(packageName, producer.generatedClassName("Implementation"))
         module.addFunction(this.buildPropertiesFun(producer))
@@ -101,14 +101,14 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
     }
 
     private fun buildPropertiesFun(producer: KSClassDeclaration): FunSpec {
-        val configPath = producer.findAnnotation(KafkaClassNames.kafkaProducerAnnotation)
+        val configPath = producer.findAnnotation(KafkaClassNames.kafkaPublisherAnnotation)
             ?.findValueNoDefault<String>("value")!!
 
         return FunSpec.builder(producer.simpleName.asString() + "_ProducerProperties")
-            .returns(KafkaClassNames.producerConfig)
+            .returns(KafkaClassNames.publisherConfig)
             .addAnnotation(setOf(producer.qualifiedName!!.asString()).toTagAnnotation()!!)
             .addParameter("config", CommonClassNames.config)
-            .addParameter("extractor", CommonClassNames.configValueExtractor.parameterizedBy(KafkaClassNames.producerConfig))
+            .addParameter("extractor", CommonClassNames.configValueExtractor.parameterizedBy(KafkaClassNames.publisherConfig))
             .addStatement("val configValue = config.getValue(%S)", configPath)
             .addStatement("return extractor.extract(configValue)!!", Objects::class.java)
             .build()
@@ -136,7 +136,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
             .toTagAnnotation()?.let { valueSerializer.addAnnotation(it) }
 
         val propertiesTag = setOf(producer.qualifiedName!!.asString()).toTagAnnotation()!!
-        val config = ParameterSpec.builder("properties", KafkaClassNames.producerConfig).addAnnotation(propertiesTag).build()
+        val config = ParameterSpec.builder("properties", KafkaClassNames.publisherConfig).addAnnotation(propertiesTag).build()
 
         return FunSpec.builder(producer.simpleName.asString() + "_ProducerImpl")
             .returns(implementationName)
@@ -156,7 +156,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
 
         val b = producer.extendsKeepAop(resolver, implementationName)
             .addSuperinterface(CommonClassNames.lifecycle)
-            .addProperty(PropertySpec.builder("config", KafkaClassNames.producerConfig, KModifier.PRIVATE, KModifier.FINAL).initializer("config").build())
+            .addProperty(PropertySpec.builder("config", KafkaClassNames.publisherConfig, KModifier.PRIVATE, KModifier.FINAL).initializer("config").build())
             .addProperty(PropertySpec.builder("keySerializer", KafkaClassNames.serializer.parameterizedBy(keyType), KModifier.PRIVATE, KModifier.FINAL).initializer("keySerializer").build())
             .addProperty(PropertySpec.builder("valueSerializer", KafkaClassNames.serializer.parameterizedBy(valueType), KModifier.PRIVATE, KModifier.FINAL).initializer("valueSerializer").build())
             .addProperty(PropertySpec.builder("telemetryFactory", KafkaClassNames.producerTelemetryFactory, KModifier.PRIVATE, KModifier.FINAL).initializer("telemetryFactory").build())
@@ -164,7 +164,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
             .addProperty(PropertySpec.builder("telemetry", KafkaClassNames.producerTelemetry.copy(true), KModifier.PRIVATE).addAnnotation(Volatile::class).initializer("null").mutable().build())
             .primaryConstructor(FunSpec.constructorBuilder()
                 .addParameter("telemetryFactory", KafkaClassNames.producerTelemetryFactory)
-                .addParameter("config", KafkaClassNames.producerConfig)
+                .addParameter("config", KafkaClassNames.publisherConfig)
                 .addParameter("keySerializer", KafkaClassNames.serializer.parameterizedBy(keyType))
                 .addParameter("valueSerializer", KafkaClassNames.serializer.parameterizedBy(valueType))
                 .build())
@@ -257,7 +257,7 @@ class KafkaProducerSymbolProcessor(val env: SymbolProcessorEnvironment) : BaseSy
             .addProperty(PropertySpec.builder("delegate", delegateType).initializer("%T(telemetryFactory, config, keySerializer, valueSerializer)", KafkaClassNames.transactionalProducerImpl).build())
             .primaryConstructor(FunSpec.constructorBuilder()
                 .addParameter("telemetryFactory", KafkaClassNames.producerTelemetryFactory)
-                .addParameter("config", KafkaClassNames.producerConfig)
+                .addParameter("config", KafkaClassNames.publisherConfig)
                 .addParameter("keySerializer", keySer)
                 .addParameter("valueSerializer", valSer)
                 .build())

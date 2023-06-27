@@ -27,12 +27,12 @@ public class KafkaClassNames {
 
 
 
-    public static final ClassName kafkaProducerAnnotation = ClassName.get("ru.tinkoff.kora.kafka.common.annotation", "KafkaProducer");
+    public static final ClassName kafkaPublisherAnnotation = ClassName.get("ru.tinkoff.kora.kafka.common.annotation", "KafkaPublisher");
     public static final ClassName producer = ClassName.get("org.apache.kafka.clients.producer", "Producer");
     public static final ClassName kafkaProducer = ClassName.get("org.apache.kafka.clients.producer", "KafkaProducer");
     public static final ClassName transactionalProducer = ClassName.get("ru.tinkoff.kora.kafka.common.producer", "TransactionalProducer");
     public static final ClassName transactionalProducerImpl = ClassName.get("ru.tinkoff.kora.kafka.common.producer", "TransactionalProducerImpl");
-    public static final ClassName producerConfig = ClassName.get("ru.tinkoff.kora.kafka.common.producer", "ProducerConfig");
+    public static final ClassName publisherConfig = ClassName.get("ru.tinkoff.kora.kafka.common.producer", "PublisherConfig");
     public static final ClassName producerTelemetryFactory = ClassName.get("ru.tinkoff.kora.kafka.common.producer.telemetry", "KafkaProducerTelemetryFactory");
     public static final ClassName producerTelemetry = ClassName.get("ru.tinkoff.kora.kafka.common.producer.telemetry", "KafkaProducerTelemetry");
 

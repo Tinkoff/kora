@@ -4,6 +4,6 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Properties;
 
-public record ProducerConfig(Properties driverProperties, @Nullable TransactionConfig transaction) {
+public record PublisherConfig(Properties driverProperties, @Nullable TransactionConfig transaction) {
     public record TransactionConfig(String idPrefix, int maxPoolSize, Duration maxWaitTime) {}
 }

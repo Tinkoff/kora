@@ -16,18 +16,18 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
 
-public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
+public class KafkaPublisherAnnotationProcessor extends AbstractKoraProcessor {
     private TypeElement kafkaProducerAnnotationElement;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        this.kafkaProducerAnnotationElement = this.elements.getTypeElement(KafkaClassNames.kafkaProducerAnnotation.canonicalName());
+        this.kafkaProducerAnnotationElement = this.elements.getTypeElement(KafkaClassNames.kafkaPublisherAnnotation.canonicalName());
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(KafkaClassNames.kafkaProducerAnnotation.canonicalName());
+        return Set.of(KafkaClassNames.kafkaPublisherAnnotation.canonicalName());
     }
 
     @Override
@@ -36,17 +36,17 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
         for (var producer : producers) {
             try {
                 if (!(producer instanceof TypeElement typeElement) || typeElement.getKind() != ElementKind.INTERFACE) {
-                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
+                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
                     continue;
                 }
                 var supertypes = typeElement.getInterfaces();
                 if (supertypes.size() != 1) {
-                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
+                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
                     continue;
                 }
                 var supertypeMirror = (DeclaredType) supertypes.get(0);
                 if (!(TypeName.get(supertypeMirror) instanceof ParameterizedTypeName supertypeName)) {
-                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
+                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
                     continue;
                 }
                 if (supertypeName.rawType.equals(KafkaClassNames.producer)) {
@@ -60,7 +60,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
                     this.generateProducerModule(typeElement, supertypeMirror, supertypeName, keyType, valueType);
                     this.generateTransactionalProducerImplementation(typeElement, keyType, valueType);
                 } else {
-                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaProducer can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
+                    this.messager.printMessage(Diagnostic.Kind.ERROR, "@KafkaPublisher can be placed only on interfaces extending only Producer or TransactionalProducer", producer);
                     continue;
                 }
             } catch (ProcessingErrorException e) {
@@ -79,7 +79,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
             .addOriginatingElement(typeElement)
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(CommonClassNames.module)
-            .addAnnotation(AnnotationSpec.builder(CommonClassNames.koraGenerated).addMember("value", "$S", KafkaProducerAnnotationProcessor.class.getCanonicalName()).build());
+            .addAnnotation(AnnotationSpec.builder(CommonClassNames.koraGenerated).addMember("value", "$S", KafkaPublisherAnnotationProcessor.class.getCanonicalName()).build());
         var implementationName = ClassName.get(packageName, NameUtils.generatedType(typeElement, "Implementation"));
         module.addMethod(this.buildPropertiesMethod(typeElement));
         module.addMethod(this.buildGeneratedProducerMethod(typeElement, supertypeMirror, implementationName, keyType, valueType));
@@ -104,7 +104,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
             valueSerializer.addAnnotation(TagUtils.makeAnnotationSpec(valueTag));
         }
         var propertiesTag = AnnotationSpec.builder(CommonClassNames.tag).addMember("value", "$T.class", ClassName.get(typeElement)).build();
-        var config = ParameterSpec.builder(KafkaClassNames.producerConfig, "properties").addAnnotation(propertiesTag).build();
+        var config = ParameterSpec.builder(KafkaClassNames.publisherConfig, "properties").addAnnotation(propertiesTag).build();
 
         return MethodSpec.methodBuilder(typeElement.getSimpleName() + "_ProducerImpl")
             .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
@@ -118,15 +118,15 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
     }
 
     private MethodSpec buildPropertiesMethod(TypeElement typeElement) {
-        var producerAnnotation = AnnotationUtils.findAnnotation(typeElement, KafkaClassNames.kafkaProducerAnnotation);
+        var producerAnnotation = AnnotationUtils.findAnnotation(typeElement, KafkaClassNames.kafkaPublisherAnnotation);
         var configPath = Objects.requireNonNull(AnnotationUtils.<String>parseAnnotationValueWithoutDefault(producerAnnotation, "value"));
 
         return MethodSpec.methodBuilder(typeElement.getSimpleName() + "_ProducerProperties")
             .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
-            .returns(KafkaClassNames.producerConfig)
+            .returns(KafkaClassNames.publisherConfig)
             .addAnnotation(AnnotationSpec.builder(CommonClassNames.tag).addMember("value", "$T.class", ClassName.get(typeElement)).build())
             .addParameter(CommonClassNames.config, "config")
-            .addParameter(ParameterizedTypeName.get(CommonClassNames.configValueExtractor, KafkaClassNames.producerConfig), "propertiesExtractor")
+            .addParameter(ParameterizedTypeName.get(CommonClassNames.configValueExtractor, KafkaClassNames.publisherConfig), "propertiesExtractor")
             .addStatement("var configValue = config.getValue($S)", configPath)
             .addStatement("return $T.requireNonNull(propertiesExtractor.extract(configValue))", Objects.class)
             .build();
@@ -151,7 +151,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
             .addOriginatingElement(typeElement)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addSuperinterface(CommonClassNames.lifecycle)
-            .addField(KafkaClassNames.producerConfig, "config", Modifier.PRIVATE, Modifier.FINAL)
+            .addField(KafkaClassNames.publisherConfig, "config", Modifier.PRIVATE, Modifier.FINAL)
             .addField(ParameterizedTypeName.get(KafkaClassNames.serializer, keyType), "keySerializer", Modifier.PRIVATE, Modifier.FINAL)
             .addField(ParameterizedTypeName.get(KafkaClassNames.serializer, valueType), "valueSerializer", Modifier.PRIVATE, Modifier.FINAL)
             .addField(KafkaClassNames.producerTelemetryFactory, "telemetryFactory", Modifier.PRIVATE, Modifier.FINAL)
@@ -159,7 +159,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
             .addField(KafkaClassNames.producerTelemetry, "telemetry", Modifier.PRIVATE, Modifier.VOLATILE)
             .addMethod(MethodSpec.constructorBuilder()
                 .addParameter(KafkaClassNames.producerTelemetryFactory, "telemetryFactory")
-                .addParameter(KafkaClassNames.producerConfig, "config")
+                .addParameter(KafkaClassNames.publisherConfig, "config")
                 .addParameter(ParameterizedTypeName.get(KafkaClassNames.serializer, keyType), "keySerializer")
                 .addParameter(ParameterizedTypeName.get(KafkaClassNames.serializer, valueType), "valueSerializer")
                 .addModifiers(Modifier.PUBLIC)
@@ -246,7 +246,7 @@ public class KafkaProducerAnnotationProcessor extends AbstractKoraProcessor {
             .addField(delegateType, "delegate", Modifier.PRIVATE, Modifier.FINAL)
             .addMethod(MethodSpec.constructorBuilder()
                 .addParameter(KafkaClassNames.producerTelemetryFactory, "telemetryFactory")
-                .addParameter(KafkaClassNames.producerConfig, "config")
+                .addParameter(KafkaClassNames.publisherConfig, "config")
                 .addParameter(keySer, "keySerializer")
                 .addParameter(valSer, "valueSerializer")
                 .addModifiers(Modifier.PUBLIC)

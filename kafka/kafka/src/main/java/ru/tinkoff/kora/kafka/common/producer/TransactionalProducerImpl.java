@@ -25,12 +25,12 @@ public final class TransactionalProducerImpl<K, V> implements TransactionalProdu
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final KafkaProducerTelemetryFactory producerTelemetryFactory;
     private final AtomicInteger size = new AtomicInteger(0);
-    private final ProducerConfig config;
+    private final PublisherConfig config;
     private final Serializer<K> keySerializer;
     private final Serializer<V> valueSerializer;
-    private final ProducerConfig.TransactionConfig transactionConfig;
+    private final PublisherConfig.TransactionConfig transactionConfig;
 
-    public TransactionalProducerImpl(KafkaProducerTelemetryFactory factory, ProducerConfig config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    public TransactionalProducerImpl(KafkaProducerTelemetryFactory factory, PublisherConfig config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
         this.producerTelemetryFactory = factory;
         this.config = config;
         this.transactionConfig = Objects.requireNonNull(config.transaction());

@@ -244,14 +244,14 @@ void process2(ConsumerRecords<@Tag(Sometag1.class) String, @Tag(Sometag2.class) 
 Создается продюсер с помощью интерфейса:
 
 ```java
-@ru.tinkoff.kora.kafka.common.annotation.KafkaProducer("kafka.producer.config")
+@ru.tinkoff.kora.kafka.common.annotation.KafkaPublisher("kafka.producer.config")
 public interface MyKafkaProducer extends org.apache.kafka.clients.producer.Producer<byte[], byte[]> {
 }
 ```
 
 По такому интерфейсу будет сгенерирован модуль, содержащий:
 
-- `ru.tinkoff.kora.kafka.common.producer.ProducerConfig`, собранный из конфигурации по пути "kafka.producer.config"
+- `ru.tinkoff.kora.kafka.common.producer.PublisherConfig`, собранный из конфигурации по пути "kafka.producer.config"
 - реализацию `MyKafkaProducer`, делегирующую во внутренний `KafkaProducer`, с добавлением телеметрии
 - `KafkaProducer` с тегом `@Tag(MyKafkaProducer.class)`, если нужен именно этот класс. При использовании будет отсутствовать телеметрия
 
@@ -262,7 +262,7 @@ public interface MyKafkaProducer extends org.apache.kafka.clients.producer.Produ
 
 ```java
 
-@ru.tinkoff.kora.kafka.common.annotation.KafkaProducer("kafka.producer.config")
+@ru.tinkoff.kora.kafka.common.annotation.KafkaPublisher("kafka.producer.config")
 public interface MyKafkaProducer extends ru.tinkoff.kora.kafka.common.producer.TransactionalProducer<byte[], byte[]> {
 }
 
@@ -286,7 +286,7 @@ public interface MyKafkaProducer extends ru.tinkoff.kora.kafka.common.producer.T
 
 ```java
 
-@ru.tinkoff.kora.kafka.common.annotation.KafkaProducer("kafka.producer.config")
+@ru.tinkoff.kora.kafka.common.annotation.KafkaPublisher("kafka.producer.config")
 public interface MyKafkaProducer extends org.apache.kafka.clients.producer.Producer<@Tag(MyTag1.class) byte[], @Tag(MyTag2.class) byte[]> {
 }
 ```

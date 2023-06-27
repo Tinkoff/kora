@@ -11,7 +11,7 @@ import java.util.Properties;
 /**
  * @param <K> key type
  * @param <V> value type
- * @deprecated move to @ru.tinkoff.kora.kafka.common.annotation.KafkaProducer generated producer
+ * @deprecated move to @ru.tinkoff.kora.kafka.common.annotation.KafkaPublisher generated producer
  */
 @Deprecated
 public final class KafkaProducerContainer<K, V> implements Lifecycle, Wrapped<KafkaProducer<K, V>> {

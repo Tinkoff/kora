@@ -38,7 +38,7 @@ class TransactionalProducerImplTest {
         producerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, params.bootstrapServers());
 
         var producerTelemetry = new DefaultKafkaProducerTelemetryFactory(null, null, null);
-        var producerConfig = new ProducerConfig(producerProps, new ProducerConfig.TransactionConfig(
+        var producerConfig = new PublisherConfig(producerProps, new PublisherConfig.TransactionConfig(
             "test-", 5, Duration.ofSeconds(5)
         ));
 
