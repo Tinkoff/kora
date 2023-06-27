@@ -1,6 +1,10 @@
 package ru.tinkoff.kora.kafka.symbol.processor.producer
 
+import org.apache.kafka.common.serialization.Serializer
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import ru.tinkoff.kora.kafka.common.producer.PublisherConfig
+import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerTelemetryFactory
 import ru.tinkoff.kora.ksp.common.AbstractSymbolProcessorTest
 
 class KafkaPublisherTest : AbstractSymbolProcessorTest() {
@@ -12,6 +16,9 @@ class KafkaPublisherTest : AbstractSymbolProcessorTest() {
             
             """.trimIndent())
         compileResult.assertSuccess()
+        val clazz = loadClass("\$TestProducer_Implementation")
+        assertThat(clazz).isNotNull()
+        clazz.getConstructor(KafkaProducerTelemetryFactory::class.java, PublisherConfig::class.java, Serializer::class.java, Serializer::class.java)
     }
 
     @Test
@@ -22,6 +29,9 @@ class KafkaPublisherTest : AbstractSymbolProcessorTest() {
             
             """.trimIndent())
         compileResult.assertSuccess()
+        val clazz = loadClass("\$TestProducer_Implementation")
+        assertThat(clazz).isNotNull()
+        clazz.getConstructor(KafkaProducerTelemetryFactory::class.java, PublisherConfig::class.java, Serializer::class.java, Serializer::class.java)
     }
 
     @Test
@@ -32,5 +42,8 @@ class KafkaPublisherTest : AbstractSymbolProcessorTest() {
             
             """.trimIndent())
         compileResult.assertSuccess()
+        val clazz = loadClass("\$TestProducer_Implementation")
+        assertThat(clazz).isNotNull()
+        clazz.getConstructor(KafkaProducerTelemetryFactory::class.java, PublisherConfig::class.java, Serializer::class.java, Serializer::class.java)
     }
 }

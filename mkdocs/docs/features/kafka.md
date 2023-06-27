@@ -271,9 +271,9 @@ public interface MyKafkaProducer extends ru.tinkoff.kora.kafka.common.producer.T
         try (var producer = this.myKafkaProducer.begin()) {
             producer.send(record);
             if (something) {
-                producer.rollback();
+                producer.abortTransaction();
             } else {
-                producer.commit();// will be called on try-with-resources close
+                producer.commitTransaction();// will be called on try-with-resources close
             }
         }
     }
