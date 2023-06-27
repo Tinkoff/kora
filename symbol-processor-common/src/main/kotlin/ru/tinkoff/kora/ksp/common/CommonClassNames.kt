@@ -45,9 +45,6 @@ object CommonClassNames {
     val refreshListener = ClassName("ru.tinkoff.kora.application.graph", "RefreshListener")
 
     val generated = ClassName("ru.tinkoff.kora.common.annotation", "Generated")
-    val configValueExtractor = ClassName("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor")
-    val config = ClassName("com.typesafe.config", "Config")
-
 
     val config = ClassName("com.typesafe.config", "Config")
     val configValueExtractor = ClassName("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor")

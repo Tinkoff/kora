@@ -102,29 +102,6 @@ public class TagUtils {
         return Set.of();
     }
 
-    public static Set<String> parseTagValue(TypeMirror element) {
-        for (var annotationMirror : element.getAnnotationMirrors()) {
-            var type = annotationMirror.getAnnotationType();
-            if (type.toString().equals(CommonClassNames.tag.canonicalName())) {
-                return Objects.requireNonNull(AnnotationUtils.<List<TypeMirror>>parseAnnotationValueWithoutDefault(annotationMirror, "value"))
-                    .stream()
-                    .map(TypeMirror::toString)
-                    .collect(Collectors.toSet());
-            }
-            var annotationElement = type.asElement();
-            for (var annotatedWith : annotationElement.getAnnotationMirrors()) {
-                var annotationType = annotatedWith.getAnnotationType();
-                if (annotationType.toString().equals(CommonClassNames.tag.canonicalName())) {
-                    return Objects.requireNonNull(AnnotationUtils.<List<TypeMirror>>parseAnnotationValueWithoutDefault(annotatedWith, "value"))
-                        .stream()
-                        .map(TypeMirror::toString)
-                        .collect(Collectors.toSet());
-                }
-            }
-        }
-        return Set.of();
-    }
-
 
     public static AnnotationSpec makeAnnotationSpec(Set<String> tags) {
         var annotation = AnnotationSpec.builder(CommonClassNames.tag);
