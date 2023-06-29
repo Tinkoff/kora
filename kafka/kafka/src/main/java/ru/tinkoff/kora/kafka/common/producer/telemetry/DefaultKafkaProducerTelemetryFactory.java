@@ -3,6 +3,7 @@ package ru.tinkoff.kora.kafka.common.producer.telemetry;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerMetrics.KafkaProducerTxMetrics;
 import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerTracer.KafkaProducerRecordSpan;
 import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerTracer.KafkaProducerTxSpan;
 
@@ -58,15 +59,18 @@ public class DefaultKafkaProducerTelemetryFactory implements KafkaProducerTeleme
                     c.close();
                 } catch (Exception ignore) {}
             }
-            if (this.metrics != null) {
-                this.metrics.close();
+            if (this.metrics instanceof AutoCloseable c) {
+                try {
+                    c.close();
+                } catch (Exception ignore) {}
             }
         }
 
         @Override
         public KafkaProducerTransactionTelemetryContext tx() {
             var span = this.tracer == null ? null : this.tracer.tx();
-            return new DefaultKafkaProducerTransactionTelemetryContext(span, this.logger);
+            var metrics = this.metrics == null ? null : this.metrics.tx();
+            return new DefaultKafkaProducerTransactionTelemetryContext(span, this.logger, metrics);
         }
 
         @Override
@@ -82,14 +86,20 @@ public class DefaultKafkaProducerTelemetryFactory implements KafkaProducerTeleme
         private final KafkaProducerTxSpan span;
         @Nullable
         private final KafkaProducerLogger logger;
+        @Nullable
+        private final KafkaProducerTxMetrics metrics;
 
-        private DefaultKafkaProducerTransactionTelemetryContext(@Nullable KafkaProducerTxSpan span, @Nullable KafkaProducerLogger logger) {
+        private DefaultKafkaProducerTransactionTelemetryContext(@Nullable KafkaProducerTxSpan span, @Nullable KafkaProducerLogger logger, @Nullable KafkaProducerTxMetrics metrics) {
             this.span = span;
             this.logger = logger;
+            this.metrics = metrics;
         }
 
         @Override
         public void commit() {
+            if (this.metrics != null) {
+                this.metrics.commit();
+            }
             if (this.logger != null) {
                 this.logger.txCommit();
             }
@@ -100,6 +110,9 @@ public class DefaultKafkaProducerTelemetryFactory implements KafkaProducerTeleme
 
         @Override
         public void rollback(@Nullable Throwable e) {
+            if (this.metrics != null) {
+                this.metrics.rollback(e);
+            }
             if (this.logger != null) {
                 this.logger.txRollback(e);
             }
