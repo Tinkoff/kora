@@ -32,6 +32,7 @@ public class JdbcDatabase implements Lifecycle, Wrapped<DataSource>, JdbcConnect
             telemetryFactory == null
                 ? null
                 : telemetryFactory.get(config.poolName(),
+                "jdbc",
                 config.jdbcUrl().substring(4, config.jdbcUrl().indexOf(":", 5)),
                 config.username()));
     }
