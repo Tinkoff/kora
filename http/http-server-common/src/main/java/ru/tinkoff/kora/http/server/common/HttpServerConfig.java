@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.http.server.common;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 
 public record HttpServerConfig(
     int publicApiHttpPort,
@@ -10,7 +11,7 @@ public record HttpServerConfig(
     String privateApiHttpLivenessPath,
     int ioThreads,
     int blockingThreads,
-    int shutdownWait) {
+    Duration shutdownWait) {
 
     public static int DEFAULT_PUBLIC_API_PORT = 8080;
     public static int DEFAULT_PRIVATE_API_PORT = 8085;
@@ -19,7 +20,7 @@ public record HttpServerConfig(
     public static String DEFAULT_PRIVATE_API_LIVENESS_PATH = "/system/liveness";
     public static int DEFAULT_IO_THREADS = Math.max(Runtime.getRuntime().availableProcessors(), 2);
     public static int DEFAULT_BLOCKING_THREADS = Math.min(Math.max(Runtime.getRuntime().availableProcessors(), 2) * 8, 200);
-    public static int DEFAULT_SHUTDOWN_WAIT = 5000;
+    public static Duration DEFAULT_SHUTDOWN_WAIT = Duration.ofSeconds(5);
 
     public HttpServerConfig(
         @Nullable Integer publicApiHttpPort,
@@ -29,7 +30,7 @@ public record HttpServerConfig(
         @Nullable String  privateApiHttpLivenessPath,
         @Nullable Integer ioThreads,
         @Nullable Integer blockingThreads,
-        @Nullable Integer shutdownWait) {
+        @Nullable Duration shutdownWait) {
         this(
             publicApiHttpPort != null ? publicApiHttpPort : DEFAULT_PUBLIC_API_PORT,
             privateApiHttpPort != null ? privateApiHttpPort : DEFAULT_PRIVATE_API_PORT,
