@@ -46,11 +46,11 @@ public class UndertowHttpServer implements HttpServer, ReadinessProbe {
                 final long started = System.nanoTime();
                 this.gracefulShutdown.shutdown();
                 try {
+                    logger.debug("Public HTTP Server (Undertow) awaiting graceful shutdown...");
                     this.gracefulShutdown.awaitShutdown();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                logger.debug("Public HTTP Server (Undertow) awaiting graceful shutdown...");
                 if (this.undertow != null) {
                     this.undertow.stop();
                     this.undertow = null;
