@@ -22,7 +22,7 @@ class PerClassTests {
 
     @Test
     @Order(1)
-    void test1(KoraAppGraph graph) {
+    void test1(@TestComponent KoraAppGraph graph) {
         assertNull(prevGraph);
         assertNotNull(graph);
         prevGraph = graph;
@@ -30,7 +30,7 @@ class PerClassTests {
 
     @Test
     @Order(2)
-    void test2(KoraAppGraph graph) {
+    void test2(@TestComponent KoraAppGraph graph) {
         assertNotNull(prevGraph);
         assertNotNull(graph);
         assertSame(graph, prevGraph);

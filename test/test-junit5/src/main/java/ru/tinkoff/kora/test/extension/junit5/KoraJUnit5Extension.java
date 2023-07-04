@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -10,18 +8,19 @@ import org.mockito.internal.util.MockUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.application.graph.*;
+import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
+import ru.tinkoff.kora.application.graph.Lifecycle;
+import ru.tinkoff.kora.application.graph.Node;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.config.common.ConfigModule;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest.InitializeMode;
 
-import javax.annotation.Nullable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.lang.reflect.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,46 +38,83 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
     record GraphSupplierKey(Class<?> application, Set<GraphCandidate> components) {}
 
-    static class GraphContainer {
+    static class KoraTestContext {
 
-        final KoraAppTest annotation;
         volatile TestGraph graph;
+        final KoraAppTest annotation;
 
-        GraphContainer(KoraAppTest annotation) {
+        KoraTestContext(KoraAppTest annotation) {
             this.annotation = annotation;
         }
     }
 
-    record KoraAppMeta(Class<?> application,
-                       String configuration,
-                       Set<GraphCandidate> graphRoots,
-                       InitializeMode initializeMode,
-                       @Nullable KoraGraphModification graphModifier) {}
+    record KoraTestClassMetadata(KoraAppTest annotation, Set<GraphCandidate> graphRoots, Config config) {
 
-    private static GraphContainer getGraphContainer(ExtensionContext context) {
-        var storage = context.getStore(NAMESPACE);
-        return storage.get(KoraAppTest.class, GraphContainer.class);
-    }
+        interface Config {
 
-    @Override
-    public void beforeEach(ExtensionContext context) {
-        var graphContainer = getGraphContainer(context);
-        if (graphContainer.graph == null) {
-            final KoraAppMeta meta = findKoraAppTest(context)
-                .map(koraAppTest -> getKoraAppMeta(koraAppTest, context))
-                .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
+            Config NONE = new Config() {
+                @Override
+                public void setup(ApplicationGraphDraw graphDraw) {
+                    // do nothing
+                }
 
-            var testGraph = KoraJUnit5Extension.generateTestGraph(meta);
-            testGraph.initialize();
-            graphContainer.graph = testGraph;
+                @Override
+                public void cleanup() {
+                    // do nothing
+                }
+            };
+
+            void setup(ApplicationGraphDraw graphDraw) throws IOException;
+
+            void cleanup();
         }
 
-        prepareMocks(graphContainer.graph.initialized());
+        static class FileConfig implements Config {
 
-        var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
-        injectTestComponentFields(testInstance, graphContainer.graph.initialized());
-        injectMockComponentFields(testInstance, graphContainer.graph.initialized());
-        injectGraphComponentFields(testInstance, graphContainer.graph.initialized());
+            private final KoraConfigModification config;
+
+            private Properties prevProperties;
+
+            public FileConfig(KoraConfigModification config) {
+                this.config = config;
+            }
+
+            @Override
+            public void setup(ApplicationGraphDraw graphDraw) throws IOException {
+                prevProperties = (Properties) System.getProperties().clone();
+
+                final String extension;
+                if (config instanceof KoraConfigHoconModification) {
+                    extension = "conf";
+                } else {
+                    extension = "txt";
+                }
+
+                if (!config.systemProperties().isEmpty()) {
+                    config.systemProperties().forEach(System::setProperty);
+                }
+
+                var tmpFile = Files.createTempFile("kora-app-test-config-" + UUID.randomUUID(), "." + extension);
+                Files.writeString(tmpFile, config.config(), StandardCharsets.UTF_8);
+                var configPath = tmpFile.toAbsolutePath().toString();
+
+                System.setProperty("config.file", configPath);
+            }
+
+            @Override
+            public void cleanup() {
+                if (prevProperties != null) {
+                    System.setProperties(prevProperties);
+                    prevProperties = null;
+                }
+            }
+        }
+    }
+
+    @Nonnull
+    private static KoraTestContext getKoraTestContext(ExtensionContext context) {
+        var storage = context.getStore(NAMESPACE);
+        return storage.get(KoraAppTest.class, KoraTestContext.class);
     }
 
     private static void prepareMocks(TestGraphInitialized graphInitialized) {
@@ -94,93 +130,84 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
     }
 
-    private static void injectGraphComponentFields(Object o, TestGraphInitialized graphInitialized) {
-        final List<Field> fieldsGraphForInjection = ReflectionUtils.findFields(o.getClass(), f -> !f.isSynthetic() && f.getGenericType() instanceof KoraAppGraph, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-        for (Field field : fieldsGraphForInjection) {
-            try {
-                field.setAccessible(true);
-                field.set(o, graphInitialized.koraAppGraph());
-            } catch (Exception e) {
-                throw new ExtensionConfigurationException("Failed to Inject field '" + field.getName() + "' due to: " + e);
-            }
-        }
-    }
-
-    private static void injectTestComponentFields(Object o, TestGraphInitialized graphInitialized) {
-        injectByAnnotationFields(o, graphInitialized, TestComponent.class);
-    }
-
-    private static void injectMockComponentFields(Object o, TestGraphInitialized graphInitialized) {
-        injectByAnnotationFields(o, graphInitialized, MockComponent.class);
-    }
-
-    private static void injectByAnnotationFields(Object o, TestGraphInitialized graphInitialized, Class<? extends Annotation> annotation) {
-        final List<Field> fieldsForInjection = ReflectionUtils.findFields(o.getClass(), f -> !f.isSynthetic() && f.getAnnotation(annotation) != null, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
+    private static void injectComponentsToFields(Object testInstance, TestGraphInitialized graphInitialized) {
+        final List<Field> fieldsForInjection = ReflectionUtils.findFields(testInstance.getClass(),
+            f -> !f.isSynthetic() && (f.getAnnotation(TestComponent.class) != null || f.getAnnotation(MockComponent.class) != null),
+            ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
 
         if (fieldsForInjection.isEmpty()) {
             return;
         }
 
-        var finalFields = fieldsForInjection.stream()
-            .filter(f -> Modifier.isFinal(f.getModifiers()))
-            .toList();
-
-        if (!finalFields.isEmpty()) {
-            throw new ExtensionConfigurationException(finalFields.stream()
-                .map(f -> f.getDeclaringClass().getCanonicalName() + "#" + f.getName())
-                .collect(Collectors.joining(", ", "Fields annotated @" + annotation.getSimpleName() + " have illegal 'final' modifier [", "]")));
-        }
-
-        var staticFields = fieldsForInjection.stream()
-            .filter(f -> Modifier.isStatic(f.getModifiers()))
-            .toList();
-
-        if (!staticFields.isEmpty()) {
-            throw new ExtensionConfigurationException(staticFields.stream()
-                .map(f -> f.getDeclaringClass().getCanonicalName() + "#" + f.getName())
-                .collect(Collectors.joining(", ", "Fields annotated @" + annotation.getSimpleName() + " have illegal 'static' modifier [", "]")));
-        }
-
         for (Field field : fieldsForInjection) {
-            final Class<?>[] tags = Arrays.stream(field.getDeclaredAnnotations())
-                .filter(a -> a.annotationType().equals(Tag.class))
-                .map(a -> ((Tag) a).value())
-                .findFirst()
-                .orElse(null);
-
-            final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
-            final Object component = getComponentOrThrow(graphInitialized, candidate);
-            try {
-                field.setAccessible(true);
-                field.set(o, component);
-            } catch (Exception e) {
-                throw new ExtensionConfigurationException("Failed to Inject field '" + field.getName() + "' due to: " + e);
+            if (KoraAppGraph.class.isAssignableFrom(field.getType())) {
+                injectToField(testInstance, field, graphInitialized.koraAppGraph());
+            } else {
+                final Class<?>[] tags = parseTags(field);
+                final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
+                final Object component = getComponentOrThrow(graphInitialized, candidate);
+                injectToField(testInstance, field, component);
             }
+        }
+    }
+
+    private static void injectToField(Object testInstance, Field field, Object value) {
+        if (Modifier.isStatic(field.getModifiers())) {
+            throw new ExtensionConfigurationException("Field '%s' annotated have illegal 'static' modifier".formatted(field.getName()));
+        }
+
+        if (Modifier.isFinal(field.getModifiers())) {
+            throw new ExtensionConfigurationException("Field '%s' annotated have illegal 'final' modifier".formatted(field.getName()));
+        }
+
+        try {
+            field.setAccessible(true);
+            field.set(testInstance, value);
+        } catch (Exception e) {
+            throw new ExtensionConfigurationException("Failed to inject field '%s' due to: ".formatted(field.getName()) + e);
         }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        final KoraAppTest appTest = findKoraAppTest(context)
+        final KoraAppTest koraAppTest = findKoraAppTest(context)
             .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
 
         var storage = context.getStore(NAMESPACE);
-        storage.put(KoraAppTest.class, new GraphContainer(appTest));
+        storage.put(KoraAppTest.class, new KoraTestContext(koraAppTest));
     }
 
     @Override
-    public void afterAll(ExtensionContext context) {
-        var graphContainer = getGraphContainer(context);
-        if(graphContainer != null && graphContainer.graph.initializeMode() == InitializeMode.PER_CLASS) {
-            graphContainer.graph.close();
+    public void beforeEach(ExtensionContext context) {
+        var koraTestContext = getKoraTestContext(context);
+        if (koraTestContext.graph == null) {
+            koraTestContext.graph = KoraJUnit5Extension.generateTestGraph(koraTestContext.annotation, context);
+            koraTestContext.graph.initialize();
         }
+
+        var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
+        prepareMocks(koraTestContext.graph.initialized());
+        injectComponentsToFields(testInstance, koraTestContext.graph.initialized());
     }
 
     @Override
     public void afterEach(ExtensionContext context) {
-        var graphContainer = getGraphContainer(context);
-        if(graphContainer != null && graphContainer.graph.initializeMode() == InitializeMode.PER_METHOD) {
-            graphContainer.graph.close();
+        var koraTestContext = getKoraTestContext(context);
+        if (koraTestContext.annotation.initializeMode() == InitializeMode.PER_METHOD) {
+            if (koraTestContext.graph != null) {
+                koraTestContext.graph.close();
+                koraTestContext.graph = null;
+            }
+        }
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) {
+        var koraTestContext = getKoraTestContext(context);
+        if (koraTestContext.annotation.initializeMode() == InitializeMode.PER_CLASS) {
+            if (koraTestContext.graph != null) {
+                koraTestContext.graph.close();
+            }
         }
     }
 
@@ -191,7 +218,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
     }
 
-    private Optional<KoraAppTest> findKoraAppTest(ExtensionContext context) {
+    private static Optional<KoraAppTest> findKoraAppTest(ExtensionContext context) {
         Optional<ExtensionContext> current = Optional.of(context);
         while (current.isPresent()) {
             final Optional<KoraAppTest> annotation = AnnotationSupport.findAnnotation(current.get().getRequiredTestClass(), KoraAppTest.class);
@@ -214,40 +241,47 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
-        var graphContainer = getGraphContainer(context);
+        var koraTestContext = getKoraTestContext(context);
         var graphCandidate = getGraphCandidate(parameterContext);
-        return getComponentOrThrow(graphContainer.graph.initialized(), graphCandidate);
+        return getComponentOrThrow(koraTestContext.graph.initialized(), graphCandidate);
     }
 
-    private KoraAppMeta getKoraAppMeta(KoraAppTest koraAppTest, ExtensionContext context) {
+    private static Optional<KoraGraphModification> getGraphModification(KoraAppTest koraAppTest, ExtensionContext context) {
         final long started = System.nanoTime();
-
-        var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
-        var mockComponentFromFields = ReflectionUtils.findFields(testInstance.getClass(), f -> !f.isSynthetic() && f.getAnnotation(MockComponent.class) != null, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
-            .stream()
-            .map(field -> {
-                final Class<?>[] tag = Optional.ofNullable(field.getAnnotation(Tag.class))
-                    .map(Tag::value)
-                    .orElse(null);
-
-                return new GraphMock(new GraphCandidate(field.getGenericType(), tag));
-            })
-            .toList();
-
         var mockComponentFromParameters = context.getTestMethod()
             .filter(method -> !method.isSynthetic())
             .map(method -> List.of(method.getParameters()))
             .map(parameters -> parameters.stream()
                 .filter(parameter -> parameter.getDeclaredAnnotation(MockComponent.class) != null)
                 .map(parameter -> {
-                    final Class<?>[] tag = Optional.ofNullable(parameter.getDeclaredAnnotation(Tag.class))
-                        .map(Tag::value)
-                        .orElse(null);
+                    if(KoraAppGraph.class.isAssignableFrom(parameter.getType())) {
+                        throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
+                    }
 
+                    final Class<?>[] tag = parseTags(parameter);
                     return new GraphMock(new GraphCandidate(parameter.getParameterizedType(), tag));
                 })
                 .toList())
             .orElse(List.of());
+
+        if (koraAppTest.initializeMode() == InitializeMode.PER_CLASS && !mockComponentFromParameters.isEmpty()) {
+            throw new ExtensionConfigurationException("@KoraAppTest when run in 'InitializeMode.PER_CLASS' test can't inject @MockComponent in method parameters");
+        }
+
+        var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
+        var mockComponentFromFields = ReflectionUtils.findFields(testInstance.getClass(),
+                f -> !f.isSynthetic() && !Modifier.isFinal(f.getModifiers()) && !Modifier.isStatic(f.getModifiers()) && f.getAnnotation(MockComponent.class) != null,
+                ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
+            .stream()
+            .map(field -> {
+                if(KoraAppGraph.class.isAssignableFrom(field.getType())) {
+                    throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
+                }
+
+                final Class<?>[] tag = parseTags(field);
+                return new GraphMock(new GraphCandidate(field.getGenericType(), tag));
+            })
+            .toList();
 
         final KoraGraphModification koraGraphModification = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestGraphModifier)
@@ -268,48 +302,44 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
             });
 
+        logger.debug("@KoraAppTest graph modification collecting took: {}", Duration.ofNanos(System.nanoTime() - started));
+        return Optional.ofNullable(koraGraphModification);
+    }
+
+    private static KoraTestClassMetadata getClassMetadata(KoraAppTest koraAppTest, ExtensionContext context) {
+        final long started = System.nanoTime();
         final Set<GraphCandidate> graphRoots = Arrays.stream(koraAppTest.components())
             .map(GraphCandidate::new)
             .collect(Collectors.toSet());
 
-        final String koraAppConfig = context.getTestInstance()
+        final KoraTestClassMetadata.Config koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfigModifier)
             .map(inst -> {
+                if (!ConfigModule.class.isAssignableFrom(koraAppTest.value())) {
+                    throw new ExtensionConfigurationException("@KoraAppTest#value class expected implement `ConfigModule` in order to use `KoraAppTestConfigModifier` modifier, but didn't");
+                }
+
                 final KoraConfigModification configModification = ((KoraAppTestConfigModifier) inst).config();
-                return configModification.getConfig();
+                return ((KoraTestClassMetadata.Config) new KoraTestClassMetadata.FileConfig(configModification));
             })
-            .orElse("");
+            .orElse(KoraTestClassMetadata.Config.NONE);
 
-        if (koraAppConfig.isBlank()) {
-            logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-            return new KoraAppMeta(koraAppTest.value(), koraAppConfig,
-                graphRoots, koraAppTest.initializeMode(), koraGraphModification);
-        }
-
-        final KoraGraphModification graphModificationWithConfig = (koraGraphModification == null)
-            ? KoraGraphModification.create()
-            : koraGraphModification;
-
-        if (ConfigModule.class.isAssignableFrom(koraAppTest.value())) {
-            graphModificationWithConfig.replaceComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
-        } else {
-            graphModificationWithConfig.addComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
-        }
-
-        logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(koraAppTest.value(), koraAppConfig,
-            graphRoots, koraAppTest.initializeMode(), graphModificationWithConfig);
+        logger.debug("@KoraAppTest metadata collecting took: {}", Duration.ofNanos(System.nanoTime() - started));
+        return new KoraTestClassMetadata(koraAppTest, graphRoots, koraAppConfig);
     }
 
     private static GraphCandidate getGraphCandidate(ParameterContext parameterContext) {
         final Type parameterType = parameterContext.getParameter().getParameterizedType();
-        final Class<?>[] tags = Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
+        final Class<?>[] tags = parseTags(parameterContext.getParameter());
+        return new GraphCandidate(parameterType, tags);
+    }
+
+    private static Class<?>[] parseTags(AnnotatedElement object) {
+        return Arrays.stream(object.getDeclaredAnnotations())
             .filter(a -> a.annotationType().equals(Tag.class))
             .map(a -> ((Tag) a).value())
             .findFirst()
             .orElse(null);
-
-        return new GraphCandidate(parameterType, tags);
     }
 
     private static Object getComponentOrThrow(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
@@ -328,7 +358,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     }
 
     private static Optional<Object> getComponentFromGraph(TestGraphInitialized graph, GraphCandidate candidate) {
-        if(KoraAppGraph.class.equals(candidate.type())) {
+        if (KoraAppGraph.class.equals(candidate.type())) {
             return Optional.of(graph.koraAppGraph());
         }
 
@@ -372,17 +402,19 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     }
 
     @SuppressWarnings("unchecked")
-    private static TestGraph generateTestGraph(KoraAppMeta meta) {
-        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(meta.application(), meta.graphRoots()), k -> {
+    private static TestGraph generateTestGraph(KoraAppTest annotation, ExtensionContext context) {
+        var testMetadata = getClassMetadata(annotation, context);
+        var applicationClass = testMetadata.annotation.value();
+        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(applicationClass, testMetadata.graphRoots()), k -> {
             try {
                 final long startedLoading = System.nanoTime();
-                var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(meta.application.getName() + "Graph");
+                var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(applicationClass.getName() + "Graph");
                 var constructors = (Constructor<? extends Supplier<? extends ApplicationGraphDraw>>[]) clazz.getConstructors();
                 var supplier = (Supplier<ApplicationGraphDraw>) constructors[0].newInstance();
                 logger.debug("@KoraAppTest loading took: {}", Duration.ofNanos(System.nanoTime() - startedLoading));
                 return supplier;
             } catch (ClassNotFoundException e) {
-                throw new ExtensionConfigurationException("@KoraAppTest#value must be annotated with @KoraApp, but probably wasn't: " + meta.application, e);
+                throw new ExtensionConfigurationException("@KoraAppTest#value must be annotated with @KoraApp, but probably wasn't: " + applicationClass, e);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -390,7 +422,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         final long startedSubgraph = System.nanoTime();
         final ApplicationGraphDraw graphDraw = graphSupplier.get();
-        final Node<?>[] nodesForSubGraph = meta.graphRoots.stream()
+        final Node<?>[] nodesForSubGraph = testMetadata.graphRoots.stream()
             .flatMap(component -> {
                 final Set<Node<Object>> nodes = GraphUtils.findNodeByTypeOrAssignable(graphDraw, component);
                 if (nodes.isEmpty()) {
@@ -402,9 +434,10 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .toArray(Node[]::new);
 
         final ApplicationGraphDraw subGraph = (nodesForSubGraph.length == 0)
-            ? graphDraw
+            ? graphDraw.copy()
             : graphDraw.subgraph(nodesForSubGraph);
         logger.debug("@KoraAppTest subgraph took: {}", Duration.ofNanos(System.nanoTime() - startedSubgraph));
-        return new TestGraph(subGraph::copy, meta.graphModifier(), meta.initializeMode);
+        var koraGraphModification = getGraphModification(annotation, context).orElse(null);
+        return new TestGraph(subGraph::copy, testMetadata, koraGraphModification);
     }
 }

@@ -1,70 +1,85 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.kora.application.graph.*;
+import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
+import ru.tinkoff.kora.application.graph.RefreshableGraph;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest.InitializeMode;
+import ru.tinkoff.kora.test.extension.junit5.KoraJUnit5Extension.KoraTestClassMetadata;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Properties;
 import java.util.function.Supplier;
 
-final class TestGraph implements ExtensionContext.Store.CloseableResource, AutoCloseable {
+final class TestGraph implements AutoCloseable {
+
+    private static final Object LOCK = new Object();
 
     private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
 
     @Nullable
     private final KoraGraphModification graphModifier;
     private final Supplier<? extends ApplicationGraphDraw> graphSupplier;
-    private final InitializeMode initializeMode;
+    private final KoraTestClassMetadata meta;
+
     private volatile TestGraphInitialized graphInitialized;
 
     TestGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier,
-              @Nullable KoraGraphModification graphModifier,
-              InitializeMode initializeMode) {
+              KoraTestClassMetadata meta,
+              @Nullable KoraGraphModification graphModifier) {
         this.graphSupplier = graphSupplier;
         this.graphModifier = graphModifier;
-        this.initializeMode = initializeMode;
+        this.meta = meta;
     }
 
     void initialize() {
-        var graphDraw = graphSupplier.get();
-        if (graphModifier != null) {
-            final long startedModify = System.nanoTime();
+        logger.debug("@KoraAppTest initializing graph...");
+        final long started = System.nanoTime();
 
-            for (GraphModification modification : graphModifier.getModifications()) {
-                modification.accept(graphDraw);
+        synchronized (LOCK) {
+            var config = meta.config();
+            try {
+                var graphDraw = graphSupplier.get();
+                if (graphModifier != null) {
+                    for (GraphModification modification : graphModifier.getModifications()) {
+                        modification.accept(graphDraw);
+                    }
+                }
+
+                config.setup(graphDraw);
+
+                final RefreshableGraph initGraph = graphDraw.init().block(Duration.ofMinutes(10));
+                this.graphInitialized = new TestGraphInitialized(initGraph, graphDraw, new DefaultKoraAppGraph(graphDraw, initGraph));
+                logger.info("@KoraAppTest initialization took: {}", Duration.ofNanos(System.nanoTime() - started));
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            } finally {
+                config.cleanup();
             }
-
-            logger.debug("@KoraAppTest modification took: {}", Duration.ofNanos(System.nanoTime() - startedModify));
         }
-
-        final long startedInit = System.nanoTime();
-        final RefreshableGraph initGraph = graphDraw.init().block(Duration.ofMinutes(10));
-        this.graphInitialized = new TestGraphInitialized(initGraph, graphDraw, new DefaultKoraAppGraph(graphDraw, initGraph));
-        logger.info("@KoraAppTest initialization took: {}", Duration.ofNanos(System.nanoTime() - startedInit));
     }
 
     @Nonnull
-    InitializeMode initializeMode() {
-        return initializeMode;
-    }
-
     TestGraphInitialized initialized() {
         if (graphInitialized == null) {
-            initialize();
+            throw new IllegalStateException("TestGraphInitialized is not initialized!");
         }
-
         return graphInitialized;
     }
 
     @Override
     public void close() {
-        if(graphInitialized != null) {
+        if (graphInitialized != null) {
+            final long started = System.nanoTime();
+            logger.debug("@KoraAppTest releasing graph...");
             graphInitialized.refreshableGraph().release().block(Duration.ofMinutes(10));
             graphInitialized = null;
+            logger.info("@KoraAppTest releasing took: {}", Duration.ofNanos(System.nanoTime() - started));
         }
     }
 }

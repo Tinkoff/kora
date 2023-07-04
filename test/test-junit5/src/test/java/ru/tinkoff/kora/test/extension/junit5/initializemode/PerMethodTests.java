@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import ru.tinkoff.kora.application.graph.Graph;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppGraph;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
+import ru.tinkoff.kora.test.extension.junit5.TestComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,7 +21,7 @@ public class PerMethodTests {
 
     @Test
     @Order(1)
-    void test1(KoraAppGraph graph) {
+    void test1(@TestComponent KoraAppGraph graph) {
         assertNull(prevGraph);
         assertNotNull(graph);
         prevGraph = graph;
@@ -28,7 +29,7 @@ public class PerMethodTests {
 
     @Test
     @Order(2)
-    void test2(KoraAppGraph graph) {
+    void test2(@TestComponent KoraAppGraph graph) {
         assertNotNull(prevGraph);
         assertNotNull(graph);
         assertNotSame(graph, prevGraph);

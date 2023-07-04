@@ -2,7 +2,6 @@ package ru.tinkoff.kora.test.extension.junit5.config;
 
 import com.typesafe.config.Config;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTestConfigModifier;
@@ -10,17 +9,17 @@ import ru.tinkoff.kora.test.extension.junit5.KoraConfigModification;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestConfigApplication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@KoraAppTest(
-    value = TestApplication.class,
-    components = {TestComponent1.class})
-public class ConfigMethodFileWithRawWithFileAnnotationWithRawAnnotationJUnitExtensionTests implements KoraAppTestConfigModifier {
+@KoraAppTest(TestConfigApplication.class)
+public class ConfigWithFileWithRawTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigFile("reference-raw.conf")   // 1
+        return KoraConfigModification.ofConfigHoconFile("reference-raw.conf")   // 1
             .mergeWithConfigHocon("""
                             myconfig {
                               myinnerconfig {
@@ -33,6 +32,10 @@ public class ConfigMethodFileWithRawWithFileAnnotationWithRawAnnotationJUnitExte
 
     @Test
     void parameterConfigFromMethodInjected(@TestComponent Config config) {
-        assertEquals("Config(SimpleConfigObject({\"myconfig\":{\"myinnerconfig\":{\"fourth\":4,\"myproperty\":1,\"third\":3}}}))", config.toString());
+        assertNotNull(config.getObject("myconfig"));
+        assertNotNull(config.getObject("myconfig.myinnerconfig"));
+        assertEquals(4, config.getNumber("myconfig.myinnerconfig.fourth"));
+        assertEquals(3, config.getNumber("myconfig.myinnerconfig.third"));
+        assertEquals(1, config.getNumber("myconfig.myinnerconfig.myproperty"));
     }
 }
