@@ -5,7 +5,7 @@ import ru.tinkoff.kora.common.Tag;
 
 @Tag(LifecycleComponent.class)
 @Component
-public final class LifecycleComponent2 implements LifecycleComponent {
+public final class TestComponent2 implements LifecycleComponent {
 
     public String get() {
         return "2";

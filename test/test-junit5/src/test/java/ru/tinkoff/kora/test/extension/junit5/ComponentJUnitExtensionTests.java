@@ -2,15 +2,17 @@ package ru.tinkoff.kora.test.extension.junit5;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.tinkoff.kora.test.extension.junit5.testdata.Component1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent12;
-import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent2;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent12;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent2;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @KoraAppTest(
-    application = LifecycleApplication.class,
-    components = {LifecycleComponent2.class, LifecycleComponent12.class, Component1.class})
-public class ComponentJUnitExtensionTests extends Assertions {
+    value = TestApplication.class,
+    components = {TestComponent2.class, TestComponent12.class, TestComponent1.class})
+public class ComponentJUnitExtensionTests {
 
     @Test
     void emptyTest() {
@@ -18,13 +20,13 @@ public class ComponentJUnitExtensionTests extends Assertions {
     }
 
     @Test
-    void parameterFirstInjected(@TestComponent Component1 firstComponent) {
+    void parameterFirstInjected(@TestComponent TestComponent1 firstComponent) {
         assertEquals("1", firstComponent.get());
     }
 
     @Test
-    void parameterBothInjected(@TestComponent Component1 firstComponent,
-                               @TestComponent LifecycleComponent12 secondComponent) {
+    void parameterBothInjected(@TestComponent TestComponent1 firstComponent,
+                               @TestComponent TestComponent12 secondComponent) {
         assertEquals("1", firstComponent.get());
         assertEquals("12", secondComponent.get());
     }

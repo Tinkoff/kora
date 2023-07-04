@@ -4,11 +4,11 @@ import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 
 @Component
-public final class LifecycleComponent23 implements LifecycleComponent {
+public final class TestComponent23 implements LifecycleComponent {
 
     private final LifecycleComponent lifecycleComponent;
 
-    public LifecycleComponent23(@Tag(LifecycleComponent.class) LifecycleComponent lifecycleComponent) {
+    public TestComponent23(@Tag(LifecycleComponent.class) LifecycleComponent lifecycleComponent) {
         this.lifecycleComponent = lifecycleComponent;
     }
 

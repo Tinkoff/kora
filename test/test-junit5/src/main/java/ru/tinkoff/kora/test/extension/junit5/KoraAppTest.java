@@ -33,7 +33,7 @@ public @interface KoraAppTest {
     /**
      * @return class annotated with {@link KoraApp}
      */
-    Class<?> application();
+    Class<?> value();
 
     /**
      * @return classes that are {@link Component} and will be included in Context initialization

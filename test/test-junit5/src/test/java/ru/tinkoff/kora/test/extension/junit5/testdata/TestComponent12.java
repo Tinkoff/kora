@@ -3,11 +3,11 @@ package ru.tinkoff.kora.test.extension.junit5.testdata;
 import ru.tinkoff.kora.common.Component;
 
 @Component
-public final class LifecycleComponent12 implements LifecycleComponent {
+public final class TestComponent12 implements LifecycleComponent {
 
-    private final Component1 component1;
+    private final TestComponent1 component1;
 
-    public LifecycleComponent12(Component1 component1) {
+    public TestComponent12(TestComponent1 component1) {
         this.component1 = component1;
     }
 

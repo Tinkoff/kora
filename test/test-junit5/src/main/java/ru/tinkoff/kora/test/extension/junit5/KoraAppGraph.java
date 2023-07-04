@@ -15,7 +15,7 @@ import java.util.List;
 public interface KoraAppGraph {
 
     @Nullable
-    Object getFirst(@NotNull Type type);
+    Object getFirst(@Nonnull Type type);
 
     /**
      * Try to find implementation in Graph by type and tags
@@ -25,10 +25,10 @@ public interface KoraAppGraph {
      * @return type instance from Graph
      */
     @Nullable
-    Object getFirst(@NotNull Type type, Class<?>... tags);
+    Object getFirst(@Nonnull Type type, Class<?>... tags);
 
     @Nullable
-    <T> T getFirst(@NotNull Class<T> type);
+    <T> T getFirst(@Nonnull Class<T> type);
 
     /**
      * Try to find implementation in Graph by type and tags
@@ -39,10 +39,10 @@ public interface KoraAppGraph {
      * @return type instance from Graph
      */
     @Nullable
-    <T> T getFirst(@NotNull Class<T> type, Class<?>... tags);
+    <T> T getFirst(@Nonnull Class<T> type, Class<?>... tags);
 
     @Nonnull
-    List<Object> getAll(@NotNull Type type);
+    List<Object> getAll(@Nonnull Type type);
 
     /**
      * Try to find implementation in Graph by type using {@link Tag.Any}
@@ -52,10 +52,10 @@ public interface KoraAppGraph {
      * @return component instance from Graph
      */
     @Nonnull
-    List<Object> getAll(@NotNull Type type, Class<?>... tags);
+    List<Object> getAll(@Nonnull Type type, Class<?>... tags);
 
     @Nonnull
-    <T> List<T> getAll(@NotNull Class<T> type);
+    <T> List<T> getAll(@Nonnull Class<T> type);
 
     /**
      * Try to find implementation in Graph by type using {@link Tag.Any}
@@ -66,5 +66,5 @@ public interface KoraAppGraph {
      * @return type instance from Graph
      */
     @Nonnull
-    <T> List<T> getAll(@NotNull Class<T> type, Class<?>... tags);
+    <T> List<T> getAll(@Nonnull Class<T> type, Class<?>... tags);
 }

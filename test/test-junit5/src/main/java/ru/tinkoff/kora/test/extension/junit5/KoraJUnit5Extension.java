@@ -2,23 +2,19 @@ package ru.tinkoff.kora.test.extension.junit5;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.Mockito;
+import org.mockito.internal.util.MockUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
-import ru.tinkoff.kora.application.graph.Graph.Factory;
-import ru.tinkoff.kora.application.graph.Lifecycle;
-import ru.tinkoff.kora.application.graph.Node;
-import ru.tinkoff.kora.application.graph.RefreshableGraph;
+import ru.tinkoff.kora.application.graph.*;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.config.common.ConfigModule;
-import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeMock;
-import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification.NodeTypeCandidate;
+import ru.tinkoff.kora.test.extension.junit5.KoraAppTest.InitializeMode;
 
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
@@ -29,281 +25,97 @@ import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
+final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback, ExecutionCondition, ParameterResolver, InvocationInterceptor {
+
+    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KoraJUnit5Extension.class);
 
     private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KoraJUnit5Extension.class);
-    private static final Class<?>[] TAG_ANY = new Class[]{Tag.Any.class};
 
     // Application class -> graph supplier
     private static final Map<GraphSupplierKey, Supplier<ApplicationGraphDraw>> GRAPH_SUPPLIER_MAP = new ConcurrentHashMap<>();
 
-    static class TestClassContainer {
+    record GraphSupplierKey(Class<?> application, Set<GraphCandidate> components) {}
 
-        final KoraAppTest koraAppTest;
-        volatile Graph graph;
+    static class GraphContainer {
 
-        TestClassContainer(KoraAppTest koraAppTest) {
-            this.koraAppTest = koraAppTest;
+        final KoraAppTest annotation;
+        volatile TestGraph graph;
+
+        GraphContainer(KoraAppTest annotation) {
+            this.annotation = annotation;
         }
     }
-
-    record GraphSupplier(Supplier<? extends ApplicationGraphDraw> graphSupplier, KoraAppMeta meta) {
-
-        public Graph get() {
-            return switch (meta.shareMode) {
-                case PER_CLASS -> new PerClassGraph(graphSupplier, meta.components, meta.graphModifier);
-                case PER_METHOD -> new PerMethodGraph(graphSupplier, meta.components, meta.graphModifier);
-            };
-        }
-    }
-
-    interface Graph {
-
-        void initialize();
-
-        GraphInitialized initialized();
-    }
-
-    @SuppressWarnings("unchecked")
-    static class AbstractGraph implements Graph {
-
-        private static final Class<?>[] TAGS_EMPTY = new Class[]{};
-
-        @Nullable
-        protected final KoraGraphModification graphModifier;
-        protected final Collection<NodeTypeCandidate> components;
-        protected final Supplier<? extends ApplicationGraphDraw> graphSupplier;
-        protected volatile GraphInitialized graphInitialized;
-
-        AbstractGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier,
-                      Collection<NodeTypeCandidate> components,
-                      @Nullable KoraGraphModification graphModifier) {
-            this.graphSupplier = graphSupplier;
-            this.components = components;
-            this.graphModifier = graphModifier;
-        }
-
-        @Override
-        public void initialize() {
-            var graphDraw = graphSupplier.get();
-            if (graphModifier != null) {
-                final long startedModify = System.nanoTime();
-
-                for (KoraGraphModification.NodeAddition addition : graphModifier.getAdditions()) {
-                    final Class<?>[] tags = (addition.candidate().tags() == null)
-                        ? TAGS_EMPTY
-                        : addition.candidate().tags();
-
-                    graphDraw.addNode0(addition.candidate().type(), tags, getNodeFactory(addition.function(), graphDraw));
-                }
-
-                for (KoraGraphModification.NodeReplacement replacement : graphModifier.getReplacements()) {
-                    final Set<Node<Object>> nodesToReplace = GraphUtils.findNodeByTypeOrAssignable(graphDraw, replacement.candidate());
-                    if (nodesToReplace.isEmpty()) {
-                        throw new ExtensionConfigurationException("Can't find Nodes to Replace: " + replacement.candidate());
-                    }
-
-                    for (Node<Object> nodeToReplace : nodesToReplace) {
-                        graphDraw.replaceNode(nodeToReplace, ((Factory<Object>) getNodeFactory(replacement.function(), graphDraw)));
-                    }
-                }
-
-                for (NodeMock mock : graphModifier.getMocks()) {
-                    final Set<Node<Object>> nodesToMock = GraphUtils.findNodeByTypeOrAssignable(graphDraw, mock.candidate());
-                    if (nodesToMock.isEmpty()) {
-                        final Class<?>[] tags = (mock.candidate().tags() == null)
-                            ? TAGS_EMPTY
-                            : mock.candidate().tags();
-
-                        graphDraw.addNode0(mock.candidate().type(), tags, getNodeFactory(g -> {
-                            if (mock.candidate().type() instanceof Class<?> mockClass) {
-                                var addition = Mockito.mock(mockClass);
-                                if (Lifecycle.class.isAssignableFrom(mockClass)) {
-                                    Mockito.when(((Lifecycle) addition).init()).thenReturn(Mono.empty());
-                                    Mockito.when(((Lifecycle) addition).release()).thenReturn(Mono.empty());
-                                }
-
-                                return addition;
-                            } else {
-                                throw new IllegalArgumentException("Can't mock type: " + mock.candidate().type());
-                            }
-                        }, graphDraw));
-                    } else {
-                        for (Node<Object> nodeToMock : nodesToMock) {
-                            graphDraw.replaceNode(nodeToMock, g -> {
-                                if (mock.candidate().type() instanceof Class<?> mockClass) {
-                                    var replacement = Mockito.mock(mockClass);
-                                    if (Lifecycle.class.isAssignableFrom(mockClass)) {
-                                        Mockito.when(((Lifecycle) replacement).init()).thenReturn(Mono.empty());
-                                        Mockito.when(((Lifecycle) replacement).release()).thenReturn(Mono.empty());
-                                    }
-
-                                    return replacement;
-                                } else {
-                                    throw new IllegalArgumentException("Can't mock type: " + mock.candidate().type());
-                                }
-                            });
-                        }
-                    }
-                }
-
-                logger.debug("@KoraAppTest modification took: {}", Duration.ofNanos(System.nanoTime() - startedModify));
-            }
-
-            final long startedInit = System.nanoTime();
-            final RefreshableGraph initGraph = graphDraw.init().block(Duration.ofMinutes(3));
-            this.graphInitialized = new GraphInitialized(initGraph, graphDraw);
-            logger.info("@KoraAppTest initialization took: {}", Duration.ofNanos(System.nanoTime() - startedInit));
-        }
-
-        private <V> Factory<V> getNodeFactory(Function<KoraAppGraph, V> graphFunction, ApplicationGraphDraw graphDraw) {
-            return g -> graphFunction.apply(new KoraAppGraph() {
-
-                @Nullable
-                @Override
-                public Object getFirst(@NotNull Type type) {
-                    var node = graphDraw.findNodeByType(type);
-                    return (node == null)
-                        ? null
-                        : g.get(node);
-                }
-
-                @Nullable
-                @Override
-                public <T> T getFirst(@NotNull Class<T> type) {
-                    return (T) getFirst(((Type) type));
-                }
-
-                @Nullable
-                @Override
-                public Object getFirst(@NotNull Type type, Class<?>... tags) {
-                    var nodes = GraphUtils.findNodeByType(graphDraw, new NodeTypeCandidate(type, tags));
-                    return nodes.stream()
-                        .map(g::get)
-                        .findFirst()
-                        .orElse(null);
-                }
-
-                @Nullable
-                @Override
-                public <T> T getFirst(@NotNull Class<T> type, Class<?>... tags) {
-                    return (T) getFirst((Type) type, tags);
-                }
-
-                @NotNull
-                @Override
-                public List<Object> getAll(@NotNull Type type) {
-                    return getAll(type, TAG_ANY);
-                }
-
-                @NotNull
-                @Override
-                public List<Object> getAll(@NotNull Type type, Class<?>... tags) {
-                    var nodes = GraphUtils.findNodeByType(graphDraw, new NodeTypeCandidate(type, tags));
-                    return nodes.stream()
-                        .map(g::get)
-                        .toList();
-                }
-
-                @NotNull
-                @Override
-                public <T> List<T> getAll(@NotNull Class<T> type) {
-                    return getAll(type, TAG_ANY);
-                }
-
-                @NotNull
-                @Override
-                public <T> List<T> getAll(@NotNull Class<T> type, Class<?>... tags) {
-                    return (List<T>) getAll(((Type) type), tags);
-                }
-            });
-        }
-
-        @Override
-        public GraphInitialized initialized() {
-            if (graphInitialized == null) {
-                initialize();
-            }
-
-            return graphInitialized;
-        }
-    }
-
-    static class PerMethodGraph extends AbstractGraph {
-
-        PerMethodGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, Collection<NodeTypeCandidate> components, KoraGraphModification graphModifier) {
-            super(graphSupplier, components, graphModifier);
-        }
-    }
-
-    static class PerClassGraph extends AbstractGraph {
-
-        public PerClassGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier, Collection<NodeTypeCandidate> components, KoraGraphModification graphModifier) {
-            super(graphSupplier, components, graphModifier);
-        }
-    }
-
-    record GraphInitialized(RefreshableGraph refreshableGraph, ApplicationGraphDraw graphDraw) {}
-
-    record GraphSupplierKey(Class<?> application,
-                            Set<NodeTypeCandidate> components) {}
 
     record KoraAppMeta(Class<?> application,
                        String configuration,
-                       Set<NodeTypeCandidate> components,
-                       KoraAppTest.InitializeMode shareMode,
+                       Set<GraphCandidate> graphRoots,
+                       InitializeMode initializeMode,
                        @Nullable KoraGraphModification graphModifier) {}
 
-    record TestComponentCandidate(Type type, Class<?>[] tags) {
-
-        @Override
-        public String toString() {
-            return "[type=" + type + ", tags=" + Arrays.toString(tags) + ']';
-        }
-    }
-
-    private static TestClassContainer getContainer(ExtensionContext context) {
+    private static GraphContainer getGraphContainer(ExtensionContext context) {
         var storage = context.getStore(NAMESPACE);
-        return storage.get(KoraAppTest.class, TestClassContainer.class);
+        return storage.get(KoraAppTest.class, GraphContainer.class);
     }
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        var container = getContainer(context);
-        if (container.graph == null || container.koraAppTest.initializeMode() == KoraAppTest.InitializeMode.PER_METHOD) {
+        var graphContainer = getGraphContainer(context);
+        if (graphContainer.graph == null) {
             final KoraAppMeta meta = findKoraAppTest(context)
                 .map(koraAppTest -> getKoraAppMeta(koraAppTest, context))
                 .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
 
-            var graphSupplier = KoraJUnit5Extension.generateGraphSupplier(meta);
-            var graph = graphSupplier.get();
-            graph.initialize();
-            container.graph = graph;
+            var testGraph = KoraJUnit5Extension.generateTestGraph(meta);
+            testGraph.initialize();
+            graphContainer.graph = testGraph;
         }
 
+        prepareMocks(graphContainer.graph.initialized());
+
         var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
-        injectTestComponentFields(testInstance, container.graph.initialized());
-        injectMockComponentFields(testInstance, container.graph.initialized());
+        injectTestComponentFields(testInstance, graphContainer.graph.initialized());
+        injectMockComponentFields(testInstance, graphContainer.graph.initialized());
+        injectGraphComponentFields(testInstance, graphContainer.graph.initialized());
     }
 
-    private static void injectTestComponentFields(Object o, GraphInitialized graphInitialized) {
+    private static void prepareMocks(TestGraphInitialized graphInitialized) {
+        for (Node<?> node : graphInitialized.graphDraw().getNodes()) {
+            var mockCandidate = graphInitialized.refreshableGraph().get(node);
+            if (MockUtil.isMock(mockCandidate) || MockUtil.isSpy(mockCandidate)) {
+                Mockito.reset(mockCandidate);
+                if (mockCandidate instanceof Lifecycle lifecycle) {
+                    Mockito.when(lifecycle.init()).thenReturn(Mono.empty());
+                    Mockito.when(lifecycle.release()).thenReturn(Mono.empty());
+                }
+            }
+        }
+    }
+
+    private static void injectGraphComponentFields(Object o, TestGraphInitialized graphInitialized) {
+        final List<Field> fieldsGraphForInjection = ReflectionUtils.findFields(o.getClass(), f -> !f.isSynthetic() && f.getGenericType() instanceof KoraAppGraph, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
+        for (Field field : fieldsGraphForInjection) {
+            try {
+                field.setAccessible(true);
+                field.set(o, graphInitialized.koraAppGraph());
+            } catch (Exception e) {
+                throw new ExtensionConfigurationException("Failed to Inject field '" + field.getName() + "' due to: " + e);
+            }
+        }
+    }
+
+    private static void injectTestComponentFields(Object o, TestGraphInitialized graphInitialized) {
         injectByAnnotationFields(o, graphInitialized, TestComponent.class);
     }
 
-    private static void injectMockComponentFields(Object o, GraphInitialized graphInitialized) {
+    private static void injectMockComponentFields(Object o, TestGraphInitialized graphInitialized) {
         injectByAnnotationFields(o, graphInitialized, MockComponent.class);
     }
 
-    private static void injectByAnnotationFields(Object o, GraphInitialized graphInitialized, Class<? extends Annotation> annotation) {
-        final List<Field> fieldsForInjection = Arrays.stream(o.getClass().getDeclaredFields())
-            .filter(f -> !f.isSynthetic())
-            .filter(f -> Arrays.stream(f.getDeclaredAnnotations()).anyMatch(a -> a.annotationType().equals(annotation)))
-            .toList();
+    private static void injectByAnnotationFields(Object o, TestGraphInitialized graphInitialized, Class<? extends Annotation> annotation) {
+        final List<Field> fieldsForInjection = ReflectionUtils.findFields(o.getClass(), f -> !f.isSynthetic() && f.getAnnotation(annotation) != null, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
 
         if (fieldsForInjection.isEmpty()) {
             return;
@@ -336,7 +148,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 .findFirst()
                 .orElse(null);
 
-            final TestComponentCandidate candidate = new TestComponentCandidate(field.getType(), tags);
+            final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
             final Object component = getComponentOrThrow(graphInitialized, candidate);
             try {
                 field.setAccessible(true);
@@ -353,7 +165,23 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest not found"));
 
         var storage = context.getStore(NAMESPACE);
-        storage.put(KoraAppTest.class, new TestClassContainer(appTest));
+        storage.put(KoraAppTest.class, new GraphContainer(appTest));
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) {
+        var graphContainer = getGraphContainer(context);
+        if(graphContainer != null && graphContainer.graph.initializeMode() == InitializeMode.PER_CLASS) {
+            graphContainer.graph.close();
+        }
+    }
+
+    @Override
+    public void afterEach(ExtensionContext context) {
+        var graphContainer = getGraphContainer(context);
+        if(graphContainer != null && graphContainer.graph.initializeMode() == InitializeMode.PER_METHOD) {
+            graphContainer.graph.close();
+        }
     }
 
     @Override
@@ -380,29 +208,29 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
         return Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
-            .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class));
+                   .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class))
+               || parameterContext.getParameter().getType().equals(KoraAppGraph.class);
     }
 
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
-        var container = getContainer(context);
-        var candidate = getTestComponentCandidate(parameterContext);
-        return getComponentOrThrow(container.graph.initialized(), candidate);
+        var graphContainer = getGraphContainer(context);
+        var graphCandidate = getGraphCandidate(parameterContext);
+        return getComponentOrThrow(graphContainer.graph.initialized(), graphCandidate);
     }
 
     private KoraAppMeta getKoraAppMeta(KoraAppTest koraAppTest, ExtensionContext context) {
         final long started = System.nanoTime();
 
         var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
-        var mockComponentFromFields = Arrays.stream(testInstance.getClass().getDeclaredFields())
-            .filter(f -> !f.isSynthetic())
-            .filter(f -> Arrays.stream(f.getDeclaredAnnotations()).anyMatch(a -> a.annotationType().equals(MockComponent.class)))
+        var mockComponentFromFields = ReflectionUtils.findFields(testInstance.getClass(), f -> !f.isSynthetic() && f.getAnnotation(MockComponent.class) != null, ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
+            .stream()
             .map(field -> {
                 final Class<?>[] tag = Optional.ofNullable(field.getAnnotation(Tag.class))
                     .map(Tag::value)
                     .orElse(null);
 
-                return new NodeMock(new NodeTypeCandidate(field.getGenericType(), tag));
+                return new GraphMock(new GraphCandidate(field.getGenericType(), tag));
             })
             .toList();
 
@@ -416,7 +244,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                         .map(Tag::value)
                         .orElse(null);
 
-                    return new NodeMock(new NodeTypeCandidate(parameter.getParameterizedType(), tag));
+                    return new GraphMock(new GraphCandidate(parameter.getParameterizedType(), tag));
                 })
                 .toList())
             .orElse(List.of());
@@ -440,8 +268,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
             });
 
-        final Set<NodeTypeCandidate> testComponentsFromAnnotation = Arrays.stream(koraAppTest.components())
-            .map(NodeTypeCandidate::new)
+        final Set<GraphCandidate> graphRoots = Arrays.stream(koraAppTest.components())
+            .map(GraphCandidate::new)
             .collect(Collectors.toSet());
 
         final String koraAppConfig = context.getTestInstance()
@@ -454,26 +282,26 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         if (koraAppConfig.isBlank()) {
             logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-            return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
-                testComponentsFromAnnotation, koraAppTest.initializeMode(), koraGraphModification);
+            return new KoraAppMeta(koraAppTest.value(), koraAppConfig,
+                graphRoots, koraAppTest.initializeMode(), koraGraphModification);
         }
 
         final KoraGraphModification graphModificationWithConfig = (koraGraphModification == null)
             ? KoraGraphModification.create()
             : koraGraphModification;
 
-        if (ConfigModule.class.isAssignableFrom(koraAppTest.application())) {
+        if (ConfigModule.class.isAssignableFrom(koraAppTest.value())) {
             graphModificationWithConfig.replaceComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
         } else {
             graphModificationWithConfig.addComponent(Config.class, () -> ConfigFactory.parseString(koraAppConfig));
         }
 
         logger.debug("@KoraAppTest preparation took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraAppMeta(koraAppTest.application(), koraAppConfig,
-            testComponentsFromAnnotation, koraAppTest.initializeMode(), graphModificationWithConfig);
+        return new KoraAppMeta(koraAppTest.value(), koraAppConfig,
+            graphRoots, koraAppTest.initializeMode(), graphModificationWithConfig);
     }
 
-    private static TestComponentCandidate getTestComponentCandidate(ParameterContext parameterContext) {
+    private static GraphCandidate getGraphCandidate(ParameterContext parameterContext) {
         final Type parameterType = parameterContext.getParameter().getParameterizedType();
         final Class<?>[] tags = Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
             .filter(a -> a.annotationType().equals(Tag.class))
@@ -481,16 +309,16 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .findFirst()
             .orElse(null);
 
-        return new TestComponentCandidate(parameterType, tags);
+        return new GraphCandidate(parameterType, tags);
     }
 
-    private static Object getComponentOrThrow(GraphInitialized graphInitialized, TestComponentCandidate candidate) {
+    private static Object getComponentOrThrow(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
         return getComponent(graphInitialized, candidate)
             .orElseThrow(() -> new ExtensionConfigurationException(candidate + " expected type to implement " + Lifecycle.class + " or be a " + Component.class
                                                                    + ", but it was not present generated graph, please check @KoraAppTest configuration for " + candidate));
     }
 
-    private static Optional<Object> getComponent(GraphInitialized graphInitialized, TestComponentCandidate candidate) {
+    private static Optional<Object> getComponent(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
         try {
             return getComponentFromGraph(graphInitialized, candidate);
         } catch (Exception e) {
@@ -499,7 +327,11 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
     }
 
-    private static Optional<Object> getComponentFromGraph(GraphInitialized graph, TestComponentCandidate candidate) {
+    private static Optional<Object> getComponentFromGraph(TestGraphInitialized graph, GraphCandidate candidate) {
+        if(KoraAppGraph.class.equals(candidate.type())) {
+            return Optional.of(graph.koraAppGraph());
+        }
+
         if (candidate.tags() == null) {
             return Optional.ofNullable(graph.graphDraw().findNodeByType(candidate.type()))
                 .map(v -> ((Object) graph.refreshableGraph().get(v)))
@@ -540,8 +372,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     }
 
     @SuppressWarnings("unchecked")
-    private static GraphSupplier generateGraphSupplier(KoraAppMeta meta) {
-        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(meta.application(), meta.components()), k -> {
+    private static TestGraph generateTestGraph(KoraAppMeta meta) {
+        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(meta.application(), meta.graphRoots()), k -> {
             try {
                 final long startedLoading = System.nanoTime();
                 var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(meta.application.getName() + "Graph");
@@ -550,7 +382,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 logger.debug("@KoraAppTest loading took: {}", Duration.ofNanos(System.nanoTime() - startedLoading));
                 return supplier;
             } catch (ClassNotFoundException e) {
-                throw new ExtensionConfigurationException("@KoraAppTest#application must be annotated with @KoraApp, but probably wasn't: " + meta.application, e);
+                throw new ExtensionConfigurationException("@KoraAppTest#value must be annotated with @KoraApp, but probably wasn't: " + meta.application, e);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -558,7 +390,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         final long startedSubgraph = System.nanoTime();
         final ApplicationGraphDraw graphDraw = graphSupplier.get();
-        final Node<?>[] nodesForSubGraph = meta.components.stream()
+        final Node<?>[] nodesForSubGraph = meta.graphRoots.stream()
             .flatMap(component -> {
                 final Set<Node<Object>> nodes = GraphUtils.findNodeByTypeOrAssignable(graphDraw, component);
                 if (nodes.isEmpty()) {
@@ -573,6 +405,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             ? graphDraw
             : graphDraw.subgraph(nodesForSubGraph);
         logger.debug("@KoraAppTest subgraph took: {}", Duration.ofNanos(System.nanoTime() - startedSubgraph));
-        return new GraphSupplier(() -> subGraph, meta);
+        return new TestGraph(subGraph::copy, meta.graphModifier(), meta.initializeMode);
     }
 }
