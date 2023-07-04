@@ -6,8 +6,8 @@ import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTestGraphModifier;
 import ru.tinkoff.kora.test.extension.junit5.KoraGraphModification;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent12;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent2;
 

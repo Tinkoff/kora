@@ -250,7 +250,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             .map(parameters -> parameters.stream()
                 .filter(parameter -> parameter.getDeclaredAnnotation(MockComponent.class) != null)
                 .map(parameter -> {
-                    if(KoraAppGraph.class.isAssignableFrom(parameter.getType())) {
+                    if (KoraAppGraph.class.isAssignableFrom(parameter.getType())) {
                         throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
                     }
 
@@ -270,7 +270,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
             .stream()
             .map(field -> {
-                if(KoraAppGraph.class.isAssignableFrom(field.getType())) {
+                if (KoraAppGraph.class.isAssignableFrom(field.getType())) {
                     throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
                 }
 

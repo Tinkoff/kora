@@ -4,16 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.application.graph.RefreshableGraph;
-import ru.tinkoff.kora.test.extension.junit5.KoraAppTest.InitializeMode;
 import ru.tinkoff.kora.test.extension.junit5.KoraJUnit5Extension.KoraTestClassMetadata;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Properties;
 import java.util.function.Supplier;
 
 final class TestGraph implements AutoCloseable {

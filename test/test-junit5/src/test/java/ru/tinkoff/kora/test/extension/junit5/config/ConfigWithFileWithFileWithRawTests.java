@@ -7,8 +7,6 @@ import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTestConfigModifier;
 import ru.tinkoff.kora.test.extension.junit5.KoraConfigModification;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestConfigApplication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

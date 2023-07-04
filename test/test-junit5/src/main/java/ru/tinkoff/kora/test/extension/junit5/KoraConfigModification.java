@@ -1,9 +1,5 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigRenderOptions;
 import org.intellij.lang.annotations.Language;
 
 import javax.annotation.Nonnull;

@@ -1,6 +1,5 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;

@@ -31,7 +31,7 @@ public class MockGraphReplacedTests {
 
     @Test
     void beanWithTaggedMock(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component,
-                       @TestComponent TestComponent23 component23) {
+                            @TestComponent TestComponent23 component23) {
         assertNull(component.get());
         Mockito.when(component.get()).thenReturn("?");
         assertEquals("?", component.get());

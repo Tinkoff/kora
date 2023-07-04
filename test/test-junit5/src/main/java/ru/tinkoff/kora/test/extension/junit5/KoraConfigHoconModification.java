@@ -5,7 +5,6 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigRenderOptions;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.PropertyKey;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

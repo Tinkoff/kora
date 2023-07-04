@@ -4,15 +4,12 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import ru.tinkoff.kora.application.graph.Graph;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppGraph;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @KoraAppTest(value = TestApplication.class, initializeMode = KoraAppTest.InitializeMode.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
