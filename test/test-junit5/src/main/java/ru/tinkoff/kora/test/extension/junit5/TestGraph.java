@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
 import ru.tinkoff.kora.application.graph.RefreshableGraph;
-import ru.tinkoff.kora.test.extension.junit5.KoraJUnit5Extension.KoraTestClassMetadata;
+import ru.tinkoff.kora.test.extension.junit5.KoraJUnit5Extension.TestClassMetadata;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,12 +21,12 @@ final class TestGraph implements AutoCloseable {
     @Nullable
     private final KoraGraphModification graphModifier;
     private final Supplier<? extends ApplicationGraphDraw> graphSupplier;
-    private final KoraTestClassMetadata meta;
+    private final TestClassMetadata meta;
 
     private volatile TestGraphInitialized graphInitialized;
 
     TestGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier,
-              KoraTestClassMetadata meta,
+              TestClassMetadata meta,
               @Nullable KoraGraphModification graphModifier) {
         this.graphSupplier = graphSupplier;
         this.graphModifier = graphModifier;

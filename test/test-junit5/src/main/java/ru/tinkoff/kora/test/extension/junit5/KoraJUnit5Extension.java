@@ -41,6 +41,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     static class KoraTestContext {
 
         volatile TestGraph graph;
+        volatile TestClassMetadata metadata;
         final KoraAppTest annotation;
 
         KoraTestContext(KoraAppTest annotation) {
@@ -48,7 +49,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
     }
 
-    record KoraTestClassMetadata(KoraAppTest annotation, Set<GraphCandidate> graphRoots, Config config) {
+    record TestClassMetadata(KoraAppTest annotation, Set<GraphCandidate> graphRoots, Config config) {
 
         interface Config {
 
@@ -176,8 +177,12 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     @Override
     public void beforeEach(ExtensionContext context) {
         var koraTestContext = getKoraTestContext(context);
+        if(koraTestContext.metadata == null) {
+            koraTestContext.metadata = getClassMetadata(koraTestContext.annotation, context);
+        }
+
         if (koraTestContext.graph == null) {
-            koraTestContext.graph = KoraJUnit5Extension.generateTestGraph(koraTestContext.annotation, context);
+            koraTestContext.graph = KoraJUnit5Extension.generateTestGraph(koraTestContext.annotation, koraTestContext.metadata, context);
             koraTestContext.graph.initialize();
         }
 
@@ -302,13 +307,13 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         return Optional.ofNullable(koraGraphModification);
     }
 
-    private static KoraTestClassMetadata getClassMetadata(KoraAppTest koraAppTest, ExtensionContext context) {
+    private static TestClassMetadata getClassMetadata(KoraAppTest koraAppTest, ExtensionContext context) {
         final long started = System.nanoTime();
         final Set<GraphCandidate> graphRoots = Arrays.stream(koraAppTest.components())
             .map(GraphCandidate::new)
             .collect(Collectors.toSet());
 
-        final KoraTestClassMetadata.Config koraAppConfig = context.getTestInstance()
+        final TestClassMetadata.Config koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfigModifier)
             .map(inst -> {
                 if (!ConfigModule.class.isAssignableFrom(koraAppTest.value())) {
@@ -316,12 +321,12 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 }
 
                 final KoraConfigModification configModification = ((KoraAppTestConfigModifier) inst).config();
-                return ((KoraTestClassMetadata.Config) new KoraTestClassMetadata.FileConfig(configModification));
+                return ((TestClassMetadata.Config) new TestClassMetadata.FileConfig(configModification));
             })
-            .orElse(KoraTestClassMetadata.Config.NONE);
+            .orElse(TestClassMetadata.Config.NONE);
 
         logger.debug("@KoraAppTest metadata collecting took: {}", Duration.ofNanos(System.nanoTime() - started));
-        return new KoraTestClassMetadata(koraAppTest, graphRoots, koraAppConfig);
+        return new TestClassMetadata(koraAppTest, graphRoots, koraAppConfig);
     }
 
     private static GraphCandidate getGraphCandidate(ParameterContext parameterContext) {
@@ -398,10 +403,9 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     }
 
     @SuppressWarnings("unchecked")
-    private static TestGraph generateTestGraph(KoraAppTest annotation, ExtensionContext context) {
-        var testMetadata = getClassMetadata(annotation, context);
-        var applicationClass = testMetadata.annotation.value();
-        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(applicationClass, testMetadata.graphRoots()), k -> {
+    private static TestGraph generateTestGraph(KoraAppTest annotation, TestClassMetadata metadata, ExtensionContext context) {
+        var applicationClass = metadata.annotation.value();
+        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(applicationClass, metadata.graphRoots()), k -> {
             try {
                 final long startedLoading = System.nanoTime();
                 var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(applicationClass.getName() + "Graph");
@@ -418,7 +422,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         final long startedSubgraph = System.nanoTime();
         final ApplicationGraphDraw graphDraw = graphSupplier.get();
-        final Node<?>[] nodesForSubGraph = testMetadata.graphRoots.stream()
+        final Node<?>[] nodesForSubGraph = metadata.graphRoots.stream()
             .flatMap(component -> {
                 final Set<Node<Object>> nodes = GraphUtils.findNodeByTypeOrAssignable(graphDraw, component);
                 if (nodes.isEmpty()) {
@@ -434,6 +438,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             : graphDraw.subgraph(nodesForSubGraph);
         logger.debug("@KoraAppTest subgraph took: {}", Duration.ofNanos(System.nanoTime() - startedSubgraph));
         var koraGraphModification = getGraphModification(annotation, context).orElse(null);
-        return new TestGraph(subGraph::copy, testMetadata, koraGraphModification);
+        return new TestGraph(subGraph::copy, metadata, koraGraphModification);
     }
 }
