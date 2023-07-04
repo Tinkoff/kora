@@ -140,14 +140,10 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
 
         for (Field field : fieldsForInjection) {
-            if (KoraAppGraph.class.isAssignableFrom(field.getType())) {
-                injectToField(testInstance, field, graphInitialized.koraAppGraph());
-            } else {
-                final Class<?>[] tags = parseTags(field);
-                final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
-                final Object component = getComponentOrThrow(graphInitialized, candidate);
-                injectToField(testInstance, field, component);
-            }
+            final Class<?>[] tags = parseTags(field);
+            final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
+            final Object component = getComponentOrThrow(graphInitialized, candidate);
+            injectToField(testInstance, field, component);
         }
     }
 
@@ -345,7 +341,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static Object getComponentOrThrow(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
         return getComponent(graphInitialized, candidate)
             .orElseThrow(() -> new ExtensionConfigurationException(candidate + " expected type to implement " + Lifecycle.class + " or be a " + Component.class
-                                                                   + ", but it was not present generated graph, please check @KoraAppTest configuration for " + candidate));
+                                                                   + ", but it wasn't present in graph, please check @KoraAppTest configuration for " + candidate));
     }
 
     private static Optional<Object> getComponent(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
