@@ -34,9 +34,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
 
     // Application class -> graph supplier
-    private static final Map<GraphSupplierKey, Supplier<ApplicationGraphDraw>> GRAPH_SUPPLIER_MAP = new ConcurrentHashMap<>();
-
-    record GraphSupplierKey(Class<?> application, Set<GraphCandidate> components) {}
+    private static final Map<Class<?>, Supplier<ApplicationGraphDraw>> GRAPH_SUPPLIER_MAP = new ConcurrentHashMap<>();
 
     static class KoraTestContext {
 
@@ -82,6 +80,9 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
             @Override
             public void setup(ApplicationGraphDraw graphDraw) throws IOException {
+                final String configFileName = "kora-app-test-config-" + UUID.randomUUID();
+                logger.trace("Preparing config setup with file name: {}", configFileName);
+
                 prevProperties = (Properties) System.getProperties().clone();
 
                 final String extension;
@@ -95,7 +96,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                     config.systemProperties().forEach(System::setProperty);
                 }
 
-                var tmpFile = Files.createTempFile("kora-app-test-config-" + UUID.randomUUID(), "." + extension);
+                var tmpFile = Files.createTempFile(configFileName, "." + extension);
                 Files.writeString(tmpFile, config.config(), StandardCharsets.UTF_8);
                 var configPath = tmpFile.toAbsolutePath().toString();
 
@@ -105,6 +106,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             @Override
             public void cleanup() {
                 if (prevProperties != null) {
+                    logger.trace("Cleaning up after config setup");
                     System.setProperties(prevProperties);
                     prevProperties = null;
                 }
@@ -119,6 +121,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     }
 
     private static void prepareMocks(TestGraphInitialized graphInitialized) {
+        logger.trace("Resetting mocks...");
         for (Node<?> node : graphInitialized.graphDraw().getNodes()) {
             var mockCandidate = graphInitialized.refreshableGraph().get(node);
             if (MockUtil.isMock(mockCandidate) || MockUtil.isSpy(mockCandidate)) {
@@ -131,7 +134,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
     }
 
-    private static void injectComponentsToFields(Object testInstance, TestGraphInitialized graphInitialized) {
+    private static void injectComponentsToFields(Object testInstance, TestGraphInitialized graphInitialized, ExtensionContext context) {
         final List<Field> fieldsForInjection = ReflectionUtils.findFields(testInstance.getClass(),
             f -> !f.isSynthetic() && (f.getAnnotation(TestComponent.class) != null || f.getAnnotation(MockComponent.class) != null),
             ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
@@ -143,6 +146,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         for (Field field : fieldsForInjection) {
             final Class<?>[] tags = parseTags(field);
             final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
+            logger.trace("Looking for test method '{}' field '{}' inject candidate: {}",
+                context.getDisplayName(), field.getName(), candidate);
             final Object component = getComponentOrThrow(graphInitialized, candidate);
             injectToField(testInstance, field, component);
         }
@@ -176,8 +181,9 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
     @Override
     public void beforeEach(ExtensionContext context) {
+        var started = System.nanoTime();
         var koraTestContext = getKoraTestContext(context);
-        if(koraTestContext.metadata == null) {
+        if (koraTestContext.metadata == null) {
             koraTestContext.metadata = getClassMetadata(koraTestContext.annotation, context);
         }
 
@@ -188,7 +194,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
         prepareMocks(koraTestContext.graph.initialized());
-        injectComponentsToFields(testInstance, koraTestContext.graph.initialized());
+        injectComponentsToFields(testInstance, koraTestContext.graph.initialized(), context);
+        logger.info("@KoraAppTest test method '{}' setup took: {}", context.getDisplayName(), Duration.ofNanos(System.nanoTime() - started));
     }
 
     @Override
@@ -244,6 +251,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
         var koraTestContext = getKoraTestContext(context);
         var graphCandidate = getGraphCandidate(parameterContext);
+        logger.trace("Looking for test method '{}' parameter '{}' inject candidate: {}",
+            context.getDisplayName(), parameterContext.getParameter().getName(), graphCandidate);
         return getComponentOrThrow(koraTestContext.graph.initialized(), graphCandidate);
     }
 
@@ -405,7 +414,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     @SuppressWarnings("unchecked")
     private static TestGraph generateTestGraph(KoraAppTest annotation, TestClassMetadata metadata, ExtensionContext context) {
         var applicationClass = metadata.annotation.value();
-        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(new GraphSupplierKey(applicationClass, metadata.graphRoots()), k -> {
+        var graphSupplier = GRAPH_SUPPLIER_MAP.computeIfAbsent(applicationClass, k -> {
             try {
                 final long startedLoading = System.nanoTime();
                 var clazz = KoraJUnit5Extension.class.getClassLoader().loadClass(applicationClass.getName() + "Graph");

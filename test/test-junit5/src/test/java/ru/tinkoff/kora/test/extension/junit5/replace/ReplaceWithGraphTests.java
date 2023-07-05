@@ -21,8 +21,8 @@ public class ReplaceWithGraphTests implements KoraAppTestGraphModifier {
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.create()
             .replaceComponent(LifecycleComponent.class, graph -> {
-                final TestComponent1 first = graph.getFirst(TestComponent1.class);
-                return (LifecycleComponent) () -> "?" + first.get();
+                final TestComponent1 component1 = graph.getFirst(TestComponent1.class);
+                return (LifecycleComponent) () -> "?" + component1.get();
             });
     }
 
