@@ -11,8 +11,8 @@ nav:
       - Логирование: features/logging.md
       - Метрики: features/metrics.md
       - Пробы: features/probes.md
-      - Http server: features/http-server.md
-      - Http client: features/http-client.md
+      - HTTP Server: features/http-server.md
+      - HTTP Client: features/http-client.md
       - Кодогенерация из OpenAPI: features/openapi-codegen.md
       - Kafka: features/kafka.md
       - Database: features/database.md

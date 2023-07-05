@@ -76,7 +76,7 @@ public interface ApplicationModules {
 Пример:
 ```java
 @KoraAppTest(
-    application = ApplicationModules.class,
+    value = ApplicationModules.class,
     components = {Component1.class, Component12.class})
 class ComponentJUnitExtensionTests {
     
@@ -91,7 +91,7 @@ class ComponentJUnitExtensionTests {
 Пример теста, где компоненты внедряются в поля:
 ```java
 @KoraAppTest(
-    application = ApplicationModules.class,
+    value = ApplicationModules.class,
     components = {Component1.class, Component12.class})
 class ComponentJUnitExtensionTests {
 
@@ -108,7 +108,7 @@ class ComponentJUnitExtensionTests {
 Пример теста, где компоненты внедряются в аргументы метода:
 ```java
 @KoraAppTest(
-    application = ApplicationModules.class,
+    value = ApplicationModules.class,
     components = {Component1.class, Component12.class})
 class ComponentJUnitExtensionTests {
 
@@ -123,7 +123,7 @@ class ComponentJUnitExtensionTests {
 
 Для внедрения зависимости которая имеет `@Tag`, требуется указать соответствующую аннотацию `@Tag` рядом с внедряемым аргументом:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests {
 
     @Test
@@ -141,7 +141,7 @@ class ComponentJUnitExtensionTests {
 Пример теста, где `Mock` внедряется в поля:
 ```java
 @KoraAppTest(
-    application = ApplicationModules.class,
+    value = ApplicationModules.class,
     components = {Component1.class, Component12.class})
 class ComponentJUnitExtensionTests {
 
@@ -163,7 +163,7 @@ class ComponentJUnitExtensionTests {
 Пример теста, где `Mock` внедряется в аргументы метода:
 ```java
 @KoraAppTest(
-    application = ApplicationModules.class,
+    value = ApplicationModules.class,
     components = {Component1.class, Component12.class})
 class ComponentJUnitExtensionTests {
 
@@ -179,7 +179,7 @@ class ComponentJUnitExtensionTests {
 
 Для внедрения зависимости которая имеет `@Tag`, требуется указать соответствующую аннотацию `@Tag` рядом с внедряемым аргументом:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests {
 
     @Test
@@ -197,12 +197,12 @@ class ComponentJUnitExtensionTests {
 
 Пример добавления части конфига в основной `reference.conf` конфиг будет выглядеть так:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigFile("reference.conf")
+        return KoraConfigModification.ofConfigHoconFile("reference.conf")
             .mergeWithConfigHocon("""
                                     myconfig {
                                       myproperty = 1
@@ -223,7 +223,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
 Пример добавления компонента в граф:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
     @Override
@@ -243,7 +243,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
 Пример замены компонента в графе:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
     @Override
@@ -263,7 +263,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
 Пример замены компонента в графе:
 ```java
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestGraphModifier {
 
     @Override
@@ -318,7 +318,7 @@ public interface EntityJdbcRepository extends JdbcRepository {
 Пример тестового класса:
 ```java
 @Testcontainers
-@KoraAppTest(application = ApplicationModules.class)
+@KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
     @Container
@@ -331,7 +331,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigFile("reference.conf")
+        return KoraConfigModification.ofConfigHoconFile("reference.conf")
             .mergeWithConfigHocon("""
                                     db {
                                       jdbcUrl = "%s"
@@ -352,7 +352,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
     }
 
     @BeforeEach
-    void cleanup(EntityJdbcRepository repository) {
+    void cleanup(@TestComponent EntityJdbcRepository repository) {
         repository.deleteAll();
     }
 
