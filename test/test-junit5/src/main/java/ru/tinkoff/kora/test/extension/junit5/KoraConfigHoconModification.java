@@ -78,11 +78,6 @@ public final class KoraConfigHoconModification implements KoraConfigModification
         return ConfigFactory.parseResources(configFile, ConfigParseOptions.defaults().setAllowMissing(true));
     }
 
-    @Nonnull
-    Map<String, String> getSystemProperties() {
-        return systemProperties;
-    }
-
     @Override
     public String toString() {
         return config();
