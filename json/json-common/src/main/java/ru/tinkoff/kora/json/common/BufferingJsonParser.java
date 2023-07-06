@@ -9,9 +9,10 @@ import com.fasterxml.jackson.core.io.IOContext;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class BufferingJsonParser extends ParserBase {
-    record JsonTokenData(JsonToken token, char[] textCharacters, int textOffset, int textLength) {}
+    record JsonTokenData(JsonToken token, char[] textCharacters) {}
 
     private final ArrayList<JsonTokenData> tokens = new ArrayList<>();
     private final JsonParser delegate;
@@ -49,7 +50,7 @@ public class BufferingJsonParser extends ParserBase {
         var textCharacters = parser.getTextCharacters();
         var textOffset = parser.getTextOffset();
         var textLength = parser.getTextLength();
-        return new JsonTokenData(token, textCharacters, textOffset, textLength);
+        return new JsonTokenData(token, Arrays.copyOfRange(textCharacters, textOffset, textOffset + textLength));
     }
 
     @Override
@@ -61,8 +62,9 @@ public class BufferingJsonParser extends ParserBase {
             this.tokens.add(data);
             this._currToken = nextToken;
             if (nextToken == JsonToken.FIELD_NAME) {
-                this._parsingContext.setCurrentName(new String(data.textCharacters(), data.textOffset(), data.textLength()));
+                this._parsingContext.setCurrentName(new String(data.textCharacters()));
             }
+            this._textBuffer.resetWithShared(data.textCharacters, 0, data.textCharacters.length);
             return nextToken;
         }
         this.currentToken++;
@@ -70,8 +72,9 @@ public class BufferingJsonParser extends ParserBase {
         var nextToken = data.token();
         this._currToken = nextToken;
         if (nextToken == JsonToken.FIELD_NAME) {
-            this._parsingContext.setCurrentName(new String(data.textCharacters(), data.textOffset(), data.textLength()));
+            this._parsingContext.setCurrentName(new String(data.textCharacters()));
         }
+        this._textBuffer.resetWithShared(data.textCharacters, 0, data.textCharacters.length);
         return nextToken;
     }
 
@@ -89,7 +92,7 @@ public class BufferingJsonParser extends ParserBase {
         if (currentData == null) {
             return null;
         }
-        return new String(currentData.textCharacters(), currentData.textOffset(), currentData.textLength());
+        return new String(currentData.textCharacters());
     }
 
     @Override
@@ -107,7 +110,7 @@ public class BufferingJsonParser extends ParserBase {
         if (currentData == null) {
             return -1;
         }
-        return currentData.textLength();
+        return currentData.textCharacters().length;
     }
 
     @Override
@@ -116,6 +119,6 @@ public class BufferingJsonParser extends ParserBase {
         if (currentData == null) {
             return -1;
         }
-        return currentData.textOffset();
+        return 0;
     }
 }

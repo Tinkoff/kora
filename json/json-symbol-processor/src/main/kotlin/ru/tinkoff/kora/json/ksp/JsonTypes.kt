@@ -21,7 +21,8 @@ object JsonTypes {
     val jsonFieldAnnotation = ClassName("ru.tinkoff.kora.json.common.annotation", "JsonField")
     val jsonSkipAnnotation = ClassName("ru.tinkoff.kora.json.common.annotation", "JsonSkip")
 
-    val bufferedParserWithDiscriminator = ClassName("ru.tinkoff.kora.json.common", "BufferedParserWithDiscriminator")
+    val bufferingJsonParser = ClassName("ru.tinkoff.kora.json.common", "BufferingJsonParser");
+    val discriminatorHelper = ClassName("ru.tinkoff.kora.json.common", "DiscriminatorHelper");
 
     val jsonParseException = ClassName("com.fasterxml.jackson.core", "JsonParseException")
     val jsonParser = ClassName("com.fasterxml.jackson.core", "JsonParser")
