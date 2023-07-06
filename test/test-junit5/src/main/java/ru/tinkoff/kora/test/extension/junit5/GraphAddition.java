@@ -10,9 +10,9 @@ record GraphAddition(Function<KoraAppGraph, ?> function, GraphCandidate candidat
 
     @Override
     public void accept(ApplicationGraphDraw graphDraw) {
-        final Class<?>[] tags = (candidate().tags() == null)
+        final Class<?>[] tags = (candidate().tags().isEmpty())
             ? TAGS_EMPTY
-            : candidate().tags();
+            : candidate().tagsAsArray();
 
         graphDraw.addNode0(candidate().type(), tags, getNodeFactory(function(), graphDraw));
     }

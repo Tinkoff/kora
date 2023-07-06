@@ -18,12 +18,12 @@ final class GraphUtils {
     private GraphUtils() {}
 
     static <T> Set<Node<T>> findNodeByType(ApplicationGraphDraw graph, GraphCandidate candidate) {
-        return findNodeByType(graph, candidate.type(), candidate.tags());
+        return findNodeByType(graph, candidate.type(), candidate.tagsAsArray());
     }
 
     @SuppressWarnings("unchecked")
     static <T> Set<Node<T>> findNodeByType(ApplicationGraphDraw graph, Type type, Class<?>[] tags) {
-        if (tags == null) {
+        if (tags == null || tags.length == 0) {
             final Node<T> node = (Node<T>) graph.findNodeByType(type);
             return (node == null)
                 ? Set.of()
@@ -48,12 +48,12 @@ final class GraphUtils {
     }
 
     static <T> Set<Node<T>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, GraphCandidate candidate) {
-        return findNodeByTypeOrAssignable(graph, candidate.type(), candidate.tags());
+        return findNodeByTypeOrAssignable(graph, candidate.type(), candidate.tagsAsArray());
     }
 
     @SuppressWarnings("unchecked")
     static <T> Set<Node<T>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, Type type, Class<?>[] tags) {
-        if (tags == null) {
+        if (tags == null || tags.length == 0) {
             final Set<Node<T>> nodes = new HashSet<>();
             for (var graphNode : graph.getNodes()) {
                 if (graphNode.type().equals(type)) {

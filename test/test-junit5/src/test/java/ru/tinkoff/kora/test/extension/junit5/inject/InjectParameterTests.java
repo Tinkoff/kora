@@ -11,7 +11,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent12;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@KoraAppTest(value = TestApplication.class)
+@KoraAppTest(TestApplication.class)
 public class InjectParameterTests {
 
     @TestComponent

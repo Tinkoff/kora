@@ -13,9 +13,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@KoraAppTest(
-    value = TestApplication.class,
-    components = {TestComponent12.class, TestComponent2.class})
+@KoraAppTest(TestApplication.class)
 public class ReplaceTests implements KoraAppTestGraphModifier {
 
     @TestComponent

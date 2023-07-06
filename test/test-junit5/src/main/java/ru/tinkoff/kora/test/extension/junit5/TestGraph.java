@@ -18,18 +18,13 @@ final class TestGraph implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(KoraJUnit5Extension.class);
 
-    @Nullable
-    private final KoraGraphModification graphModifier;
-    private final Supplier<? extends ApplicationGraphDraw> graphSupplier;
+    private final ApplicationGraphDraw graph;
     private final TestClassMetadata meta;
 
     private volatile TestGraphInitialized graphInitialized;
 
-    TestGraph(Supplier<? extends ApplicationGraphDraw> graphSupplier,
-              TestClassMetadata meta,
-              @Nullable KoraGraphModification graphModifier) {
-        this.graphSupplier = graphSupplier;
-        this.graphModifier = graphModifier;
+    TestGraph(ApplicationGraphDraw graph, TestClassMetadata meta) {
+        this.graph = graph;
         this.meta = meta;
     }
 
@@ -40,17 +35,9 @@ final class TestGraph implements AutoCloseable {
         synchronized (LOCK) {
             var config = meta.config();
             try {
-                var graphDraw = graphSupplier.get();
-                if (graphModifier != null) {
-                    for (GraphModification modification : graphModifier.getModifications()) {
-                        modification.accept(graphDraw);
-                    }
-                }
-
-                config.setup(graphDraw);
-
-                final RefreshableGraph initGraph = graphDraw.init().block(Duration.ofMinutes(10));
-                this.graphInitialized = new TestGraphInitialized(initGraph, graphDraw, new DefaultKoraAppGraph(graphDraw, initGraph));
+                config.setup(graph);
+                final RefreshableGraph initGraph = graph.init().block(Duration.ofMinutes(10));
+                this.graphInitialized = new TestGraphInitialized(initGraph, graph, new DefaultKoraAppGraph(graph, initGraph));
                 logger.info("@KoraAppTest graph initialization took: {}", Duration.ofNanos(System.nanoTime() - started));
             } catch (IOException e) {
                 throw new IllegalStateException(e);

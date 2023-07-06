@@ -36,7 +36,7 @@ public @interface KoraAppTest {
     Class<?> value();
 
     /**
-     * @return classes that are {@link Component} and will be included in Context initialization or all classes from {@link #value()} if empty
+     * @return {@link Component} that should be included in Context initialization in addition to {@link TestComponent} found in tests
      */
     Class<?>[] components() default {};
 }

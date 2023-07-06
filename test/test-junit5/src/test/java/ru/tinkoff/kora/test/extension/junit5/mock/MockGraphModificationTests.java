@@ -18,9 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@KoraAppTest(
-    value = TestApplication.class,
-    components = {TestComponent1.class, LifecycleComponent.class, TestComponent23.class})
+@KoraAppTest(TestApplication.class)
 public class MockGraphModificationTests implements KoraAppTestGraphModifier {
 
     @Override

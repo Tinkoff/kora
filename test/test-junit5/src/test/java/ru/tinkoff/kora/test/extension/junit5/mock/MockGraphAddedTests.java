@@ -14,8 +14,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent23;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@KoraAppTest(value = TestApplication.class,
-    components = {TestComponent23.class})
+@KoraAppTest(TestApplication.class)
 public class MockGraphAddedTests {
 
     @Test
@@ -26,18 +25,18 @@ public class MockGraphAddedTests {
     }
 
     @Test
-    void mockWithTag(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component) {
-        assertNull(component.get());
-        Mockito.when(component.get()).thenReturn("?");
-        assertEquals("?", component.get());
+    void mockWithTag(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent mock) {
+        assertNull(mock.get());
+        Mockito.when(mock.get()).thenReturn("?");
+        assertEquals("?", mock.get());
     }
 
     @Test
-    void beanWithTaggedMock(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent component,
+    void beanWithTaggedMock(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent mock,
                             @TestComponent TestComponent23 component23) {
-        assertNull(component.get());
-        Mockito.when(component.get()).thenReturn("?");
-        assertEquals("?", component.get());
+        assertNull(mock.get());
+        Mockito.when(mock.get()).thenReturn("?");
+        assertEquals("?", mock.get());
 
         assertEquals("?3", component23.get());
     }

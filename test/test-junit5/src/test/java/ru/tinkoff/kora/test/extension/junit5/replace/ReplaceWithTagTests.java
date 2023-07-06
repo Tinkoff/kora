@@ -15,9 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@KoraAppTest(
-    value = TestApplication.class,
-    components = {TestComponent2.class, TestComponent23.class})
+@KoraAppTest(TestApplication.class)
 public class ReplaceWithTagTests implements KoraAppTestGraphModifier {
 
     @TestComponent

@@ -12,10 +12,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent12;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@KoraAppTest(
-    value = TestApplication.class,
-    components = {TestComponent12.class},
-    initializeMode = KoraAppTest.InitializeMode.PER_METHOD)
+@KoraAppTest(TestApplication.class)
 public class MockParametersTests {
 
     @Test

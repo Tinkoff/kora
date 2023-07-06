@@ -11,8 +11,7 @@ import ru.tinkoff.kora.test.extension.junit5.testdata.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@KoraAppTest(value = TestApplication.class,
-    components = {TestComponent23.class, TestComponent2.class})
+@KoraAppTest(TestApplication.class)
 public class MockGraphReplacedTests {
 
     @Test
