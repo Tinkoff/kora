@@ -17,7 +17,7 @@ public class ConfigWithRawTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHocon("""
+        return KoraConfigModification.ofString("""
             myconfig {
               myinnerconfig {
                 myproperty = 1

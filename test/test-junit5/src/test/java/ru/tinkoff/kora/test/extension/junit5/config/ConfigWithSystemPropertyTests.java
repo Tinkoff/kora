@@ -10,21 +10,19 @@ import ru.tinkoff.kora.test.extension.junit5.TestComponent;
 import ru.tinkoff.kora.test.extension.junit5.testdata.TestConfigApplication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @KoraAppTest(TestConfigApplication.class)
-public class ConfigWithFileUnresolvableTests implements KoraAppTestConfigModifier {
+public class ConfigWithSystemPropertyTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHoconFile("config/reference-env.conf")
-            .withSystemProperty("ENV_SECOND", "value");
+        return KoraConfigModification.ofSystemProperty("one", "1")
+            .withSystemProperty("two", "2");
     }
 
     @Test
     void parameterConfigFromMethodInjected(@TestComponent Config config) {
-        assertNotNull(config.getObject("myconfig"));
-        assertNotNull(config.getObject("myconfig.myinnerconfig"));
-        assertEquals("value", config.getString("myconfig.myinnerconfig.second"));
+        assertEquals(1L, config.getNumber("one"));
+        assertEquals(2L, config.getNumber("two"));
     }
 }

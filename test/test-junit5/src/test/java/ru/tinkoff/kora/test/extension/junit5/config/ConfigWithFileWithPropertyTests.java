@@ -13,27 +13,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @KoraAppTest(TestConfigApplication.class)
-public class ConfigWithFileWithRawTests implements KoraAppTestConfigModifier {
+public class ConfigWithFileWithPropertyTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHoconFile("reference-raw.conf")   // 1
-            .mergeWithConfigHocon("""
-                            myconfig {
-                              myinnerconfig {
-                                myproperty = 1
-                                fourth = 4
-                              }
-                            }
-                """);                                                       // 2
+        return KoraConfigModification.ofResourceFile("config/application-env.conf")
+            .withSystemProperty("ENV_SECOND", "value");
     }
 
     @Test
     void parameterConfigFromMethodInjected(@TestComponent Config config) {
         assertNotNull(config.getObject("myconfig"));
         assertNotNull(config.getObject("myconfig.myinnerconfig"));
-        assertEquals(4, config.getNumber("myconfig.myinnerconfig.fourth"));
-        assertEquals(3, config.getNumber("myconfig.myinnerconfig.third"));
-        assertEquals(1, config.getNumber("myconfig.myinnerconfig.myproperty"));
+        assertEquals("value", config.getString("myconfig.myinnerconfig.second"));
     }
 }

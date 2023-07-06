@@ -1,38 +1,94 @@
 package ru.tinkoff.kora.test.extension.junit5;
 
-import org.intellij.lang.annotations.Language;
-
 import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
- * Configs inside {@link KoraConfigModification} are merged in user specified method order
- * <p>
- * All configs specified for test are merged into single config, each next config replaces values from previous configs
+ * "application.conf" configuration modification for tests with system properties
  */
 public interface KoraConfigModification {
-
-    @Nonnull
-    String config();
 
     @Nonnull
     Map<String, String> systemProperties();
 
     /**
-     * @param config application configuration in HOCON format as string
+     * Example: Given config below
+     * <pre>
+     *  myconfig {
+     *   myinnerconfig {
+     *     first = ${ENV_FIRST}
+     *     second = ${ENV_SECOND}
+     *   }
+     * }
+     * </pre>
+     * Use system property to set `ENV_FIRST` and 'ENV_SECOND'
+     * <code>
+     *      KoraConfigModification.ofString("""
+     *                                      myconfig {
+     *                                        myinnerconfig {
+     *                                          first = ${ENV_FIRST}
+     *                                          second = ${ENV_SECOND}
+     *                                        }
+     *                                      }
+     *                                      """)
+     *                                      .withSystemProperty("ENV_FIRST", "1")
+     *                                      .withSystemProperty("ENV_SECOND", "2");
+     * </code>
+     *
+     * @param key system property key
+     * @param value system property value
      * @return self
      */
     @Nonnull
-    static KoraConfigHoconModification ofConfigHocon(@Nonnull @Language("HOCON") String config) {
-        return new KoraConfigHoconModification(KoraConfigHoconModification.configOfHOCON(config));
+    KoraConfigModification withSystemProperty(@Nonnull String key, @Nonnull String value);
+
+    /**
+     * Example below:
+     * <code>
+     *      KoraConfigModification.ofString("""
+     *                                      myconfig {
+     *                                        myinnerconfig {
+     *                                          first = 1
+     *                                        }
+     *                                      }
+     *                                      """)
+     * </code>
+     *
+     * @param config application configuration with config as string
+     * @return self
+     */
+    @Nonnull
+    static KoraConfigString ofString(@Nonnull String config) {
+        return new KoraConfigString(config);
     }
 
     /**
-     * @param configFile application configuration in HOCON format as file from Resources
+     * File is located in "resources" directory than example below:
+     * <code>
+     *      KoraConfigModification.ofFile("reference-raw.conf")
+     * </code>
+     *
+     * @param configFile application configuration with config file from "resources" directory
      * @return self
      */
     @Nonnull
-    static KoraConfigHoconModification ofConfigHoconFile(@Nonnull String configFile) {
-        return new KoraConfigHoconModification(KoraConfigHoconModification.configOfResource(configFile));
+    static KoraConfigFile ofResourceFile(@Nonnull String configFile) {
+        return new KoraConfigFile(configFile);
+    }
+
+    /**
+     * Use system property to set `ENV_FIRST` and 'ENV_SECOND'
+     * <code>
+     *     KoraConfigModification.ofSystemProperty("ENV_FIRST", "1")
+     *                           .withSystemProperty("ENV_SECOND", "2");
+     * </code>
+     *
+     * @param key system property key
+     * @param value system property value
+     * @return self
+     */
+    @Nonnull
+    static KoraConfigSystemProperties ofSystemProperty(@Nonnull String key, @Nonnull String value) {
+        return new KoraConfigSystemProperties().withSystemProperty(key, value);
     }
 }

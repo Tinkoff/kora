@@ -17,7 +17,7 @@ public class ConfigWithFileTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHoconFile("reference-raw.conf");
+        return KoraConfigModification.ofResourceFile("application-raw.conf");
     }
 
     @Test

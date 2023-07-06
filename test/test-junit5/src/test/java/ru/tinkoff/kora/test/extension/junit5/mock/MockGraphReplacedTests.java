@@ -6,7 +6,10 @@ import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.MockComponent;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.*;
+import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
+import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent23;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

@@ -75,37 +75,34 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
 
         static class FileConfig implements Config {
 
-            private final String extension;
-            private final String config;
+            private final KoraConfigModification config;
             private final Map<String, String> systemProperties;
 
             private Properties prevProperties;
 
             public FileConfig(KoraConfigModification config) {
-                this.config = config.config();
+                this.config = config;
                 this.systemProperties = config.systemProperties();
-                if (config instanceof KoraConfigHoconModification) {
-                    this.extension = "conf";
-                } else {
-                    this.extension = "txt";
-                }
             }
 
             @Override
             public void setup(ApplicationGraphDraw graphDraw) throws IOException {
                 prevProperties = (Properties) System.getProperties().clone();
 
-                final String configFileName = "kora-app-test-config-" + UUID.randomUUID();
-                logger.trace("Preparing config setup with file name: {}", configFileName);
+                if (config instanceof KoraConfigFile kf) {
+                    System.setProperty("config.resource", kf.configFile());
+                } else if (config instanceof KoraConfigString ks) {
+                    final String configFileName = "kora-app-test-config-" + UUID.randomUUID();
+                    logger.trace("Preparing config setup with file name: {}", configFileName);
+                    var tmpFile = Files.createTempFile(configFileName, ".txt");
+                    Files.writeString(tmpFile, ks.config(), StandardCharsets.UTF_8);
+                    var configPath = tmpFile.toAbsolutePath().toString();
+                    System.setProperty("config.file", configPath);
+                }
+
                 if (!systemProperties.isEmpty()) {
                     systemProperties.forEach(System::setProperty);
                 }
-
-                var tmpFile = Files.createTempFile(configFileName, "." + extension);
-                Files.writeString(tmpFile, config, StandardCharsets.UTF_8);
-                var configPath = tmpFile.toAbsolutePath().toString();
-
-                System.setProperty("config.file", configPath);
             }
 
             @Override
