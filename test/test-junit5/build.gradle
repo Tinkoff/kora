@@ -1,17 +1,14 @@
 dependencies {
+    api libs.junit.platform.launcher
     api libs.junit.jupiter
-    api "org.mockito:mockito-core:5.4.0"
+    api libs.mockito.core
 
     implementation project(":common")
     implementation project(":config:config-common")
-    implementation project(":kora-app-annotation-processor")
     implementation libs.jetbrains.annotations
-    implementation testFixtures(project(":annotation-processor-common"))
 
     testAnnotationProcessor project(":annotation-processors")
     testImplementation project(":annotation-processors")
-    testImplementation project(":http:http-client-jdk")
-    testImplementation project(":http:http-server-undertow")
 }
 
 apply from: '../../in-test-generated.gradle'

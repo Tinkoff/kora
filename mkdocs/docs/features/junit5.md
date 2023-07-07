@@ -195,15 +195,14 @@ class ComponentJUnitExtensionTests {
 Для изменений/добавления конфига в рамках тестов предполагается чтобы тестовый класс реализовал интерфейс `KoraAppTestConfigModifier`, 
 где требуется реализовать метод предоставления модификации конфига.
 
-Пример добавления части конфига в основной `reference.conf` конфиг будет выглядеть так:
+Пример добавления конфига `application.conf` в виде строки выглядеть так:
 ```java
 @KoraAppTest(value = ApplicationModules.class)
 class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHoconFile("reference.conf")
-            .mergeWithConfigHocon("""
+        return KoraConfigModification.ofString("""
                                     myconfig {
                                       myproperty = 1
                                     }
@@ -331,8 +330,7 @@ class ComponentJUnitExtensionTests implements KoraAppTestConfigModifier {
 
     @Override
     public @NotNull KoraConfigModification config() {
-        return KoraConfigModification.ofConfigHoconFile("reference.conf")
-            .mergeWithConfigHocon("""
+        return KoraConfigModification.ofString("""
                                     db {
                                       jdbcUrl = "%s"
                                       username = "%s"
