@@ -1,0 +1,12 @@
+dependencies {
+    api libs.testcontainers.postgresql
+    api libs.jdbc.postgresql
+    api libs.jsr305
+
+    implementation libs.flyway
+    implementation "org.liquibase:liquibase-core:4.23.0"
+
+    testImplementation project(":test:test-logging")
+}
+
+apply from: '../../in-test-generated.gradle'
