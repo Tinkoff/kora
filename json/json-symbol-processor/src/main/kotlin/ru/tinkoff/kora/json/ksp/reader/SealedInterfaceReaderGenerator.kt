@@ -47,10 +47,11 @@ class SealedInterfaceReaderGenerator(private val resolver: Resolver, logger: KSP
             .addModifiers(KModifier.PUBLIC, KModifier.OVERRIDE)
             .addParameter("_parser", JsonTypes.jsonParser)
             .returns(typeName.copy(nullable = true))
-        function.addCode("val bufferedParser = %T(_parser)\n", JsonTypes.bufferingJsonParser)
-        function.addCode("val discriminator = %T.readStringDiscriminator(bufferedParser, %S)\n", JsonTypes.discriminatorHelper, discriminatorField);
+        function.addCode("val bufferingParser = %T(_parser)\n", JsonTypes.bufferingJsonParser)
+        function.addCode("val discriminator = %T.readStringDiscriminator(bufferingParser, %S)\n", JsonTypes.discriminatorHelper, discriminatorField);
         function.addCode("if (discriminator == null) throw %T(_parser, %S)\n", JsonTypes.jsonParseException, "Discriminator required, but not provided");
-        function.addCode("bufferedParser.reset()\n")
+        function.addCode("val bufferedParser = %T.createFlattened(false, bufferingParser.reset(), _parser)\n", JsonTypes.jsonParserSequence)
+        function.addCode("bufferedParser.nextToken()\n")
         function.beginControlFlow("return when(discriminator) {")
         subclasses.forEach { elem ->
             val readerName = getReaderFieldName(elem)

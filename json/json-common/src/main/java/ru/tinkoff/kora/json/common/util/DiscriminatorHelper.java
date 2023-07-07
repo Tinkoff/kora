@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.json.common;
+package ru.tinkoff.kora.json.common.util;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonToken;
