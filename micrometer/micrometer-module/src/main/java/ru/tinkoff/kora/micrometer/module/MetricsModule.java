@@ -158,4 +158,10 @@ public interface MetricsModule {
     default MicrometerCacheMetrics micrometerCacheMetrics(MeterRegistry meterRegistry) {
         return new MicrometerCacheMetrics(meterRegistry);
     }
+
+    @DefaultComponent
+    default MicrometerCacheMetrics micrometerCaffeineCacheMetrics(MeterRegistry meterRegistry) {
+        return new MicrometerCacheMetrics(meterRegistry);
+    }
+
 }

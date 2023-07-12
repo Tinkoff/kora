@@ -4,7 +4,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
+import ru.tinkoff.kora.cache.telemetry.CacheTelemetryOperation;
 import ru.tinkoff.kora.cache.telemetry.CacheTracer;
 import ru.tinkoff.kora.common.Context;
 import ru.tinkoff.kora.opentelemetry.common.OpentelemetryContext;
@@ -42,7 +42,7 @@ public final class OpentelementryCacheTracer implements CacheTracer {
     }
 
     @Override
-    public CacheSpan trace(@Nonnull CacheTelemetry.Operation operation) {
+    public CacheSpan trace(@Nonnull CacheTelemetryOperation operation) {
         var context = Context.current();
         var traceContext = OpentelemetryContext.get(context);
         var span = this.tracer.spanBuilder("cache.call")

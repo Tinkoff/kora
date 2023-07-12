@@ -2,11 +2,8 @@ package ru.tinkoff.kora.cache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import ru.tinkoff.kora.cache.telemetry.CacheMetrics;
-import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 import ru.tinkoff.kora.cache.telemetry.CacheTracer;
-import ru.tinkoff.kora.cache.telemetry.DefaultCacheTelemetry;
 import ru.tinkoff.kora.common.DefaultComponent;
 
 import javax.annotation.Nonnull;
@@ -14,9 +11,10 @@ import javax.annotation.Nullable;
 
 public interface CaffeineCacheModule {
 
+    //TODO refactor telemetry to separate impls for redis and caffeine
     @DefaultComponent
-    default CacheTelemetry defaultCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
-        return new DefaultCacheTelemetry(metrics, tracer);
+    default CaffeineCacheTelemetry caffeineCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
+        return new CaffeineCacheTelemetry(metrics, tracer);
     }
 
     @DefaultComponent
@@ -34,7 +32,7 @@ public interface CaffeineCacheModule {
                     builder.initialCapacity(config.initialSize());
                 if (config.maximumSize() != null)
                     builder.maximumSize(config.maximumSize());
-                return builder.recordStats(StatsCounter::disabledStatsCounter).build();
+                return builder.recordStats().build();
             }
         };
     }

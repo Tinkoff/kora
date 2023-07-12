@@ -85,7 +85,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2();
+            return key1() + "|" + key2();
         }
     }
 
@@ -111,7 +111,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3();
+            return key1() + "|" + key2() + "|" + key3();
         }
     }
 
@@ -139,7 +139,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4();
         }
     }
 
@@ -169,7 +169,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4() + "-" + key5();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4() + "|" + key5();
         }
     }
 
@@ -201,7 +201,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4() + "-" + key5() + "-" + key6();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4() + "|" + key5() + "|" + key6();
         }
     }
 
@@ -235,7 +235,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4() + "-" + key5() + "-" + key6() + "-" + key7();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4() + "|" + key5() + "|" + key6() + "|" + key7();
         }
     }
 
@@ -271,7 +271,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4() + "-" + key5() + "-" + key6() + "-" + key7() + "-" + key8();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4() + "|" + key5() + "|" + key6() + "|" + key7() + "|" + key8();
         }
     }
 
@@ -309,7 +309,7 @@ public interface CacheKey {
         @Nonnull
         @Override
         default String joined() {
-            return key1() + "-" + key2() + "-" + key3() + "-" + key4() + "-" + key5() + "-" + key6() + "-" + key7() + "-" + key8() + "-" + key9();
+            return key1() + "|" + key2() + "|" + key3() + "|" + key4() + "|" + key5() + "|" + key6() + "|" + key7() + "|" + key8() + "|" + key9();
         }
     }
 }

@@ -4,9 +4,7 @@ import ru.tinkoff.kora.application.graph.TypeRef;
 import ru.tinkoff.kora.cache.CacheKey;
 import ru.tinkoff.kora.cache.redis.client.LettuceModule;
 import ru.tinkoff.kora.cache.telemetry.CacheMetrics;
-import ru.tinkoff.kora.cache.telemetry.CacheTelemetry;
 import ru.tinkoff.kora.cache.telemetry.CacheTracer;
-import ru.tinkoff.kora.cache.telemetry.DefaultCacheTelemetry;
 import ru.tinkoff.kora.common.DefaultComponent;
 import ru.tinkoff.kora.json.common.JsonCommonModule;
 import ru.tinkoff.kora.json.common.JsonReader;
@@ -17,13 +15,12 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
 
     @DefaultComponent
-    default CacheTelemetry defaultCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
-        return new DefaultCacheTelemetry(metrics, tracer);
+    default RedisCacheTelemetry redisCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
+        return new RedisCacheTelemetry(metrics, tracer);
     }
 
     @DefaultComponent
@@ -161,48 +158,27 @@ public interface RedisCacheModule extends JsonCommonModule, LettuceModule {
     // Keys
     @DefaultComponent
     default <T extends CacheKey> RedisCacheKeyMapper<T> redisKeyMapper(TypeRef<T> keyRef) {
-        return c -> c.values().stream().map(String::valueOf).collect(Collectors.joining("-")).getBytes(StandardCharsets.UTF_8);
+        return c -> c.joined().getBytes(StandardCharsets.UTF_8);
     }
 
     @DefaultComponent
     default RedisCacheKeyMapper<Integer> intRedisKeyMapper() {
-        return c -> {
-            final int value = c;
-            return new byte[]{
-                (byte) (value >>> 24),
-                (byte) (value >>> 16),
-                (byte) (value >>> 8),
-                (byte) value};
-        };
+        return c -> String.valueOf(c).getBytes(StandardCharsets.UTF_8);
     }
 
     @DefaultComponent
     default RedisCacheKeyMapper<Long> longRedisKeyMapper() {
-        return c -> {
-            final long value = c;
-            return new byte[]{
-                (byte) (value >>> 56),
-                (byte) (value >>> 48),
-                (byte) (value >>> 40),
-                (byte) (value >>> 32),
-                (byte) (value >>> 24),
-                (byte) (value >>> 16),
-                (byte) (value >>> 8),
-                (byte) value,
-            };
-        };
+        return c -> String.valueOf(c).getBytes(StandardCharsets.UTF_8);
     }
 
     @DefaultComponent
     default RedisCacheKeyMapper<BigInteger> bigIntRedisKeyMapper() {
-        return BigInteger::toByteArray;
+        return c -> c.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @DefaultComponent
     default RedisCacheKeyMapper<UUID> uuidRedisKeyMapper() {
-        return c -> new byte[]{
-            (byte) (c.getLeastSignificantBits() >>> 8),
-            (byte) c.getMostSignificantBits()};
+        return c -> c.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @DefaultComponent

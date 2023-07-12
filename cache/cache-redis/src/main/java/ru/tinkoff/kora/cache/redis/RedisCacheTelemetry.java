@@ -1,14 +1,36 @@
-package ru.tinkoff.kora.cache.telemetry;
+package ru.tinkoff.kora.cache.redis;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.kora.cache.telemetry.CacheMetrics;
+import ru.tinkoff.kora.cache.telemetry.CacheTelemetryOperation;
+import ru.tinkoff.kora.cache.telemetry.CacheTracer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class DefaultCacheTelemetry implements CacheTelemetry {
+public final class RedisCacheTelemetry {
 
-    private static final Logger logger = LoggerFactory.getLogger(CacheTelemetry.class);
+    private static final String ORIGIN = "redis";
+
+    record Operation(@Nonnull String name, @Nonnull String cacheName) implements CacheTelemetryOperation {
+
+        @Nonnull
+        @Override
+        public String origin() {
+            return ORIGIN;
+        }
+    }
+
+    interface TelemetryContext {
+        void recordSuccess();
+
+        void recordSuccess(@Nullable Object valueFromCache);
+
+        void recordFailure(@Nullable Throwable throwable);
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(RedisCacheTelemetry.class);
 
     private static final TelemetryContext STUB_CONTEXT = new StubCacheTelemetry();
 
@@ -18,15 +40,13 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
     private final CacheTracer tracer;
     private final boolean isStubTelemetry;
 
-    public DefaultCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
+    RedisCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
         this.metrics = metrics;
         this.tracer = tracer;
         this.isStubTelemetry = metrics == null && tracer == null;
     }
 
     record StubCacheTelemetry() implements TelemetryContext {
-        @Override
-        public void startRecording() {}
 
         @Override
         public void recordSuccess() {}
@@ -43,20 +63,14 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
         private final Operation operation;
 
         private CacheTracer.CacheSpan span;
-        private long startedInNanos = System.nanoTime();
+        private final long startedInNanos = System.nanoTime();
 
         DefaultCacheTelemetryContext(Operation operation) {
-            this.operation = operation;
-        }
-
-        @Override
-        public void startRecording() {
             logger.trace("Operation '{}' for cache '{}' started", operation.name(), operation.cacheName());
-            startedInNanos = System.nanoTime();
-
             if (tracer != null) {
                 span = tracer.trace(operation);
             }
+            this.operation = operation;
         }
 
         @Override
@@ -106,12 +120,11 @@ public final class DefaultCacheTelemetry implements CacheTelemetry {
     }
 
     @Nonnull
-    @Override
-    public TelemetryContext create(@Nonnull String operationName, @Nonnull String cacheName, @Nonnull String origin) {
+    TelemetryContext create(@Nonnull String operationName, @Nonnull String cacheName) {
         if (isStubTelemetry) {
             return STUB_CONTEXT;
         }
 
-        return new DefaultCacheTelemetryContext(new Operation(operationName, cacheName, origin));
+        return new DefaultCacheTelemetryContext(new Operation(operationName, cacheName));
     }
 }
