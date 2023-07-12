@@ -164,4 +164,8 @@ public interface MetricsModule {
         return new MicrometerCacheMetrics(meterRegistry);
     }
 
+    @DefaultComponent
+    default CacheMetricsCollector cacheMetricsCollector() {
+        return new CacheMetricsCollector().register();
+    }
 }

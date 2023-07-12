@@ -80,4 +80,5 @@ class MonoCacheTests extends CacheRunner {
         // then
         final String fromCache = cache.getAsync(key).block();
         assertNull(fromCache);
-    }}
+    }
+}

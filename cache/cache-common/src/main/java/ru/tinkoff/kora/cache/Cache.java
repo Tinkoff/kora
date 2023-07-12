@@ -60,7 +60,7 @@ public interface Cache<K, V> {
     V computeIfAbsent(@Nonnull K key, @Nonnull Function<K, V> mappingFunction);
 
     /**
-     * @param keys             to look for value or compute and put if absent
+     * @param keys            to look for value or compute and put if absent
      * @param mappingFunction to use for value computing
      * @return existing or computed value
      */
@@ -100,7 +100,7 @@ public interface Cache<K, V> {
     Mono<V> computeIfAbsentAsync(@Nonnull K key, @Nonnull Function<K, Mono<V>> mappingFunction);
 
     /**
-     * @param keys             to look for value or compute and put if absent
+     * @param keys            to look for value or compute and put if absent
      * @param mappingFunction to use for value computing
      * @return existing or computed value
      */

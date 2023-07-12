@@ -212,53 +212,53 @@ final class FacadeCacheBuilder<K, V> implements CacheBuilder<K, V> {
                     final int currentFacade = i;
                     var facade = facades.get(i);
                     result = result.flatMap(received -> {
-                            if (received.result().size() == keys.size()) {
-                                return Mono.just(received);
-                            }
-
-                            final Set<K> keysLeft = keys.stream()
-                                .filter(k -> !received.result().containsKey(k))
-                                .collect(Collectors.toSet());
-
-                            return facade.getAsync(keysLeft)
-                                .map(receivedNow -> {
-                                    var cacheToValuesNow = new HashMap<>(received.cacheToValues());
-                                    cacheToValuesNow.put(currentFacade, receivedNow);
-                                    var resultNow = new HashMap<>(receivedNow);
-                                    resultNow.putAll(received.result());
-                                    return new ComputeResult<>(resultNow, cacheToValuesNow);
-                                })
-                                .switchIfEmpty(Mono.just(received));
-                        });
-                }
-
-                return result.flatMap(received -> {
-                        if(received.result().size() == keys.size()) {
-                            return Mono.just(received.result());
+                        if (received.result().size() == keys.size()) {
+                            return Mono.just(received);
                         }
 
                         final Set<K> keysLeft = keys.stream()
                             .filter(k -> !received.result().containsKey(k))
                             .collect(Collectors.toSet());
 
-                        return mappingFunction.apply(keysLeft)
-                            .switchIfEmpty(Mono.just(Collections.emptyMap()))
-                            .flatMap(computed -> {
-                                var resultFinal = new HashMap<>(computed);
-                                resultFinal.putAll(received.result());
-
-                                final List<Mono<V>> puts = received.cacheToValues().entrySet().stream()
-                                    .flatMap(e -> {
-                                        var facade = facades.get(e.getKey());
-                                        return resultFinal.entrySet().stream()
-                                            .filter(resultEntry -> !e.getValue().containsKey(resultEntry.getKey()))
-                                            .map(resultEntry -> facade.putAsync(resultEntry.getKey(), resultEntry.getValue()));
-                                    })
-                                    .toList();
-
-                                return Flux.merge(puts).then(Mono.just(resultFinal));
-                            });
+                        return facade.getAsync(keysLeft)
+                            .map(receivedNow -> {
+                                var cacheToValuesNow = new HashMap<>(received.cacheToValues());
+                                cacheToValuesNow.put(currentFacade, receivedNow);
+                                var resultNow = new HashMap<>(receivedNow);
+                                resultNow.putAll(received.result());
+                                return new ComputeResult<>(resultNow, cacheToValuesNow);
+                            })
+                            .switchIfEmpty(Mono.just(received));
                     });
+                }
+
+                return result.flatMap(received -> {
+                    if (received.result().size() == keys.size()) {
+                        return Mono.just(received.result());
+                    }
+
+                    final Set<K> keysLeft = keys.stream()
+                        .filter(k -> !received.result().containsKey(k))
+                        .collect(Collectors.toSet());
+
+                    return mappingFunction.apply(keysLeft)
+                        .switchIfEmpty(Mono.just(Collections.emptyMap()))
+                        .flatMap(computed -> {
+                            var resultFinal = new HashMap<>(computed);
+                            resultFinal.putAll(received.result());
+
+                            final List<Mono<V>> puts = received.cacheToValues().entrySet().stream()
+                                .flatMap(e -> {
+                                    var facade = facades.get(e.getKey());
+                                    return resultFinal.entrySet().stream()
+                                        .filter(resultEntry -> !e.getValue().containsKey(resultEntry.getKey()))
+                                        .map(resultEntry -> facade.putAsync(resultEntry.getKey(), resultEntry.getValue()));
+                                })
+                                .toList();
+
+                            return Flux.merge(puts).then(Mono.just(resultFinal));
+                        });
+                });
             });
         }
 

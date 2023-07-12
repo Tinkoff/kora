@@ -14,7 +14,6 @@ import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

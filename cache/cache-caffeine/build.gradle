@@ -1,5 +1,6 @@
 dependencies {
     compileOnly libs.jetbrains.annotations
+    compileOnly libs.prometheus.collector.caffeine
 
     api project(":cache:cache-common")
     annotationProcessor project(':config:config-annotation-processor')

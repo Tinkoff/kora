@@ -2,6 +2,7 @@ package ru.tinkoff.kora.cache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
 import ru.tinkoff.kora.cache.telemetry.CacheMetrics;
 import ru.tinkoff.kora.cache.telemetry.CacheTracer;
 import ru.tinkoff.kora.common.DefaultComponent;
@@ -11,18 +12,17 @@ import javax.annotation.Nullable;
 
 public interface CaffeineCacheModule {
 
-    //TODO refactor telemetry to separate impls for redis and caffeine
     @DefaultComponent
     default CaffeineCacheTelemetry caffeineCacheTelemetry(@Nullable CacheMetrics metrics, @Nullable CacheTracer tracer) {
         return new CaffeineCacheTelemetry(metrics, tracer);
     }
 
     @DefaultComponent
-    default CaffeineCacheFactory caffeineCacheFactory() {
+    default CaffeineCacheFactory caffeineCacheFactory(@Nullable CacheMetricsCollector cacheMetricsCollector) {
         return new CaffeineCacheFactory() {
             @Nonnull
             @Override
-            public <K, V> Cache<K, V> build(@Nonnull CaffeineCacheConfig config) {
+            public <K, V> Cache<K, V> build(@Nonnull String name, @Nonnull CaffeineCacheConfig config) {
                 final Caffeine<K, V> builder = (Caffeine<K, V>) Caffeine.newBuilder();
                 if (config.expireAfterWrite() != null)
                     builder.expireAfterWrite(config.expireAfterWrite());
@@ -32,7 +32,15 @@ public interface CaffeineCacheModule {
                     builder.initialCapacity(config.initialSize());
                 if (config.maximumSize() != null)
                     builder.maximumSize(config.maximumSize());
-                return builder.recordStats().build();
+
+                final Cache<K, V> cache;
+                if (cacheMetricsCollector != null) {
+                    cache = builder.recordStats().build();
+                    cacheMetricsCollector.addCache(name, cache);
+                } else {
+                    cache = builder.build();
+                }
+                return cache;
             }
         };
     }

@@ -23,7 +23,7 @@ public abstract class AbstractCaffeineCache<K, V> implements CaffeineCache<K, V>
                                     CaffeineCacheFactory factory,
                                     CaffeineCacheTelemetry telemetry) {
         this.name = name;
-        this.caffeine = factory.build(config);
+        this.caffeine = factory.build(name, config);
         this.telemetry = telemetry;
     }
 
