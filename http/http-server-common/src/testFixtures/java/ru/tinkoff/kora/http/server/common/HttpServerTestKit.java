@@ -63,7 +63,7 @@ public abstract class HttpServerTestKit {
 
 
 
-    private static ValueOf<HttpServerConfig> config = valueOf(new HttpServerConfig(0, 0, HttpServerConfig.DEFAULT_PRIVATE_API_METRICS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_READINESS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_LIVENESS_PATH, 1, 10, 1));
+    private static ValueOf<HttpServerConfig> config = valueOf(new HttpServerConfig(0, 0, HttpServerConfig.DEFAULT_PRIVATE_API_METRICS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_READINESS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_LIVENESS_PATH, 1, 10, Duration.ofMillis(1)));
 
     private final PrivateApiHandler privateApiHandler = new PrivateApiHandler(config, valueOf(Optional.of(registry)), All.of(readinessProbePromise), All.of(livenessProbePromise));
 
