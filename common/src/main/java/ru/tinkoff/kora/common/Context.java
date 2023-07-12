@@ -133,11 +133,8 @@ public class Context {
         return key.copy((T) value);
     }
 
-    private static int capacity(int expectedSize) {
-        if (expectedSize < 3) {
-            return expectedSize + 1;
-        }
-        return (int) ((float) expectedSize / 0.75F + 1.0F);
+    private static int capacity(int numMappings) {
+        return (int) Math.ceil(numMappings / 0.75D);
     }
 
     static {
