@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
+import ru.tinkoff.kora.common.Context;
 import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerMetrics.KafkaProducerTxMetrics;
 import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerTracer.KafkaProducerRecordSpan;
 import ru.tinkoff.kora.kafka.common.producer.telemetry.KafkaProducerTracer.KafkaProducerTxSpan;
@@ -143,30 +144,44 @@ public class DefaultKafkaProducerTelemetryFactory implements KafkaProducerTeleme
         private final KafkaProducerRecordSpan span;
         private final KafkaProducerLogger logger;
         private final ProducerRecord<?, ?> record;
+        private final Context ctx;
 
         public DefaultKafkaProducerRecordTelemetryContext(ProducerRecord<?, ?> record, @Nullable KafkaProducerRecordSpan span, @Nullable KafkaProducerLogger logger, @Nullable KafkaProducerMetrics metrics) {
             this.span = span;
             this.logger = logger;
             this.record = record;
+            this.ctx = Context.current().fork();
         }
 
         @Override
         public void sendEnd(Throwable e) {
-            if (this.logger != null) {
-                this.logger.sendEnd(record, e);
-            }
-            if (this.span != null) {
-                this.span.close(e);
+            var oldCtx = Context.current();
+            try {
+                this.ctx.inject();
+                if (this.logger != null) {
+                    this.logger.sendEnd(record, e);
+                }
+                if (this.span != null) {
+                    this.span.close(e);
+                }
+            } finally {
+                oldCtx.inject();
             }
         }
 
         @Override
         public void sendEnd(RecordMetadata metadata) {
-            if (this.logger != null) {
-                this.logger.sendEnd(metadata);
-            }
-            if (this.span != null) {
-                this.span.close(metadata);
+            var oldCtx = Context.current();
+            try {
+                this.ctx.inject();
+                if (this.logger != null) {
+                    this.logger.sendEnd(metadata);
+                }
+                if (this.span != null) {
+                    this.span.close(metadata);
+                }
+            } finally {
+                oldCtx.inject();
             }
         }
     }
