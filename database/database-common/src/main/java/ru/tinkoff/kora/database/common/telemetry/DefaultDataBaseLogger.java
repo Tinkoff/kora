@@ -12,9 +12,9 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
     private final Logger log;
     private final String poolName;
 
-    public DefaultDataBaseLogger(String driverType, String poolName) {
+    public DefaultDataBaseLogger(String poolName) {
         this.poolName = poolName;
-        this.log = LoggerFactory.getLogger("ru.tinkoff.kora.database." + driverType + "." + poolName + ".query");
+        this.log = LoggerFactory.getLogger("ru.tinkoff.kora.database." + poolName + ".query");
     }
 
     @Override

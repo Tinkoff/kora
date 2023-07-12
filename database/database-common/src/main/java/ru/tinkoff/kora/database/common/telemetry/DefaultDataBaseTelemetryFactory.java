@@ -19,7 +19,7 @@ public class DefaultDataBaseTelemetryFactory implements DataBaseTelemetryFactory
 
     @Override
     public DataBaseTelemetry get(String name, String driverType, String dbType, String username) {
-        var logger = this.loggerFactory == null ? null : this.loggerFactory.get(driverType, name);
+        var logger = this.loggerFactory == null ? null : this.loggerFactory.get(name);
         var metricWriter = this.metricWriterFactory == null ? null : this.metricWriterFactory.get(name);
         var tracingFactory = this.tracingFactory == null ? null : this.tracingFactory.get(dbType, null, username);
 
