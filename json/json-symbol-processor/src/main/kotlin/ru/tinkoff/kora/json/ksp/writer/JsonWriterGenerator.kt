@@ -50,10 +50,10 @@ class JsonWriterGenerator(private val resolver: Resolver) {
         }
         functionBody.addStatement("_gen.writeStartObject(_object)")
 
-        val discriminatorField = declaration.discriminatorField(resolver)
+        val discriminatorField = declaration.discriminatorField()
         if (discriminatorField != null) {
             if (meta.fields.none { it.jsonName == discriminatorField }) {
-                val discriminatorValue = meta.classDeclaration.discriminatorValues().first()
+                val discriminatorValue = meta.type.discriminatorValues().first()
                 functionBody.addStatement("_gen.writeFieldName(%S)", discriminatorField)
                 functionBody.addStatement("_gen.writeString(%S)", discriminatorValue)
             }
