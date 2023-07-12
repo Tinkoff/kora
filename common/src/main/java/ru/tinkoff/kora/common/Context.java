@@ -31,7 +31,7 @@ public class Context {
     }
 
     public Context fork() {
-        var values = new ConcurrentHashMap<Key<?>, Object>();
+        var values = new ConcurrentHashMap<Key<?>, Object>(capacity(this.values.size()));
         for (var entry : this.values.entrySet()) {
             var value = entry.getValue();
             if (value == null) {
@@ -121,7 +121,7 @@ public class Context {
         protected abstract T copy(T object);
     }
 
-    public static class KeyImmutable<T> extends Key<T> {
+    public static abstract class KeyImmutable<T> extends Key<T> {
         protected T copy(T object) {
             return object;
         }
@@ -131,6 +131,13 @@ public class Context {
     @SuppressWarnings("unchecked")
     private static <T> T copy(Key<T> key, Object value) {
         return key.copy((T) value);
+    }
+
+    private static int capacity(int expectedSize) {
+        if (expectedSize < 3) {
+            return expectedSize + 1;
+        }
+        return (int) ((float) expectedSize / 0.75F + 1.0F);
     }
 
     static {
