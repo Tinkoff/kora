@@ -1,10 +1,9 @@
 package ru.tinkoff.kora.cache.caffeine.testdata;
 
-import ru.tinkoff.kora.annotation.processor.common.MockLifecycle;
 import ru.tinkoff.kora.cache.caffeine.CaffeineCacheModule;
 import ru.tinkoff.kora.common.KoraApp;
-import ru.tinkoff.kora.config.common.Config;
 import ru.tinkoff.kora.common.annotation.Root;
+import ru.tinkoff.kora.config.common.Config;
 import ru.tinkoff.kora.config.common.DefaultConfigExtractorsModule;
 import ru.tinkoff.kora.config.common.factory.MapConfigFactory;
 
