@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentMatchers;
-import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.mockito.verification.VerificationMode;
 import reactor.core.publisher.Flux;
@@ -25,6 +24,7 @@ import ru.tinkoff.kora.common.util.ByteBufferFluxInputStream;
 import ru.tinkoff.kora.common.util.ReactorUtils;
 import ru.tinkoff.kora.http.common.HttpHeaders;
 import ru.tinkoff.kora.http.common.HttpResultCode;
+import ru.tinkoff.kora.http.server.common.$HttpServerConfig_ConfigValueExtractor.HttpServerConfig_Impl;
 import ru.tinkoff.kora.http.server.common.router.PublicApiHandler;
 import ru.tinkoff.kora.http.server.common.telemetry.DefaultHttpServerTelemetry;
 import ru.tinkoff.kora.http.server.common.telemetry.HttpServerLogger;
@@ -672,7 +672,7 @@ public abstract class HttpServerTestKit {
         var handlerList = Stream.of(handlers)
             .map(HttpServerTestKit::valueOf)
             .toList();
-        var config = new HttpServerConfig(0, 0, HttpServerConfig.DEFAULT_PRIVATE_API_METRICS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_READINESS_PATH, HttpServerConfig.DEFAULT_PRIVATE_API_LIVENESS_PATH, ignoreTrailingSlash, 1, 10, 1);
+        var config = new HttpServerConfig_Impl(0, 0, "/metrics", "/system/readiness", "/system/liveness", ignoreTrailingSlash, 1, 10, Duration.ofMillis(1));
         var publicApiHandler = new PublicApiHandler(All.of(handlerList), All.of(interceptorsList), valueOf(new DefaultHttpServerTelemetry(this.metrics, this.logger, null)), valueOf(config));
         this.httpServer = this.httpServer(valueOf(config), publicApiHandler);
         this.httpServer.init().block();
