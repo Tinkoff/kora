@@ -33,14 +33,14 @@ public class ReaderTypeMetaParser {
 
     public JsonClassReaderMeta parse(TypeElement jsonClass, TypeMirror typeMirror) throws ProcessingErrorException {
         if (jsonClass.getKind() != ElementKind.CLASS && jsonClass.getKind() != ElementKind.RECORD) {
-            throw new ProcessingErrorException("Should not be called for non class elements: " + jsonClass, jsonClass);
+            throw new ProcessingErrorException("JsonReader can't be called for non class elements: " + jsonClass, jsonClass);
         }
         if (jsonClass.getModifiers().contains(Modifier.ABSTRACT)) {
-            throw new ProcessingErrorException("Should not be called for abstract elements: " + jsonClass, jsonClass);
+            throw new ProcessingErrorException("JsonReader can't be called for abstract classes: " + jsonClass, jsonClass);
         }
         var jsonConstructor = this.findJsonConstructor(jsonClass);
         if (jsonConstructor == null) {
-            throw new ProcessingErrorException("Class: %s\nTo generate json reader class must have one public constructor or constructor annotated with any of @Json/@JsonReader"
+            throw new ProcessingErrorException("Class: %s\nIn order to generate JsonReader class must have one public constructor or constructor annotated with any of @Json/@JsonReader"
                 .formatted(jsonClass),
                 jsonClass
             );
