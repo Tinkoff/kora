@@ -7,10 +7,17 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ksp.toClassName
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlux
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isFuture
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isMono
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isSuspend
+import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
+import java.util.concurrent.Future
 
 @KspExperimental
 class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheAspect() {
@@ -24,6 +31,14 @@ class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheA
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {
+        if (method.isFuture()) {
+            throw ProcessingErrorException("@Cacheable can't be applied for types assignable from ${Future::class.java}", method)
+        } else if (method.isMono()) {
+            throw ProcessingErrorException("@Cacheable can't be applied for types assignable from ${Mono::class.java}", method)
+        } else if (method.isFlux()) {
+            throw ProcessingErrorException("@Cacheable can't be applied for types assignable from ${Flux::class.java}", method)
+        }
+
         val operation = getCacheOperation(method)
         val cacheFields = getCacheFields(operation, resolver, aspectContext)
 
@@ -57,27 +72,24 @@ class CacheableAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheA
         if (!method.isSuspend() && operation.cacheImplementations.size == 1) {
             val impl = resolver.getClassDeclarationByName(operation.cacheImplementations[0])
             if (impl != null) {
-                val superType = impl.superTypes.filter { t -> t.resolve().toClassName() == CAFFEINE_CACHE }.firstOrNull()
-                if (superType != null) {
-                    val codeBlock = if (isSingleNullableParam) {
-                        CodeBlock.of(
-                            """
+                val codeBlock = if (isSingleNullableParam) {
+                    CodeBlock.of(
+                        """
                                 return if (_key != null) {
-                                    %L.putIfAbsent(_key) { %L }
+                                    %L.computeIfAbsent(_key) { %L }
                                 } else {
                                     %L
                                 }
                             """.trimIndent(), cacheFields[0], superMethod, superMethod
-                        )
-                    } else {
-                        CodeBlock.of("return %L.putIfAbsent(_key) { %L }", cacheFields[0], superMethod)
-                    }
-
-                    return CodeBlock.builder()
-                        .add(keyBlock)
-                        .add(codeBlock)
-                        .build()
+                    )
+                } else {
+                    CodeBlock.of("return %L.computeIfAbsent(_key) { %L }", cacheFields[0], superMethod)
                 }
+
+                return CodeBlock.builder()
+                    .add(keyBlock)
+                    .add(codeBlock)
+                    .build()
             }
         }
 

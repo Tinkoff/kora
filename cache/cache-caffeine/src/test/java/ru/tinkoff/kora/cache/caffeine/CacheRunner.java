@@ -8,7 +8,7 @@ abstract class CacheRunner extends Assertions implements CaffeineCacheModule {
     protected DummyCache createCache() {
         try {
             return new DummyCache(new CaffeineCacheConfig(null, null, null, null),
-                caffeineCacheFactory(), defaultCacheTelemetry(null, null));
+                caffeineCacheFactory(null), caffeineCacheTelemetry(null, null));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

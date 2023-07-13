@@ -24,4 +24,4 @@ dependencies {
     testImplementation libs.testcontainers.junit.jupiter
 }
 
-apply from: "../../in-test-generated.gradle"
+apply from: "${project.rootDir}/in-test-generated.gradle"

@@ -8,6 +8,7 @@ dependencies {
     implementation project(":config:config-common")
     implementation libs.caffeine
 
+    testImplementation libs.prometheus.collector.caffeine
     testImplementation testFixtures(project(":annotation-processor-common"))
     testImplementation project(":annotation-processor-common")
     testImplementation project(":aop:aop-annotation-processor")

@@ -2,7 +2,9 @@ package ru.tinkoff.kora.cache.annotation.processor.aop;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import reactor.core.publisher.Flux;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
+import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperation;
 import ru.tinkoff.kora.cache.annotation.processor.CacheOperationUtils;
 
@@ -10,6 +12,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
@@ -29,6 +32,12 @@ public class CacheInvalidateAopKoraAspect extends AbstractAopCacheAspect {
 
     @Override
     public ApplyResult apply(ExecutableElement method, String superCall, AspectContext aspectContext) {
+        if (MethodUtils.isFuture(method, env)) {
+            throw new ProcessingErrorException("@CacheInvalidate can't be applied for types assignable from " + Future.class, method);
+        } else if (MethodUtils.isFlux(method, env)) {
+            throw new ProcessingErrorException("@CacheInvalidate can't be applied for types assignable from " + Flux.class, method);
+        }
+
         final CacheOperation operation = CacheOperationUtils.getCacheMeta(method);
         final List<String> cacheFields = getCacheFields(operation, env, aspectContext);
 

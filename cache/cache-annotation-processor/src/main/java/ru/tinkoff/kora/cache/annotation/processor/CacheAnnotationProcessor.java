@@ -26,8 +26,8 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
     private static final ClassName ANNOTATION_CACHE = ClassName.get("ru.tinkoff.kora.cache.annotation", "Cache");
 
-    private static final ClassName CLASS_CACHE = ClassName.get("ru.tinkoff.kora.cache", "Cache");
-    private static final ClassName CLASS_CACHE_TELEMETRY = ClassName.get("ru.tinkoff.kora.cache.telemetry", "CacheTelemetry");
+    private static final ClassName CAFFEINE_TELEMETRY = ClassName.get("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheTelemetry");
+    private static final ClassName REDIS_TELEMETRY = ClassName.get("ru.tinkoff.kora.cache.redis", "RedisCacheTelemetry");
     private static final ClassName CLASS_CONFIG = ClassName.get("com.typesafe.config", "Config");
     private static final ClassName CLASS_CONFIG_EXTRACTOR = ClassName.get("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor");
 
@@ -209,7 +209,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                         .build())
                     .build())
                 .addParameter(CAFFEINE_CACHE_FACTORY, "factory")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
+                .addParameter(CAFFEINE_TELEMETRY, "telemetry")
                 .addStatement("return new $L(config, factory, telemetry)", cacheImplName)
                 .returns(TypeName.get(cacheContract.asType()))
                 .build();
@@ -227,7 +227,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                     .build())
                 .addParameter(REDIS_CACHE_CLIENT_SYNC, "syncClient")
                 .addParameter(REDIS_CACHE_CLIENT_REACTIVE, "reactiveClient")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
+                .addParameter(REDIS_TELEMETRY, "telemetry")
                 .addParameter(TypeName.get(keyMapperType), "keyMapper")
                 .addParameter(TypeName.get(valueMapperType), "valueMapper")
                 .addStatement("return new $L(config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", methodName)
@@ -249,7 +249,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(CAFFEINE_CACHE_CONFIG, "config")
                 .addParameter(CAFFEINE_CACHE_FACTORY, "factory")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
+                .addParameter(CAFFEINE_TELEMETRY, "telemetry")
                 .addStatement("super($S, config, factory, telemetry)", configPath)
                 .build();
         } else if (((TypeElement) cacheType.asElement()).getQualifiedName().contentEquals(REDIS_CACHE.canonicalName())) {
@@ -262,7 +262,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
                 .addParameter(REDIS_CACHE_CONFIG, "config")
                 .addParameter(REDIS_CACHE_CLIENT_SYNC, "syncClient")
                 .addParameter(REDIS_CACHE_CLIENT_REACTIVE, "reactiveClient")
-                .addParameter(CLASS_CACHE_TELEMETRY, "telemetry")
+                .addParameter(REDIS_TELEMETRY, "telemetry")
                 .addParameter(TypeName.get(keyMapperType), "keyMapper")
                 .addParameter(TypeName.get(valueMapperType), "valueMapper")
                 .addStatement("super($S, config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", configPath)

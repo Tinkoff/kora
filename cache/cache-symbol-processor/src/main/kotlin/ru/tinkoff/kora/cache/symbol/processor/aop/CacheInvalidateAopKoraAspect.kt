@@ -5,10 +5,17 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperation
 import ru.tinkoff.kora.cache.symbol.processor.CacheOperationUtils.Companion.getCacheOperation
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isFlux
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isFuture
+import ru.tinkoff.kora.ksp.common.FunctionUtils.isMono
 import ru.tinkoff.kora.ksp.common.FunctionUtils.isVoid
+import ru.tinkoff.kora.ksp.common.exception.ProcessingErrorException
+import java.util.concurrent.Future
 
 @KspExperimental
 class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAopCacheAspect() {
@@ -21,6 +28,14 @@ class CacheInvalidateAopKoraAspect(private val resolver: Resolver) : AbstractAop
     }
 
     override fun apply(method: KSFunctionDeclaration, superCall: String, aspectContext: KoraAspect.AspectContext): KoraAspect.ApplyResult {
+        if (method.isFuture()) {
+            throw ProcessingErrorException("@CacheInvalidate can't be applied for types assignable from ${Future::class.java}", method)
+        } else if (method.isMono()) {
+            throw ProcessingErrorException("@CacheInvalidate can't be applied for types assignable from ${Mono::class.java}", method)
+        } else if (method.isFlux()) {
+            throw ProcessingErrorException("@CacheInvalidate can't be applied for types assignable from ${Flux::class.java}", method)
+        }
+
         val operation = getCacheOperation(method)
         val cacheFields = getCacheFields(operation, resolver, aspectContext)
 

@@ -18,7 +18,7 @@ abstract class CacheRunner extends Assertions implements RedisCacheModule {
         var syncRedisClient = lettuceCacheRedisClient(lettuceCommander);
         var reactiveRedisClient = lettuceReactiveCacheRedisClient(lettuceCommander);
         return new DummyCache(new RedisCacheConfig(null, null),
-            syncRedisClient, reactiveRedisClient, defaultCacheTelemetry(null, null),
+            syncRedisClient, reactiveRedisClient, redisCacheTelemetry(null, null),
             stringRedisKeyMapper(), stringRedisValueMapper());
     }
 }

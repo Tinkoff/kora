@@ -29,16 +29,16 @@ class CacheSymbolProcessor(
 
     private val ANNOTATION_CACHE = ClassName("ru.tinkoff.kora.cache.annotation", "Cache")
 
-    private val CLASS_CACHE = ClassName("ru.tinkoff.kora.cache", "Cache")
-    private val CLASS_CACHE_TELEMETRY = ClassName("ru.tinkoff.kora.cache.telemetry", "CacheTelemetry")
     private val CLASS_CONFIG = ClassName("com.typesafe.config", "Config")
     private val CLASS_CONFIG_EXTRACTOR = ClassName("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor")
 
+    private val CAFFEINE_TELEMETRY = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheTelemetry")
     private val CAFFEINE_CACHE = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCache")
     private val CAFFEINE_CACHE_FACTORY = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheFactory")
     private val CAFFEINE_CACHE_CONFIG = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheConfig")
     private val CAFFEINE_CACHE_IMPL = ClassName("ru.tinkoff.kora.cache.caffeine", "AbstractCaffeineCache")
 
+    private val REDIS_TELEMETRY = ClassName("ru.tinkoff.kora.cache.redis", "RedisCacheTelemetry")
     private val REDIS_CACHE = ClassName("ru.tinkoff.kora.cache.redis", "RedisCache")
     private val REDIS_CACHE_IMPL = ClassName("ru.tinkoff.kora.cache.redis", "AbstractRedisCache")
     private val REDIS_CACHE_CONFIG = ClassName("ru.tinkoff.kora.cache.redis", "RedisCacheConfig")
@@ -199,7 +199,7 @@ class CacheSymbolProcessor(
                         .build()
                 )
                 .addParameter("factory", CAFFEINE_CACHE_FACTORY)
-                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("telemetry", CAFFEINE_TELEMETRY)
                 .addStatement("return %T(config, factory, telemetry)", cacheImplName)
                 .returns(cacheContract.toTypeName())
                 .build()
@@ -221,7 +221,7 @@ class CacheSymbolProcessor(
                 )
                 .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
                 .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
-                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("telemetry", REDIS_TELEMETRY)
                 .addParameter("keyMapper", keyMapperType)
                 .addParameter("valueMapper", valueMapperType)
                 .addStatement("return new %L(config, syncClient, reactiveClient, telemetry, keyMapper, valueMapper)", methodName)
@@ -238,7 +238,7 @@ class CacheSymbolProcessor(
             FunSpec.constructorBuilder()
                 .addParameter("config", CAFFEINE_CACHE_CONFIG)
                 .addParameter("factory", CAFFEINE_CACHE_FACTORY)
-                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("telemetry", CAFFEINE_TELEMETRY)
                 .build()
         } else if (resolved.toClassName() == REDIS_CACHE) {
             val keyType = cacheContract.typeParameters[0]
@@ -249,7 +249,7 @@ class CacheSymbolProcessor(
                 .addParameter("config", REDIS_CACHE_CONFIG)
                 .addParameter("syncClient", REDIS_CACHE_CLIENT_SYNC)
                 .addParameter("reactiveClient", REDIS_CACHE_CLIENT_REACTIVE)
-                .addParameter("telemetry", CLASS_CACHE_TELEMETRY)
+                .addParameter("telemetry", REDIS_TELEMETRY)
                 .addParameter("keyMapper", keyMapperType)
                 .addParameter("valueMapper", valueMapperType)
                 .build()

@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DummyCache implements Cache<String, String> {
@@ -30,6 +32,20 @@ public class DummyCache implements Cache<String, String> {
     }
 
     @Override
+    public String computeIfAbsent(@Nonnull String key, @Nonnull Function<String, String> mappingFunction) {
+        return cache.computeIfAbsent(key, mappingFunction);
+    }
+
+    @Nonnull
+    @Override
+    public Map<String, String> computeIfAbsent(@Nonnull Collection<String> keys, @Nonnull Function<Set<String>, Map<String, String>> mappingFunction) {
+        return keys.stream()
+            .map(k -> Map.of(k, cache.computeIfAbsent(k, key -> mappingFunction.apply(Set.of(key)).get(key))))
+            .flatMap(m -> m.entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
     public void invalidate(@Nonnull String key) {
         cache.remove(key);
     }
@@ -50,6 +66,17 @@ public class DummyCache implements Cache<String, String> {
     public Mono<String> putAsync(@Nonnull String key, @Nonnull String value) {
         put(key, value);
         return Mono.just(value);
+    }
+
+    @Override
+    public Mono<String> computeIfAbsentAsync(@Nonnull String key, @Nonnull Function<String, Mono<String>> mappingFunction) {
+        return Mono.just(computeIfAbsent(key, (k) -> mappingFunction.apply(k).block()));
+    }
+
+    @Nonnull
+    @Override
+    public Mono<Map<String, String>> computeIfAbsentAsync(@Nonnull Collection<String> keys, @Nonnull Function<Set<String>, Mono<Map<String, String>>> mappingFunction) {
+        return Mono.just(computeIfAbsent(keys, (k) -> mappingFunction.apply(k).block()));
     }
 
     @Nonnull
