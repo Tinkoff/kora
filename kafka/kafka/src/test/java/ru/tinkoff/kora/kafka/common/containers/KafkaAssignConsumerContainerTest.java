@@ -43,7 +43,7 @@ class KafkaAssignConsumerContainerTest {
         driverProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, params.bootstrapServers());
         driverProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         var testTopic = params.createTopic("test-topic", 3);
-        var config = new KafkaConsumerConfig_Impl(driverProps, List.of(testTopic), null, null, Either.right("earliest"), Duration.ofMillis(100), null, Integer.valueOf(2), Duration.ofSeconds(1));
+        var config = new KafkaConsumerConfig_Impl(driverProps, List.of(testTopic), null, null, Either.right("earliest"), Duration.ofMillis(100), Duration.ofMillis(100), Integer.valueOf(2), Duration.ofSeconds(1));
         var deque = new ConcurrentLinkedDeque<>();
         @SuppressWarnings("unchecked")
         var telemetry = (KafkaConsumerTelemetry<String, Integer>) Mockito.mock(KafkaConsumerTelemetry.class);
