@@ -84,26 +84,33 @@ public final class KafkaSubscribeConsumerContainer<K, V> implements Lifecycle {
 
             try (consumer) {
                 consumers.add(consumer);
+                logger.info("Kafka Consumer '{}' started in {}",
+                    consumerPrefix, Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
+
                 boolean isFirstPoll = true;
                 while (isActive.get()) {
                     try {
+                        logger.trace("Kafka Consumer '{}' polling...", consumerPrefix);
+
                         var records = consumer.poll(config.pollTimeout());
                         if (isFirstPoll) {
-                            logger.info("Kafka Consumer '{}' started in {}",
+                            logger.info("Kafka Consumer '{}' first poll in {}",
                                 consumerPrefix, Duration.ofNanos(System.nanoTime() - started).toString().substring(2).toLowerCase());
                             isFirstPoll = false;
                         }
 
-                        if (!records.isEmpty() && logger.isDebugEnabled()) {
-                            var topics = new HashSet<String>(records.partitions().size());
-                            var partitions = new HashSet<Integer>(records.partitions().size());
+                        if (!records.isEmpty() && logger.isTraceEnabled()) {
+                            var logTopics = new HashSet<String>(records.partitions().size());
+                            var logPartitions = new HashSet<Integer>(records.partitions().size());
                             for (TopicPartition partition : records.partitions()) {
-                                partitions.add(partition.partition());
-                                topics.add(partition.topic());
+                                logPartitions.add(partition.partition());
+                                logTopics.add(partition.topic());
                             }
 
-                            logger.debug("Kafka Consumer '{}' polled '{}' records from topics {} and partitions {}",
-                                consumerPrefix, records.count(), topics, partitions);
+                            logger.trace("Kafka Consumer '{}' polled '{}' records from topics {} and partitions {}",
+                                consumerPrefix, records.count(), logTopics, logPartitions);
+                        } else if (!records.isEmpty() && logger.isDebugEnabled()) {
+                            logger.debug("Kafka Consumer '{}' polled '{}' records", consumerPrefix, records.count());
                         } else {
                             logger.trace("Kafka Consumer '{}' polled '0' records", consumerPrefix);
                         }
