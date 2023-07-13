@@ -112,7 +112,7 @@ class AopSymbolProcessor(
                     }
                     ClassKind.CLASS -> {
                         if (declaration.isAbstract()) {
-                            errors.add(ProcessingError("Aspects cant be applied to abstract classes, but $declaration is abstract", declaration))
+                            errors.add(ProcessingError("Aspects can't be applied to abstract classes, but $declaration is abstract", declaration))
                             return null
                         }
                         if (!declaration.isOpen()) {

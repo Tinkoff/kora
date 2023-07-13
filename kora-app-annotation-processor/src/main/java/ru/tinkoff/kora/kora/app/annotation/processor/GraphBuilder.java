@@ -210,13 +210,13 @@ public class GraphBuilder {
                 var msg = new StringBuilder();
                 var claimTypeName = TypeName.get(dependencyClaim.type()).annotated(List.of());
                 if (dependencyClaim.tags().isEmpty()) {
-                    msg.append(String.format("Required dependency type was not found and can't be auto created: %s. " +
-                                             "Please check component for @%s annotation or that required module with such component is plugged in.",
+                    msg.append(String.format("Required dependency type was not found and can't be auto created: %s.\n" +
+                                             "Please check class for @%s annotation or that required module with component is plugged in.",
                         claimTypeName, CommonClassNames.component.simpleName()));
                 } else {
                     var tagMsg = dependencyClaim.tags().stream().collect(Collectors.joining(", ", "@Tag(", ")"));
-                    msg.append(String.format("Required dependency type was not found and can't be auto created: %s with tag %s. " +
-                                             "Please check component for @%s annotation or that required module with such component is plugged in.",
+                    msg.append(String.format("Required dependency type was not found and can't be auto created: %s with tag %s.\n" +
+                                             "Please check class for @%s annotation or that required module with component is plugged in.",
                         claimTypeName, tagMsg, CommonClassNames.component.simpleName()));
                 }
                 for (var hint : hints) {
