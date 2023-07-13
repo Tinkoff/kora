@@ -26,7 +26,7 @@ class KafkaConsumerConfigGenerator {
                 "extractor",
                 CommonClassNames.configValueExtractor.parameterizedBy(kafkaConsumerConfig)
             )
-            .addStatement("val configValue = config.getValue(%S)", configPath)
+            .addStatement("val configValue = config.get(%S)", configPath)
             .addStatement("return extractor.extract(configValue)")
             .addAnnotation(listOf(tagName).toTagAnnotation())
             .build()
