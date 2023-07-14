@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class JdbcDatabase implements Lifecycle, Wrapped<DataSource>, JdbcConnectionFactory {
     private final Context.Key<Connection> connectionKey = new Context.Key<>() {
@@ -28,22 +29,26 @@ public class JdbcDatabase implements Lifecycle, Wrapped<DataSource>, JdbcConnect
     private final DataBaseTelemetry telemetry;
 
     public JdbcDatabase(JdbcDatabaseConfig config, DataBaseTelemetryFactory telemetryFactory) {
-        this(config,
-            telemetryFactory == null
-                ? null
-                : telemetryFactory.get(config.poolName(),
-                "jdbc",
-                config.jdbcUrl().substring(4, config.jdbcUrl().indexOf(":", 5)),
-                config.username()));
+        this(config, getTelemetry(config, telemetryFactory));
     }
 
     public JdbcDatabase(JdbcDatabaseConfig databaseConfig, DataBaseTelemetry telemetry) {
-        this.databaseConfig = databaseConfig;
-        this.telemetry = telemetry;
+        this.databaseConfig = Objects.requireNonNull(databaseConfig);
+        this.telemetry = Objects.requireNonNull(telemetry);
         this.dataSource = new HikariDataSource(JdbcDatabaseConfig.toHikariConfig(this.databaseConfig));
         if (telemetry != null) {
             this.dataSource.setMetricRegistry(telemetry.getMetricRegistry());
         }
+    }
+
+    private static DataBaseTelemetry getTelemetry(JdbcDatabaseConfig config, DataBaseTelemetryFactory factory) {
+        var jdbcUrl = config.jdbcUrl();
+        return factory.get(
+            config.poolName(),
+            "jdbc",
+            jdbcUrl.substring(4, jdbcUrl.indexOf(":", 5)),
+            config.username()
+        );
     }
 
     @Override
