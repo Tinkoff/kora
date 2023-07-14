@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @KoraAppTest(TestConfigApplication.class)
 public class ConfigWithSystemPropertyTests implements KoraAppTestConfigModifier {
+    @TestComponent
+    Config config;
 
     @Override
     public @NotNull KoraConfigModification config() {
@@ -21,7 +23,7 @@ public class ConfigWithSystemPropertyTests implements KoraAppTestConfigModifier 
     }
 
     @Test
-    void parameterConfigFromMethodInjected(@TestComponent Config config) {
+    void parameterConfigFromMethodInjected() {
         assertEquals(1L, config.getNumber("one"));
         assertEquals(2L, config.getNumber("two"));
     }

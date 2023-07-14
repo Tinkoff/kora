@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @KoraAppTest(TestConfigApplication.class)
 public class ConfigWithFileWithPropertyTests implements KoraAppTestConfigModifier {
+    @TestComponent
+    Config config;
 
     @Override
     public @NotNull KoraConfigModification config() {
@@ -22,7 +24,7 @@ public class ConfigWithFileWithPropertyTests implements KoraAppTestConfigModifie
     }
 
     @Test
-    void parameterConfigFromMethodInjected(@TestComponent Config config) {
+    void parameterConfigFromMethodInjected() {
         assertNotNull(config.getObject("myconfig"));
         assertNotNull(config.getObject("myconfig.myinnerconfig"));
         assertEquals("value", config.getString("myconfig.myinnerconfig.second"));

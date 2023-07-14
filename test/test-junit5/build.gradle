@@ -4,7 +4,7 @@ dependencies {
     api libs.mockito.core
 
     implementation project(":common")
-    implementation project(":config:config-common")
+    implementation project(":config:config-hocon")
     implementation libs.jetbrains.annotations
 
     testAnnotationProcessor project(":annotation-processors")

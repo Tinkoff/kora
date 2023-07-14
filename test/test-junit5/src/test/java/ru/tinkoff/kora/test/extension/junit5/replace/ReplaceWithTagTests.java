@@ -24,7 +24,12 @@ public class ReplaceWithTagTests implements KoraAppTestGraphModifier {
     @Override
     public @NotNull KoraGraphModification graph() {
         return KoraGraphModification.create()
-            .replaceComponent(TestComponent2.class, List.of(LifecycleComponent.class), () -> (LifecycleComponent) () -> "?");
+            .replaceComponent(TestComponent2.class, List.of(LifecycleComponent.class), () -> new TestComponent2() {
+                @Override
+                public String get() {
+                    return "?";
+                }
+            });
     }
 
     @Test

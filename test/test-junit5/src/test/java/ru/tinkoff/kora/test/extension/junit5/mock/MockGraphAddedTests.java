@@ -6,10 +6,7 @@ import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest;
 import ru.tinkoff.kora.test.extension.junit5.MockComponent;
 import ru.tinkoff.kora.test.extension.junit5.TestComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.LifecycleComponent;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestApplication;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent1;
-import ru.tinkoff.kora.test.extension.junit5.testdata.TestComponent23;
+import ru.tinkoff.kora.test.extension.junit5.testdata.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,14 +22,14 @@ public class MockGraphAddedTests {
     }
 
     @Test
-    void mockWithTag(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent mock) {
+    void mockWithTag(@Tag(LifecycleComponent.class) @MockComponent TestComponent2 mock) {
         assertNull(mock.get());
         Mockito.when(mock.get()).thenReturn("?");
         assertEquals("?", mock.get());
     }
 
     @Test
-    void beanWithTaggedMock(@Tag(LifecycleComponent.class) @MockComponent LifecycleComponent mock,
+    void beanWithTaggedMock(@Tag(LifecycleComponent.class) @MockComponent TestComponent2 mock,
                             @TestComponent TestComponent23 component23) {
         assertNull(mock.get());
         Mockito.when(mock.get()).thenReturn("?");

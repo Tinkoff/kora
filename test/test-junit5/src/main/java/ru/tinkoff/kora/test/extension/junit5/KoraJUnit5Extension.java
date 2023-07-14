@@ -14,7 +14,6 @@ import ru.tinkoff.kora.application.graph.Node;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.common.annotation.Root;
-import ru.tinkoff.kora.config.common.ConfigModule;
 import ru.tinkoff.kora.test.extension.junit5.KoraAppTest.InitializeMode;
 
 import javax.annotation.Nonnull;
@@ -27,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback, ParameterResolver {
 
@@ -235,8 +235,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
         return Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
-                   .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class))
-               || parameterContext.getParameter().getType().equals(KoraAppGraph.class);
+            .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class))
+            || parameterContext.getParameter().getType().equals(KoraAppGraph.class);
     }
 
     @Override
@@ -252,19 +252,18 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         final long started = System.nanoTime();
         var mockComponentFromParameters = context.getTestMethod()
             .filter(method -> !method.isSynthetic())
-            .map(method -> List.of(method.getParameters()))
-            .map(parameters -> parameters.stream()
-                .filter(parameter -> parameter.getDeclaredAnnotation(MockComponent.class) != null)
-                .map(parameter -> {
-                    if (KoraAppGraph.class.isAssignableFrom(parameter.getType())) {
-                        throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
-                    }
+            .stream()
+            .flatMap(m -> Stream.of(m.getParameters()))
+            .filter(parameter -> parameter.getDeclaredAnnotation(MockComponent.class) != null)
+            .map(parameter -> {
+                if (KoraAppGraph.class.isAssignableFrom(parameter.getType())) {
+                    throw new ExtensionConfigurationException("KoraAppGraph can't be target of @MockComponent");
+                }
 
-                    final Class<?>[] tag = parseTags(parameter);
-                    return new GraphMock(new GraphCandidate(parameter.getParameterizedType(), tag));
-                })
-                .toList())
-            .orElse(List.of());
+                final Class<?>[] tag = parseTags(parameter);
+                return new GraphMock(new GraphCandidate(parameter.getParameterizedType(), tag));
+            })
+            .toList();
 
         if (koraAppTest.initializeMode() == InitializeMode.PER_CLASS && !mockComponentFromParameters.isEmpty()) {
             throw new ExtensionConfigurationException("@KoraAppTest when run in 'InitializeMode.PER_CLASS' test can't inject @MockComponent in method parameters");
@@ -317,10 +316,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         final TestClassMetadata.Config koraAppConfig = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestConfigModifier)
             .map(inst -> {
-                if (!ConfigModule.class.isAssignableFrom(koraAppTest.value())) {
-                    throw new ExtensionConfigurationException("@KoraAppTest#value class expected implement `ConfigModule` in order to use `KoraAppTestConfigModifier` modifier, but didn't");
-                }
-
                 final KoraConfigModification configModification = ((KoraAppTestConfigModifier) inst).config();
                 return ((TestClassMetadata.Config) new TestClassMetadata.FileConfig(configModification));
             })
@@ -361,8 +356,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static Object getComponentOrThrow(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
         return getComponent(graphInitialized, candidate)
             .orElseThrow(() -> new ExtensionConfigurationException(candidate + " was not found in graph, expected type to implement " + Lifecycle.class
-                                                                   + " or be a @" + Component.class.getSimpleName() + " or be a @" + Root.class.getSimpleName()
-                                                                   + ", please check @KoraAppTest configuration"));
+                + " or be a @" + Component.class.getSimpleName() + " or be a @" + Root.class.getSimpleName()
+                + ", please check @KoraAppTest configuration"));
     }
 
     private static Optional<Object> getComponent(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
