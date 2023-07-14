@@ -4,7 +4,10 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.TreeMap;
 
 public class ApplicationGraphDraw {
 
@@ -19,11 +22,11 @@ public class ApplicationGraphDraw {
         return root;
     }
 
-    public <T> Node<T> addNode0(Type type, Class<?>[] tags, Graph.Factory<T> factory, Node<?>... dependencies) {
+    public <T> Node<T> addNode0(Type type, Class<?>[] tags, Graph.Factory<? extends T> factory, Node<?>... dependencies) {
         return this.addNode0(type, tags, factory, List.of(), dependencies);
     }
 
-    public <T> Node<T> addNode0(Type type, Class<?>[] tags, Graph.Factory<T> factory, List<Node<? extends GraphInterceptor<T>>> interceptors, Node<?>... dependencies) {
+    public <T> Node<T> addNode0(Type type, Class<?>[] tags, Graph.Factory<? extends T> factory, List<Node<? extends GraphInterceptor<T>>> interceptors, Node<?>... dependencies) {
         for (var dependency : dependencies) {
             if (dependency.index >= 0 && dependency.graphDraw != this) {
                 throw new IllegalArgumentException("Dependency is from another graph");
@@ -71,7 +74,7 @@ public class ApplicationGraphDraw {
         return null;
     }
 
-    public <T> void replaceNode(Node<T> node, Graph.Factory<T> factory) {
+    public <T> void replaceNode(Node<T> node, Graph.Factory<? extends T> factory) {
         this.graphNodes.set(node.index, new Node<T>(
             this, node.index, factory, node.type(), List.of(), List.of(), node.tags()
         ));

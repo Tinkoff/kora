@@ -2,11 +2,11 @@ package ru.tinkoff.kora.test.extension.junit5;
 
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
-import ru.tinkoff.kora.application.graph.Graph;
+import ru.tinkoff.kora.application.graph.Node;
 
 import java.util.function.Function;
 
-record GraphReplacement(Function<KoraAppGraph, ?> function, GraphCandidate candidate) implements GraphModification {
+record GraphReplacement<T>(Function<KoraAppGraph, ? extends T> function, GraphCandidate candidate) implements GraphModification {
 
     @Override
     public void accept(ApplicationGraphDraw graphDraw) {
@@ -16,7 +16,9 @@ record GraphReplacement(Function<KoraAppGraph, ?> function, GraphCandidate candi
         }
 
         for (var nodeToReplace : nodesToReplace) {
-            graphDraw.replaceNode(nodeToReplace, ((Graph.Factory<Object>) getNodeFactory(function(), graphDraw)));
+            @SuppressWarnings("unchecked")
+            var casted = (Node<T>) nodeToReplace;
+            graphDraw.replaceNode(casted, g -> function.apply(new DefaultKoraAppGraph(graphDraw, g)));
         }
     }
 }

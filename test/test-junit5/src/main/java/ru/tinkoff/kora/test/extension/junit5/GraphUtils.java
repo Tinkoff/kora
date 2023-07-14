@@ -47,38 +47,38 @@ final class GraphUtils {
         return Set.of();
     }
 
-    static <T> Set<Node<T>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, GraphCandidate candidate) {
+    static Set<Node<?>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, GraphCandidate candidate) {
         return findNodeByTypeOrAssignable(graph, candidate.type(), candidate.tagsAsArray());
     }
 
     @SuppressWarnings("unchecked")
-    static <T> Set<Node<T>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, Type type, Class<?>[] tags) {
+    static Set<Node<?>> findNodeByTypeOrAssignable(ApplicationGraphDraw graph, Type type, Class<?>[] tags) {
         if (tags == null || tags.length == 0) {
-            final Set<Node<T>> nodes = new HashSet<>();
+            final Set<Node<?>> nodes = new HashSet<>();
             for (var graphNode : graph.getNodes()) {
                 if (graphNode.type().equals(type)) {
-                    nodes.add((Node<T>) graphNode);
+                    nodes.add(graphNode);
                 }
 
                 var typeClass = tryCastType(type);
                 var graphClass = tryCastType(graphNode.type());
                 if (typeClass.isPresent() && graphClass.isPresent() && typeClass.get().isAssignableFrom(graphClass.get())) {
-                    nodes.add((Node<T>) graphNode);
+                    nodes.add(graphNode);
                 }
             }
 
             return nodes;
         } else if (Arrays.equals(TAG_ANY, tags)) {
-            final Set<Node<T>> nodes = new HashSet<>();
+            final Set<Node<?>> nodes = new HashSet<>();
             for (var graphNode : graph.getNodes()) {
                 if (graphNode.type().equals(type)) {
-                    nodes.add((Node<T>) graphNode);
+                    nodes.add(graphNode);
                 }
 
                 var typeClass = tryCastType(type);
                 var graphClass = tryCastType(graphNode.type());
                 if (typeClass.isPresent() && graphClass.isPresent() && typeClass.get().isAssignableFrom(graphClass.get())) {
-                    nodes.add((Node<T>) graphNode);
+                    nodes.add(graphNode);
                 }
             }
 
@@ -87,13 +87,13 @@ final class GraphUtils {
             for (var graphNode : graph.getNodes()) {
                 if (Arrays.equals(tags, graphNode.tags())) {
                     if (graphNode.type().equals(type)) {
-                        return Set.of((Node<T>) graphNode);
+                        return Set.of(graphNode);
                     }
 
                     var typeClass = tryCastType(type);
                     var graphClass = tryCastType(graphNode.type());
                     if (typeClass.isPresent() && graphClass.isPresent() && typeClass.get().isAssignableFrom(graphClass.get())) {
-                        return Set.of((Node<T>) graphNode);
+                        return Set.of(graphNode);
                     }
                 }
             }
