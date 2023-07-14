@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.kora.app.annotation.processor;
 
 import org.junit.jupiter.api.Test;
+import ru.tinkoff.kora.application.graph.internal.NodeImpl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,8 +41,8 @@ public class GraphInterceptorTest extends AbstractKoraAppTest {
             }
             """);
         assertThat(draw.getNodes()).hasSize(3);
-        draw.init().block();
-        assertThat(draw.getNodes().get(1).getInterceptors()).hasSize(1);
+        draw.init();
+        assertThat(((NodeImpl<?>) draw.getNodes().get(1)).getInterceptors()).hasSize(1);
     }
 
     @Test
@@ -74,8 +75,8 @@ public class GraphInterceptorTest extends AbstractKoraAppTest {
             }
             """);
         assertThat(draw.getNodes()).hasSize(2);
-        draw.init().block();
-        assertThat(draw.getNodes().get(1).getInterceptors()).hasSize(1);
+        draw.init();
+        assertThat(((NodeImpl<?>) draw.getNodes().get(1)).getInterceptors()).hasSize(1);
     }
 
 }
