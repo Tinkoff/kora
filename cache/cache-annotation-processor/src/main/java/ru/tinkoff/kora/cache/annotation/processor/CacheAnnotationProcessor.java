@@ -28,7 +28,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
 
     private static final ClassName CAFFEINE_TELEMETRY = ClassName.get("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheTelemetry");
     private static final ClassName REDIS_TELEMETRY = ClassName.get("ru.tinkoff.kora.cache.redis", "RedisCacheTelemetry");
-    private static final ClassName CLASS_CONFIG = ClassName.get("com.typesafe.config", "Config");
+    private static final ClassName CLASS_CONFIG = ClassName.get("ru.tinkoff.kora.config.common", "Config");
     private static final ClassName CLASS_CONFIG_EXTRACTOR = ClassName.get("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor");
 
     private static final ClassName CAFFEINE_CACHE = ClassName.get("ru.tinkoff.kora.cache.caffeine", "CaffeineCache");
@@ -187,7 +187,7 @@ public class CacheAnnotationProcessor extends AbstractKoraProcessor {
             .addModifiers(Modifier.DEFAULT, Modifier.PUBLIC)
             .addParameter(CLASS_CONFIG, "config")
             .addParameter(TypeName.get(extractorType), "extractor")
-            .addStatement("return extractor.extract(config.getValue($S))", configPath)
+            .addStatement("return extractor.extract(config.get($S))", configPath)
             .returns(TypeName.get(returnType))
             .build();
     }

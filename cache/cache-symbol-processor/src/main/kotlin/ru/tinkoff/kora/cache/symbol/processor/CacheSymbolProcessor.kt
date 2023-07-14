@@ -29,7 +29,7 @@ class CacheSymbolProcessor(
 
     private val ANNOTATION_CACHE = ClassName("ru.tinkoff.kora.cache.annotation", "Cache")
 
-    private val CLASS_CONFIG = ClassName("com.typesafe.config", "Config")
+    private val CLASS_CONFIG = ClassName("ru.tinkoff.kora.config.common", "Config")
     private val CLASS_CONFIG_EXTRACTOR = ClassName("ru.tinkoff.kora.config.common.extractor", "ConfigValueExtractor")
 
     private val CAFFEINE_TELEMETRY = ClassName("ru.tinkoff.kora.cache.caffeine", "CaffeineCacheTelemetry")
@@ -172,7 +172,7 @@ class CacheSymbolProcessor(
             .addModifiers(KModifier.PUBLIC)
             .addParameter("config", CLASS_CONFIG)
             .addParameter("extractor", extractorType)
-            .addStatement("return extractor.extract(config.getValue(%S))", configPath)
+            .addStatement("return extractor.extract(config.get(%S))!!", configPath)
             .returns(returnType.asType(listOf()).toTypeName())
             .build()
     }

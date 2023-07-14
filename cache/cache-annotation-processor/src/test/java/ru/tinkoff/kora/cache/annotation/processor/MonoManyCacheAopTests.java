@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.cache.annotation.processor;
 
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class MonoManyCacheAopTests extends Assertions implements CaffeineCacheModule {
 
             final Constructor<?> cacheConstructor1 = cacheClass1.getDeclaredConstructors()[0];
             cacheConstructor1.setAccessible(true);
-            cache1 = (DummyCache2) cacheConstructor1.newInstance(new CaffeineCacheConfig(null, null, null, null),
+            cache1 = (DummyCache2) cacheConstructor1.newInstance(CacheRunner.getConfig(),
                 caffeineCacheFactory(null), caffeineCacheTelemetry(null, null));
 
             var cacheClass2 = classLoader.loadClass(CACHED_IMPL_2);
@@ -55,7 +56,7 @@ class MonoManyCacheAopTests extends Assertions implements CaffeineCacheModule {
 
             final Constructor<?> cacheConstructor2 = cacheClass2.getDeclaredConstructors()[0];
             cacheConstructor2.setAccessible(true);
-            cache2 = (DummyCache22) cacheConstructor2.newInstance(new CaffeineCacheConfig(null, null, null, null),
+            cache2 = (DummyCache22) cacheConstructor2.newInstance(CacheRunner.getConfig(),
                 caffeineCacheFactory(null), caffeineCacheTelemetry(null, null));
 
             var serviceClass = classLoader.loadClass(CACHED_SERVICE);

@@ -38,7 +38,7 @@ class SuspendCacheOneAopTests : CaffeineCacheModule {
 
             val cacheClass = classLoader.loadClass(CACHE_CLASS) ?: throw IllegalArgumentException("Expected class not found: $CACHE_CLASS")
             cache = cacheClass.constructors[0].newInstance(
-                CaffeineCacheConfig(null, null, null, null),
+                CacheRunner.getConfig(),
                 caffeineCacheFactory(null),
                 caffeineCacheTelemetry(null, null)
             ) as DummyCache1

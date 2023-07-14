@@ -42,14 +42,14 @@ class SyncManyCacheAopTests : CaffeineCacheModule {
 
             val cache1Class = classLoader.loadClass(CACHE1_CLASS) ?: throw IllegalArgumentException("Expected class not found: $CACHE1_CLASS")
             cache1 = cache1Class.constructors[0].newInstance(
-                CaffeineCacheConfig(null, null, null, null),
+                CacheRunner.getConfig(),
                 caffeineCacheFactory(null),
                 caffeineCacheTelemetry(null, null)
             ) as DummyCache2
 
             val cache2Class = classLoader.loadClass(CACHE2_CLASS) ?: throw IllegalArgumentException("Expected class not found: $CACHE2_CLASS")
             cache2 = cache2Class.constructors[0].newInstance(
-                CaffeineCacheConfig(null, null, null, null),
+                CacheRunner.getConfig(),
                 caffeineCacheFactory(null),
                 caffeineCacheTelemetry(null, null)
             ) as DummyCache22

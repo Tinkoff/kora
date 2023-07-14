@@ -41,7 +41,7 @@ class MonoCacheOneAopTests extends Assertions implements CaffeineCacheModule {
 
             final Constructor<?> cacheConstructor = cacheClass.getDeclaredConstructors()[0];
             cacheConstructor.setAccessible(true);
-            cache = (DummyCache1) cacheConstructor.newInstance(new CaffeineCacheConfig(null, null, null, null),
+            cache = (DummyCache1) cacheConstructor.newInstance(CacheRunner.getConfig(),
                 caffeineCacheFactory(null), caffeineCacheTelemetry(null, null));
 
             var serviceClass = classLoader.loadClass(CACHED_SERVICE);

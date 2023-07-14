@@ -1,12 +1,13 @@
-package ru.tinkoff.kora.cache.caffeine;
+package ru.tinkoff.kora.cache.annotation.processor;
 
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
-import ru.tinkoff.kora.cache.caffeine.testdata.DummyCache;
+import ru.tinkoff.kora.cache.caffeine.CaffeineCacheConfig;
 
 import java.time.Duration;
 
-abstract class CacheRunner extends Assertions implements CaffeineCacheModule {
+final class CacheRunner {
+
+    private CacheRunner() { }
 
     public static CaffeineCacheConfig getConfig() {
         return new CaffeineCacheConfig() {
@@ -28,13 +29,5 @@ abstract class CacheRunner extends Assertions implements CaffeineCacheModule {
                 return null;
             }
         };
-    }
-
-    protected DummyCache createCache() {
-        try {
-            return new DummyCache(getConfig(), caffeineCacheFactory(null), caffeineCacheTelemetry(null, null));
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
     }
 }
