@@ -19,7 +19,7 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
 
     @Override
     public boolean isEnabled() {
-        return this.log.isInfoEnabled();
+        return this.log.isDebugEnabled();
     }
 
     @Override
@@ -31,10 +31,10 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
             gen.writeEndObject();
         });
 
-        if (log.isDebugEnabled()) {
-            log.debug(marker, "SQL executing for pool '{}':\n{}", this.poolName, queryContext.sql());
-        } else if (log.isInfoEnabled()) {
-            log.info(marker, "SQL executing for pool '{}'", this.poolName);
+        if (log.isTraceEnabled()) {
+            log.trace(marker, "SQL executing for pool '{}':\n{}", this.poolName, queryContext.sql());
+        } else if (log.isDebugEnabled()) {
+            log.debug(marker, "SQL executing for pool '{}'", this.poolName);
         }
     }
 
@@ -48,10 +48,10 @@ public class DefaultDataBaseLogger implements DataBaseLogger {
             gen.writeEndObject();
         });
 
-        if (log.isDebugEnabled()) {
-            log.debug(marker, "SQL executed for pool '{}':\n{}", this.poolName, queryContext.sql());
-        } else if (log.isInfoEnabled()) {
-            log.info(marker, "SQL executed for pool '{}'", this.poolName);
+        if (log.isTraceEnabled()) {
+            log.trace(marker, "SQL executed for pool '{}':\n{}", this.poolName, queryContext.sql());
+        } else if (log.isDebugEnabled()) {
+            log.debug(marker, "SQL executed for pool '{}'", this.poolName);
         }
     }
 }
