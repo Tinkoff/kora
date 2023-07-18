@@ -256,6 +256,11 @@ public class AnnotationConfigTest extends AbstractConfigTest {
               }
               
               public int hashCode() { return java.util.Objects.hashCode(value); }
+              
+              @Override
+              public String toString() {
+                return "TestConfig[%s]".formatted(value);
+              }
             }
             """);
 

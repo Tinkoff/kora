@@ -154,11 +154,11 @@ public class ConfigUtils {
                 } else if (method.getParameters().isEmpty()) {
                     if (name.startsWith("get")) {
                         fieldsWithAccessors.computeIfAbsent(CommonUtils.decapitalize(name.substring(3)), n -> new FieldAndAccessors()).getter = method;
-                    } else if (name.startsWith("set")) {
-                        fieldsWithAccessors.computeIfAbsent(CommonUtils.decapitalize(name.substring(3)), n -> new FieldAndAccessors()).setter = method;
                     } else {
                         fieldsWithAccessors.computeIfAbsent(name, n -> new FieldAndAccessors()).getter = method;
                     }
+                } else if (method.getParameters().size() == 1 && name.startsWith("set")) {
+                    fieldsWithAccessors.computeIfAbsent(CommonUtils.decapitalize(name.substring(3)), n -> new FieldAndAccessors()).setter = method;
                 }
             }
         }
