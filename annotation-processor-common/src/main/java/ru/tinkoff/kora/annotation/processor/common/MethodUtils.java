@@ -25,6 +25,14 @@ public final class MethodUtils {
         return CommonUtils.isVoid(method.getReturnType());
     }
 
+    public static boolean isVoidGeneric(TypeMirror returnType) {
+        if(returnType instanceof DeclaredType dt) {
+            return CommonUtils.isVoid(dt.getTypeArguments().get(0));
+        }
+
+        return false;
+    }
+
     public static Optional<TypeMirror> getGenericType(TypeMirror typeMirror) {
         if (typeMirror instanceof DeclaredType) {
             return ((DeclaredType) typeMirror).getTypeArguments().stream()

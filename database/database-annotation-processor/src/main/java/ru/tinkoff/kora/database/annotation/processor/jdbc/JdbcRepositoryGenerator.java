@@ -158,7 +158,7 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
             try (_conToClose; var _stmt = _conToUse.prepareStatement(_query.sql())) {$>
             """, connection, JdbcTypes.CONNECTION, DbUtils.QUERY_CONTEXT, query.rawQuery(), sql, DbUtils.operationName(method));
         b.addCode(StatementSetterGenerator.generate(method, query, parameters, batchParam, parameterMappers));
-        if (MethodUtils.isVoid(method) || isMono && CommonUtils.isVoid(((DeclaredType) methodType).getTypeArguments().get(0))) {
+        if (MethodUtils.isVoid(method) || isMono && MethodUtils.isVoidGeneric(methodType.getReturnType())) {
             if (batchParam != null) {
                 b.addStatement("var _batchResult = _stmt.executeBatch()");
             } else {
