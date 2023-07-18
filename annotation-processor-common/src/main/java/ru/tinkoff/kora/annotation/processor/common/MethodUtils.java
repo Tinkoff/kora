@@ -8,6 +8,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.util.Optional;
 import java.util.concurrent.Future;
 
@@ -16,18 +17,24 @@ public final class MethodUtils {
     private MethodUtils() {}
 
     public static boolean isMono(ExecutableElement method, ProcessingEnvironment env) {
-        final TypeMirror returnType = env.getTypeUtils().erasure(method.getReturnType());
-        return returnType.toString().equals(Mono.class.getCanonicalName());
+        return isMono(method, env.getTypeUtils());
     }
 
-    public static boolean isMono(TypeMirror returnType, ProcessingEnvironment env) {
-        return returnType.toString().equals(Mono.class.getCanonicalName());
+    public static boolean isMono(ExecutableElement method, Types types) {
+        return isMono(method.getReturnType(), types);
+    }
+
+    public static boolean isMono(TypeMirror method, Types types) {
+        final TypeMirror returnType = types.erasure(method);
+        return types.isAssignable(returnType, returnType);
+    }
+
+    public static boolean isMono(TypeMirror returnType) {
+        return returnType.toString().startsWith(Mono.class.getCanonicalName());
     }
 
     public static boolean isFuture(ExecutableElement method, ProcessingEnvironment env) {
-        var targetType = env.getElementUtils().getTypeElement(Future.class.getCanonicalName());
-        final TypeMirror returnType = env.getTypeUtils().erasure(method.getReturnType());
-        return env.getTypeUtils().isAssignable(returnType, targetType.asType());
+        return isFuture(method.getReturnType(), env);
     }
 
     public static boolean isFuture(TypeMirror returnType, ProcessingEnvironment env) {
