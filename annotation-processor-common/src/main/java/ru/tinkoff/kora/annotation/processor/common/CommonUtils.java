@@ -607,11 +607,18 @@ public class CommonUtils {
     }
 
     public static boolean isFuture(TypeMirror type) {
-        return type.getKind() == TypeKind.DECLARED
-               && type instanceof DeclaredType dt
-               && (dt.asElement().toString().equals(CompletableFuture.class.getCanonicalName())
-                   || dt.asElement().toString().equals(Future.class.getCanonicalName())
-                   || dt.asElement().toString().equals(RunnableFuture.class.getCanonicalName())
-                   || dt.asElement().toString().equals(FutureTask.class.getCanonicalName()));
+        if(type.getKind() != TypeKind.DECLARED) {
+            return false;
+        }
+
+        if(!(type instanceof DeclaredType dt)) {
+            return false;
+        }
+
+        final String name = dt.asElement().toString();
+        return name.equals(CompletableFuture.class.getCanonicalName())
+                   || name.equals(Future.class.getCanonicalName())
+                   || name.equals(RunnableFuture.class.getCanonicalName())
+                   || name.equals(FutureTask.class.getCanonicalName());
     }
 }
