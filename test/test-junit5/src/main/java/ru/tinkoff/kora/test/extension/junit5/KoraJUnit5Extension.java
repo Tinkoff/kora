@@ -520,7 +520,6 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         final Set<Node<?>> nodesForSubGraph = roots.stream()
             .flatMap(component -> GraphUtils.findNodeByTypeOrAssignable(graphDraw, component).stream())
             .collect(Collectors.toSet());
-
         final ApplicationGraphDraw subGraph = (nodesForSubGraph.size() == 0)
             ? graphDraw
             : graphDraw.subgraph(nodesForSubGraph.toArray(Node[]::new));
