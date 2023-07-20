@@ -22,13 +22,24 @@ public final class ValidUtils {
                     .filter(ft -> ft instanceof DeclaredType)
                     .map(factoryType -> {
                         final DeclaredType factoryRawType = (DeclaredType) factoryType;
-                        final Map<String, Object> parameters = env.getElementUtils().getElementValuesWithDefaults(annotation).entrySet().stream()
+                        final Map<String, Object> parametersWithDefaults = env.getElementUtils().getElementValuesWithDefaults(annotation).entrySet().stream()
                             .collect(Collectors.toMap(
                                 ae -> ae.getKey().getSimpleName().toString(),
                                 ae -> castParameterValue(ae.getValue()),
                                 (v1, v2) -> v2,
                                 LinkedHashMap::new
                             ));
+
+                        var annotationParameters = annotation.getAnnotationType().asElement().getEnclosedElements().stream()
+                            .filter(e -> e instanceof ExecutableElement)
+                            .toList();
+
+                        final Map<String, Object> parameters = new LinkedHashMap<>();
+                        for (var parameter : annotationParameters) {
+                            final String parameterName = parameter.getSimpleName().toString();
+                            final Object parameterValue = parametersWithDefaults.get(parameterName);
+                            parameters.put(parameterName, parameterValue);
+                        }
 
                         if (parameters.size() > 0) {
                             factoryRawType.asElement().getEnclosedElements()
@@ -39,7 +50,7 @@ public final class ValidUtils {
                                 .filter(e -> e.getParameters().size() == parameters.size())
                                 .findFirst()
                                 .orElseThrow(() -> new ProcessingErrorException("Expected " + factoryRawType.asElement().getSimpleName()
-                                                                                + "#create() method with " + parameters.size() + " parameters, but was didn't find such", factoryRawType.asElement(), annotation));
+                                                                                + "#create() method with " + parameters.size() + " parametersWithDefaults, but was didn't find such", factoryRawType.asElement(), annotation));
                         }
 
                         final TypeMirror fieldType = getBoxType(parameterType, env);
