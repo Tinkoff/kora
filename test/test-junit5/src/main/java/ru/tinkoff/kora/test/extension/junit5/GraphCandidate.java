@@ -22,7 +22,7 @@ record GraphCandidate(@Nonnull Type type, @Nonnull List<Class<?>> tags) {
         return tags.toArray(Class[]::new);
     }
 
-    public boolean isNode(Node<?> node) {
+    public boolean isSuitable(Node<?> node) {
         if (!node.type().equals(type)) {
             return false;
         }

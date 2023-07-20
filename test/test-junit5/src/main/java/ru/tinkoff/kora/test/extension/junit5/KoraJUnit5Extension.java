@@ -271,7 +271,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         mocks.addAll(metadata.parameterMocks);
         for (GraphMock mock : mocks) {
             for (Node<?> node : graphDraw.getNodes()) {
-                if (mock.candidate().isNode(node)) {
+                if (mock.candidate().isSuitable(node)) {
                     var candidates = getDependenciesCandidates(node);
                     mockDependenciesCandidates.addAll(candidates);
                 }
@@ -285,7 +285,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
                 mockDependencies.add(new GraphMock(new GraphCandidate(mockDependencyCandidate.type(), mockDependencyCandidate.tags())));
             } else {
                 final boolean allDependentAreMocks = dependentNodes.stream().allMatch(n -> mockDependenciesCandidates.contains(n)
-                                                                                           || mocks.stream().anyMatch(mock -> mock.candidate().isNode(n)));
+                                                                                           || mocks.stream().anyMatch(mock -> mock.candidate().isSuitable(n)));
 
                 if (allDependentAreMocks) {
                     mockDependencies.add(new GraphMock(new GraphCandidate(mockDependencyCandidate.type(), mockDependencyCandidate.tags())));
