@@ -64,8 +64,8 @@ public final class Node<T> {
         return Collections.unmodifiableList(this.dependentNodes);
     }
 
-    public List<Node<?>> getDependencyNodes() {
-        return List.copyOf(this.dependencyNodes);
+    List<Node<?>> getDependencyNodes() {
+        return this.dependencyNodes;
     }
 
     public List<Node<? extends GraphInterceptor<T>>> getInterceptors() {
