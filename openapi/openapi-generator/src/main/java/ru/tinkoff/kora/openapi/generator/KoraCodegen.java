@@ -1253,11 +1253,13 @@ public class KoraCodegen extends DefaultCodegen {
             if (tagData == null) {
                 tagData = this.tags.get("*");
             }
-            if (tagData.httpClientTag != null) {
-                httpClientAnnotationParams.put("httpClientTag", tagData.httpClientTag);
-            }
-            if (tagData.telemetryTag != null) {
-                httpClientAnnotationParams.put("telemetryTag", tagData.telemetryTag);
+            if (tagData != null) {
+                if (tagData.httpClientTag != null) {
+                    httpClientAnnotationParams.put("httpClientTag", tagData.httpClientTag);
+                }
+                if (tagData.telemetryTag != null) {
+                    httpClientAnnotationParams.put("telemetryTag", tagData.telemetryTag);
+                }
             }
 
             op.vendorExtensions.put("x-java-import", operationImports);
