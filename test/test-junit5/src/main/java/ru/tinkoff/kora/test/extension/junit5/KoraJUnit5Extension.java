@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.application.graph.ApplicationGraphDraw;
+import ru.tinkoff.kora.application.graph.Graph;
 import ru.tinkoff.kora.application.graph.Lifecycle;
 import ru.tinkoff.kora.application.graph.Node;
 import ru.tinkoff.kora.common.Component;
@@ -147,7 +148,7 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         }
 
         var testInstance = context.getTestInstance().orElseThrow(() -> new ExtensionConfigurationException("@KoraAppTest can't get TestInstance for @TestComponent field injection"));
-        for (Field field : metadata.fieldsForInjection) {
+        for (var field : metadata.fieldsForInjection) {
             final Class<?>[] tags = parseTags(field);
             final GraphCandidate candidate = new GraphCandidate(field.getType(), tags);
             logger.trace("Looking for test method '{}' field '{}' inject candidate: {}",
@@ -240,8 +241,9 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
         return Arrays.stream(parameterContext.getParameter().getDeclaredAnnotations())
-                   .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class))
-               || parameterContext.getParameter().getType().equals(KoraAppGraph.class);
+            .anyMatch(a -> a.annotationType().equals(TestComponent.class) || a.annotationType().equals(MockComponent.class))
+            || parameterContext.getParameter().getType().equals(KoraAppGraph.class)
+            || parameterContext.getParameter().getType().equals(Graph.class);
     }
 
     @Override
@@ -253,60 +255,15 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
         return getComponentOrThrow(koraTestContext.graph.initialized(), graphCandidate);
     }
 
-    private static Set<Node<?>> getDependenciesCandidates(Node<?> node) {
-        final Set<Node<?>> mockDependenciesCandidates = new HashSet<>(node.getDependencyNodes());
-        for (Node<?> dependencyNode : node.getDependencyNodes()) {
-            var candidates = getDependenciesCandidates(dependencyNode);
-            mockDependenciesCandidates.addAll(candidates);
-        }
-
-        return mockDependenciesCandidates;
-    }
-
-    private static Set<GraphMock> getDependenciesMocks(ApplicationGraphDraw graphDraw,
-                                                       TestMethodMetadata metadata) {
-        final Set<Node<?>> mockDependenciesCandidates = new HashSet<>();
-
-        var mocks = new HashSet<>(metadata.classMetadata.fieldMocks);
-        mocks.addAll(metadata.parameterMocks);
-        for (GraphMock mock : mocks) {
-            for (Node<?> node : graphDraw.getNodes()) {
-                if (mock.candidate().isSuitable(node)) {
-                    var candidates = getDependenciesCandidates(node);
-                    mockDependenciesCandidates.addAll(candidates);
-                }
-            }
-        }
-
-        final Set<GraphMock> mockDependencies = new HashSet<>();
-        for (Node<?> mockDependencyCandidate : mockDependenciesCandidates) {
-            var dependentNodes = mockDependencyCandidate.getDependentNodes();
-            if (dependentNodes.isEmpty()) {
-                mockDependencies.add(new GraphMock(new GraphCandidate(mockDependencyCandidate.type(), mockDependencyCandidate.tags())));
-            } else {
-                final boolean allDependentAreMocks = dependentNodes.stream().allMatch(n -> mockDependenciesCandidates.contains(n)
-                                                                                           || mocks.stream().anyMatch(mock -> mock.candidate().isSuitable(n)));
-
-                if (allDependentAreMocks) {
-                    mockDependencies.add(new GraphMock(new GraphCandidate(mockDependencyCandidate.type(), mockDependencyCandidate.tags())));
-                }
-            }
-        }
-
-        return mockDependencies;
-    }
-
     private static Optional<KoraGraphModification> getGraphModification(ApplicationGraphDraw graphDraw,
                                                                         TestMethodMetadata metadata,
                                                                         ExtensionContext context) {
         final long started = System.nanoTime();
         var mockComponentFromParameters = metadata.parameterMocks();
         var mockComponentFromFields = metadata.classMetadata().fieldMocks();
-        var mockComponentDependencies = getDependenciesMocks(graphDraw, metadata);
 
         var mocks = new HashSet<>(mockComponentFromParameters);
         mocks.addAll(mockComponentFromFields);
-        mocks.addAll(mockComponentDependencies);
 
         final KoraGraphModification koraGraphModification = context.getTestInstance()
             .filter(inst -> inst instanceof KoraAppTestGraphModifier)
@@ -430,8 +387,8 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static Object getComponentOrThrow(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
         return getComponent(graphInitialized, candidate)
             .orElseThrow(() -> new ExtensionConfigurationException(candidate + " was not found in graph, expected type to implement " + Lifecycle.class
-                                                                   + " or be a @" + Component.class.getSimpleName() + " or be a @" + Root.class.getSimpleName()
-                                                                   + ", please check @KoraAppTest configuration"));
+                + " or be a @" + Component.class.getSimpleName() + " or be a @" + Root.class.getSimpleName()
+                + ", please check @KoraAppTest configuration"));
     }
 
     private static Optional<Object> getComponent(TestGraphInitialized graphInitialized, GraphCandidate candidate) {
@@ -446,6 +403,9 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
     private static Optional<Object> getComponentFromGraph(TestGraphInitialized graph, GraphCandidate candidate) {
         if (KoraAppGraph.class.equals(candidate.type())) {
             return Optional.of(graph.koraAppGraph());
+        }
+        if (Graph.class.equals(candidate.type())) {
+            return Optional.of(graph.refreshableGraph());
         }
 
         if (candidate.tags().isEmpty()) {
@@ -512,17 +472,33 @@ final class KoraJUnit5Extension implements BeforeAllCallback, BeforeEachCallback
             }
         });
 
-        final long startedSubgraph = System.nanoTime();
-        final TestMethodMetadata methodMetadata = getMethodMetadata(classMetadata, context);
-        final ApplicationGraphDraw graphDraw = graphSupplier.get().copy();
+        var startedSubgraph = System.nanoTime();
+        var methodMetadata = getMethodMetadata(classMetadata, context);
+        var graphDraw = graphSupplier.get().copy();
 
-        final Set<GraphCandidate> roots = scanGraphRoots(methodMetadata, context);
-        final Set<Node<?>> nodesForSubGraph = roots.stream()
+        var roots = scanGraphRoots(methodMetadata, context);
+        var nodesForSubGraph = roots.stream()
             .flatMap(component -> GraphUtils.findNodeByTypeOrAssignable(graphDraw, component).stream())
             .collect(Collectors.toSet());
-        final ApplicationGraphDraw subGraph = (nodesForSubGraph.size() == 0)
-            ? graphDraw
-            : graphDraw.subgraph(nodesForSubGraph.toArray(Node[]::new));
+        var mocks = new ArrayList<Node<?>>();
+        for (var fieldMock : classMetadata.fieldMocks) {
+            var mockCandidates = GraphUtils.findNodeByTypeOrAssignable(graphDraw, fieldMock.candidate());
+            mocks.addAll(mockCandidates);
+        }
+        for (var parameterMocks : methodMetadata.parameterMocks) {
+            var mockCandidates = GraphUtils.findNodeByTypeOrAssignable(graphDraw, parameterMocks.candidate());
+            mocks.addAll(mockCandidates);
+        }
+        final ApplicationGraphDraw subGraph;
+        if (nodesForSubGraph.isEmpty()) {
+            if (mocks.isEmpty()) {
+                subGraph = graphDraw;
+            } else {
+                subGraph = graphDraw.subgraph(mocks, graphDraw.getNodes());
+            }
+        } else {
+            subGraph = graphDraw.subgraph(mocks, nodesForSubGraph);
+        }
 
         getGraphModification(graphDraw, methodMetadata, context).ifPresent(koraGraphModification -> {
             for (GraphModification modification : koraGraphModification.getModifications()) {
