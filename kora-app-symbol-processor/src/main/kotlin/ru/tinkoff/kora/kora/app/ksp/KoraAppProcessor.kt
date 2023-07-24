@@ -189,7 +189,7 @@ class KoraAppProcessor(
                 .filter(filterObjectMethods)
                 .toMutableList()
 
-            val submodules = declaration.superTypes.map { it.resolve() }
+            val submodules = declaration.getAllSuperTypes()
                 .map { it.declaration as KSClassDeclaration }
                 .filter { it.findAnnotation(CommonClassNames.koraSubmodule) != null }
                 .map { resolver.getKSNameFromString(it.qualifiedName!!.asString() + "SubmoduleImpl") }
