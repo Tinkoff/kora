@@ -30,15 +30,13 @@ public final class ValidUtils {
                                 LinkedHashMap::new
                             ));
 
-                        var annotationParameters = annotation.getAnnotationType().asElement().getEnclosedElements().stream()
-                            .filter(e -> e instanceof ExecutableElement)
-                            .toList();
-
                         final Map<String, Object> parameters = new LinkedHashMap<>();
-                        for (var parameter : annotationParameters) {
-                            final String parameterName = parameter.getSimpleName().toString();
-                            final Object parameterValue = parametersWithDefaults.get(parameterName);
-                            parameters.put(parameterName, parameterValue);
+                        for (Element parameter : annotation.getAnnotationType().asElement().getEnclosedElements()) {
+                            if (parameter instanceof ExecutableElement ep) {
+                                final String parameterName = ep.getSimpleName().toString();
+                                final Object parameterValue = parametersWithDefaults.get(parameterName);
+                                parameters.put(parameterName, parameterValue);
+                            }
                         }
 
                         if (parameters.size() > 0) {
@@ -50,7 +48,7 @@ public final class ValidUtils {
                                 .filter(e -> e.getParameters().size() == parameters.size())
                                 .findFirst()
                                 .orElseThrow(() -> new ProcessingErrorException("Expected " + factoryRawType.asElement().getSimpleName()
-                                                                                + "#create() method with " + parameters.size() + " parametersWithDefaults, but was didn't find such", factoryRawType.asElement(), annotation));
+                                                                                + "#create() method with " + parameters.size() + " parameters, but was didn't find such", factoryRawType.asElement(), annotation));
                         }
 
                         final TypeMirror fieldType = getBoxType(parameterType, env);
