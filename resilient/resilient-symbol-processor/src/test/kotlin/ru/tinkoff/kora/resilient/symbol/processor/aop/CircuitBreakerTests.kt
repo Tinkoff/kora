@@ -4,7 +4,7 @@ import com.google.devtools.ksp.KspExperimental
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException
+import ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerNotPermittedException
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -17,7 +17,7 @@ class CircuitBreakerTests : AppRunner() {
             listOf(
                 CircuitBreakerTarget::class,
                 FallbackTarget::class,
-                RetryableTarget::class,
+                RetryTarget::class,
                 TimeoutTarget::class,
             )
         )
@@ -42,7 +42,7 @@ class CircuitBreakerTests : AppRunner() {
         try {
             service.getValueSync()
             fail("Should not happen")
-        } catch (ex: CallNotPermittedException) {
+        } catch (ex: CircuitBreakerNotPermittedException) {
             assertNotNull(ex.message)
         }
     }
@@ -64,7 +64,7 @@ class CircuitBreakerTests : AppRunner() {
         try {
             service.getValueSyncVoid()
             fail("Should not happen")
-        } catch (ex: CallNotPermittedException) {
+        } catch (ex: CircuitBreakerNotPermittedException) {
             assertNotNull(ex.message)
         }
     }
@@ -86,7 +86,7 @@ class CircuitBreakerTests : AppRunner() {
         try {
             runBlocking { service.getValueSuspend() }
             fail("Should not happen")
-        } catch (ex: CallNotPermittedException) {
+        } catch (ex: CircuitBreakerNotPermittedException) {
             assertNotNull(ex.message)
         }
     }
@@ -108,7 +108,7 @@ class CircuitBreakerTests : AppRunner() {
         try {
             runBlocking { service.getValueFLow().collect { v -> v } }
             fail("Should not happen")
-        } catch (ex: CallNotPermittedException) {
+        } catch (ex: CircuitBreakerNotPermittedException) {
             assertNotNull(ex.message)
         }
     }

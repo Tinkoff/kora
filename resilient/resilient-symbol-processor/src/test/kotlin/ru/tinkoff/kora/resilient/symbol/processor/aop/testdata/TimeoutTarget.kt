@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.common.annotation.Root
-import ru.tinkoff.kora.resilient.timeout.annotation.Timeout
+import ru.tinkoff.kora.resilient.kora.Timeout
 
 @Component
 @Root

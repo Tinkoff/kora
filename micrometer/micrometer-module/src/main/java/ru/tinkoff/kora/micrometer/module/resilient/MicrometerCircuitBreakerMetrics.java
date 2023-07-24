@@ -2,8 +2,8 @@ package ru.tinkoff.kora.micrometer.module.resilient;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker.State;
-import ru.tinkoff.kora.resilient.circuitbreaker.telemetry.CircuitBreakerMetrics;
+import ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreaker;
+import ru.tinkoff.kora.resilient.kora.telemetry.CircuitBreakerMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -20,7 +20,7 @@ public final class MicrometerCircuitBreakerMetrics implements CircuitBreakerMetr
     }
 
     @Override
-    public void recordState(@Nonnull String name, @Nonnull State newState) {
+    public void recordState(@Nonnull String name, @Nonnull CircuitBreaker.State newState) {
         final AtomicInteger state = metrics.computeIfAbsent(name, k -> {
             final AtomicInteger gaugeState = new AtomicInteger(asIntState(newState));
             Gauge.builder("resilient.circuitbreaker.state", gaugeState::get)
@@ -33,7 +33,7 @@ public final class MicrometerCircuitBreakerMetrics implements CircuitBreakerMetr
         state.set(asIntState(newState));
     }
 
-    private int asIntState(State state) {
+    private int asIntState(CircuitBreaker.State state) {
         return switch (state) {
             case CLOSED -> 0;
             case HALF_OPEN -> 1;

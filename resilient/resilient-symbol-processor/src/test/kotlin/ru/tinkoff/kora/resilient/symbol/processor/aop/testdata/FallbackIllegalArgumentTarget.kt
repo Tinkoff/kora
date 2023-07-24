@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.resilient.symbol.processor.aop.testdata
 
 import ru.tinkoff.kora.common.Component
-import ru.tinkoff.kora.resilient.fallback.annotation.Fallback
+import ru.tinkoff.kora.resilient.kora.Fallback
 
 @Component
 open class FallbackIllegalArgumentTarget {

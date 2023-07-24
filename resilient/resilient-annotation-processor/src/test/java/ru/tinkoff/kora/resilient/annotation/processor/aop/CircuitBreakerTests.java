@@ -3,7 +3,7 @@ package ru.tinkoff.kora.resilient.annotation.processor.aop;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.*;
-import ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException;
+import ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerNotPermittedException;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -14,7 +14,7 @@ class CircuitBreakerTests extends AppRunner {
     private CircuitBreakerTarget getService() {
         final InitializedGraph graph = getGraph(AppWithConfig.class,
             CircuitBreakerTarget.class,
-            RetryableTarget.class,
+            RetryTarget.class,
             TimeoutTarget.class,
             FallbackTarget.class);
 
@@ -38,7 +38,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueSync();
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         }
     }
@@ -60,7 +60,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueSyncVoid();
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         }
     }
@@ -82,7 +82,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueSyncVoidCheckedException();
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         }
     }
@@ -106,7 +106,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueSyncCheckedException();
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         } catch (IOException e) {
             fail(e);
@@ -130,7 +130,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueMono().block(Duration.ofSeconds(5));
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         }
     }
@@ -152,7 +152,7 @@ class CircuitBreakerTests extends AppRunner {
         try {
             service.getValueFlux().blockFirst(Duration.ofSeconds(5));
             fail("Should not happen");
-        } catch (CallNotPermittedException ex) {
+        } catch (CircuitBreakerNotPermittedException ex) {
             assertNotNull(ex.getMessage());
         }
     }
