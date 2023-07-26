@@ -20,6 +20,10 @@ public class RawJson implements SerializableString {
         this.value = value;
     }
 
+    public byte[] value() {
+        return value;
+    }
+
     @Override
     public String getValue() {
         return new String(value, StandardCharsets.UTF_8);
