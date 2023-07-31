@@ -44,7 +44,7 @@ public class CassandraExtensionTest extends AbstractAnnotationProcessorTest {
     void testRowMapper() {
         compile(List.of(new KoraAppProcessor()), """
             @ru.tinkoff.kora.common.KoraApp
-            public interface TestApp {
+            public interface TestApp extends ru.tinkoff.kora.database.cassandra.CassandraModule{
               @Root
               default String root(ru.tinkoff.kora.database.cassandra.mapper.result.CassandraRowMapper<TestRecord> r) {return "";}
             }
@@ -63,7 +63,7 @@ public class CassandraExtensionTest extends AbstractAnnotationProcessorTest {
     public void testListResultSetMapper() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         compile(List.of(new KoraAppProcessor()), """
             @ru.tinkoff.kora.common.KoraApp
-            public interface TestApp {
+            public interface TestApp extends ru.tinkoff.kora.database.cassandra.CassandraModule {
              
               @Root
               default String root(ru.tinkoff.kora.database.cassandra.mapper.result.CassandraResultSetMapper<java.util.List<TestRecord>> r) {return "";}
@@ -101,7 +101,7 @@ public class CassandraExtensionTest extends AbstractAnnotationProcessorTest {
     public void testSingleResultSetMapper() {
         compile(List.of(new KoraAppProcessor()), """
             @ru.tinkoff.kora.common.KoraApp
-            public interface TestApp {
+            public interface TestApp extends ru.tinkoff.kora.database.cassandra.CassandraModule {
               @Root
               default String root(ru.tinkoff.kora.database.cassandra.mapper.result.CassandraResultSetMapper<TestRecord> r) {return "";}
             }
