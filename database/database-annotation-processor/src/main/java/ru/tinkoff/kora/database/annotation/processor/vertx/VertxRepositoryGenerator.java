@@ -3,7 +3,6 @@ package ru.tinkoff.kora.database.annotation.processor.vertx;
 import com.squareup.javapoet.*;
 import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
 import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
-import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
 import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
@@ -115,10 +114,7 @@ public final class VertxRepositoryGenerator implements RepositoryGenerator {
         } else if (returnType.toString().equals(DbUtils.UPDATE_COUNT.canonicalName())) {
             resultMapper = CodeBlock.of("$T::extractUpdateCount", VertxTypes.ROW_SET_MAPPER);
         } else {
-            if(resultMapperName == null) {
-                throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
-            }
-
+            Objects.requireNonNull(resultMapperName, () -> "Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
             resultMapper = CodeBlock.of("$N", resultMapperName);
         }
         if (returnType.getKind() != TypeKind.VOID) {

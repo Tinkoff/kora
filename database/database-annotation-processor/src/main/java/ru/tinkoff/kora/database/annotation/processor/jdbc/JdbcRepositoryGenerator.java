@@ -2,7 +2,10 @@ package ru.tinkoff.kora.database.annotation.processor.jdbc;
 
 import com.squareup.javapoet.*;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.annotation.processor.common.*;
+import ru.tinkoff.kora.annotation.processor.common.CommonUtils;
+import ru.tinkoff.kora.annotation.processor.common.FieldFactory;
+import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
+import ru.tinkoff.kora.annotation.processor.common.Visitors;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils;
 import ru.tinkoff.kora.database.annotation.processor.DbUtils.Mapper;
@@ -194,9 +197,7 @@ public final class JdbcRepositoryGenerator implements RepositoryGenerator {
                 ? CodeBlock.of("_result")
                 : CodeBlock.of("$T.requireNonNull(_result)", Objects.class);
 
-            if(resultMapperName == null) {
-                throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
-            }
+            Objects.requireNonNull(resultMapperName, () -> "Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
 
             b.addCode("try (var _rs = _stmt.executeQuery()) {$>\n")
                 .addCode("var _result = $L.apply(_rs);\n", resultMapperName)
