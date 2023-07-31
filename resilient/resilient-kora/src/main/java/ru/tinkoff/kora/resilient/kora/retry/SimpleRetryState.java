@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.kora.retry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.kora.resilient.kora.telemetry.RetryMetrics;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;

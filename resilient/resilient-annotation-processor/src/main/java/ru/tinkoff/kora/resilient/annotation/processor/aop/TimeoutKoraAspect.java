@@ -48,7 +48,7 @@ public class TimeoutKoraAspect implements KoraAspect {
 
         var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
-        var metricsType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.telemetry.TimeoutMetrics"));
+        var metricsType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutMetrics"));
         var fieldMetrics = aspectContext.fieldFactory().constructorParam(metricsType, List.of(AnnotationSpec.builder(Nullable.class).build()));
         var timeouterType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.Timeout"));
         var fieldTimeout = aspectContext.fieldFactory().constructorInitialized(timeouterType,

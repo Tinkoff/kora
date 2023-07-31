@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
-import ru.tinkoff.kora.resilient.kora.telemetry.RetryMetrics;
 
 import java.time.Duration;
 

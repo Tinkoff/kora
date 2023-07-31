@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.resilient.kora.retry;
 
-import ru.tinkoff.kora.resilient.kora.telemetry.RetryMetrics;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;

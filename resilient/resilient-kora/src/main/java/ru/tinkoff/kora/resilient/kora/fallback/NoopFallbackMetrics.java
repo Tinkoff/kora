@@ -1,7 +1,5 @@
 package ru.tinkoff.kora.resilient.kora.fallback;
 
-import ru.tinkoff.kora.resilient.kora.telemetry.FallbackMetrics;
-
 import javax.annotation.Nonnull;
 
 final class NoopFallbackMetrics implements FallbackMetrics {

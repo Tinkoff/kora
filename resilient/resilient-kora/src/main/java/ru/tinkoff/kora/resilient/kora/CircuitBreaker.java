@@ -16,7 +16,7 @@ import java.lang.annotation.*;
 public @interface CircuitBreaker {
 
     /**
-     * @return the name of the circuitBreaker breaker and part of the config path
+     * @return the name of CircuitBreaker config path
      */
     String value();
 }

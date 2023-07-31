@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.kora.circuitbreaker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.kora.resilient.kora.telemetry.CircuitBreakerMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.List;

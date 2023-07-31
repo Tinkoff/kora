@@ -3,7 +3,6 @@ package ru.tinkoff.kora.resilient.kora.fallback;
 import ru.tinkoff.kora.application.graph.All;
 import ru.tinkoff.kora.config.common.Config;
 import ru.tinkoff.kora.config.common.extractor.ConfigValueExtractor;
-import ru.tinkoff.kora.resilient.kora.telemetry.FallbackMetrics;
 
 import javax.annotation.Nullable;
 

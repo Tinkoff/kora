@@ -5,7 +5,6 @@ import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.config.common.Config;
 import ru.tinkoff.kora.config.common.extractor.ConfigValueExtractor;
 import ru.tinkoff.kora.resilient.kora.Timeout;
-import ru.tinkoff.kora.resilient.kora.telemetry.TimeoutMetrics;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.ExecutorService;

@@ -12,7 +12,7 @@ import java.lang.annotation.*;
 public @interface Fallback {
 
     /**
-     * @return configuration name
+     * @return the name of Fallback config path
      */
     String value();
 

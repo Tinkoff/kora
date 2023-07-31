@@ -2,7 +2,6 @@ package ru.tinkoff.kora.resilient.kora.fallback;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.kora.resilient.kora.telemetry.FallbackMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;

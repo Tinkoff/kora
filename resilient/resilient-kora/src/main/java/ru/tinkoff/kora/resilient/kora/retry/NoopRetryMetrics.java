@@ -1,8 +1,6 @@
 package ru.tinkoff.kora.resilient.kora.retry;
 
 
-import ru.tinkoff.kora.resilient.kora.telemetry.RetryMetrics;
-
 import javax.annotation.Nonnull;
 
 final class NoopRetryMetrics implements RetryMetrics {

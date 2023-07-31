@@ -52,7 +52,7 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val annotation = method.annotations.filter { a -> a.annotationType.resolve().toClassName().canonicalName == ANNOTATION_TYPE }.first()
         val timeoutName = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "value" }.map { arg -> arg.value.toString() }.first()
 
-        val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.telemetry.TimeoutMetrics")!!.asType(listOf()).makeNullable()
+        val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.timeout.TimeoutMetrics")!!.asType(listOf()).makeNullable()
         val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
         val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.timeout.TimeoutManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())

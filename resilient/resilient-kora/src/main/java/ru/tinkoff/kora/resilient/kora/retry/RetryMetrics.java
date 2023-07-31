@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.resilient.kora.telemetry;
+package ru.tinkoff.kora.resilient.kora.retry;
 
 import javax.annotation.Nonnull;
 
