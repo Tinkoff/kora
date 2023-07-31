@@ -121,8 +121,16 @@ public final class R2dbcRepositoryGenerator implements RepositoryGenerator {
         if (returnType.toString().equals(DbUtils.UPDATE_COUNT.canonicalName())) {
             b.addCode("return _flux.flatMap($T::getRowsUpdated).reduce(0L, Long::sum).map($T::new)", R2dbcTypes.RESULT, DbUtils.UPDATE_COUNT);
         } else if (resultFluxMapper != null) {
+            if(resultMapperName == null) {
+                throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
+            }
+
             b.addCode("return $L.apply(_flux)\n", resultMapperName);
         } else if (rowMapper != null || !CommonUtils.isVoid(returnType)) {
+            if(resultMapperName == null) {
+                throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
+            }
+
             b.addCode("return $L.apply(_flux)\n", resultMapperName);
         } else {
             b.addCode("return _flux.flatMap($T::getRowsUpdated).then()", R2dbcTypes.RESULT);

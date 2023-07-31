@@ -123,6 +123,10 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
             if (CommonUtils.isVoid(((DeclaredType) returnType).getTypeArguments().get(0))) {
                 b.addStatement("return $T.from(_rrs).then()", CommonClassNames.flux);
             } else {
+                if(resultMapperName == null) {
+                    throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
+                }
+
                 b.addStatement("return $N.apply(_rrs)", resultMapperName);
             }
             b.endControlFlow().addCode(")\n");// flatMap Statement
@@ -140,6 +144,10 @@ public class CassandraRepositoryGenerator implements RepositoryGenerator {
             b.beginControlFlow("try");
             b.addStatement("var _rs = _session.execute(_s)");
             if (returnType.getKind() != TypeKind.VOID) {
+                if(resultMapperName == null) {
+                    throw new IllegalStateException("Illegal State occurred when expected to get result mapper, but got null in " + method.getEnclosingElement().getSimpleName() + "#" + method.getSimpleName());
+                }
+
                 b.addStatement("var _result = $N.apply(_rs)", resultMapperName);
             }
             b.addStatement("_telemetry.close(null)");
