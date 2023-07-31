@@ -100,7 +100,7 @@ public interface CassandraModule extends DataBaseModule {
     default CassandraRowMapper<Instant> instantCassandraRowMapper() {
         return row -> row.isNull(0)
             ? null
-            : row.get(0, Instant.class);
+            : row.getInstant(0);
     }
 
     default CassandraReactiveResultSetMapper<Void, Mono<Void>> voidMonoCassandraReactiveResultSetMapper() {
