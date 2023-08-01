@@ -47,10 +47,12 @@ class KoraCodegenTest {
         var modes = new String[]{
             "java_client",
             "java_server",
-            "reactive_client",
-            "reactive_server",
+            "java_reactive_client",
+            "java_reactive_server",
             "kotlin_client",
-            "kotlin_server"
+            "kotlin_client",
+            "kotlin_coroutine_server",
+            "kotlin_coroutine_server"
         };
         var files = new String[]{
             "/example/petstoreV3_form.yaml",
@@ -109,7 +111,7 @@ class KoraCodegenTest {
             .map(File::getAbsolutePath)
             .map(String::toString)
             .toList();
-        if (mode.contains("kotlin")) {
+        if (mode.startsWith("kotlin")) {
             compileKotlin(name, files.stream().filter(f -> f.endsWith(".kt")).toList());
         } else {
             TestUtils.annotationProcessFiles(files.stream().filter(f -> f.endsWith(".java")).toList(), processors);

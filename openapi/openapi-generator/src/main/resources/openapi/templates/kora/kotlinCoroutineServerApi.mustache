@@ -19,8 +19,8 @@ import ru.tinkoff.kora.http.server.common.annotation.HttpController;
 import ru.tinkoff.kora.common.Tag;
 import ru.tinkoff.kora.http.common.annotation.InterceptWith;
 import ru.tinkoff.kora.http.server.common.HttpServerInterceptor;
-{{/hasAuthMethods}}{{#vendorExtensions.enableValidation}}{{^hasAuthMethods}}
-import ru.tinkoff.kora.http.common.annotation.InterceptWith;{{/hasAuthMethods}}
+{{/hasAuthMethods}}{{#vendorExtensions.enableValidation}}
+import ru.tinkoff.kora.http.common.annotation.InterceptWith;
 import ru.tinkoff.kora.validation.common.annotation.Validate;
 import ru.tinkoff.kora.validation.common.annotation.Valid;
 import ru.tinkoff.kora.validation.common.annotation.Size;
@@ -66,7 +66,7 @@ import ru.tinkoff.kora.validation.common.annotation.Range;
     @Validate
     {{/vendorExtensions.x-validate}}
     @Mapping({{classname}}ServerResponseMappers.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}ResponseMapper::class)
-    {{#vendorExtensions.enableValidation}}open {{/vendorExtensions.enableValidation}}fun {{operationId}}({{>kotlinAnnotatedParams}}): {{classname}}Responses.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}ApiResponse {
+    {{#vendorExtensions.enableValidation}}open {{/vendorExtensions.enableValidation}}suspend fun {{operationId}}({{>kotlinAnnotatedParams}}): {{classname}}Responses.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}ApiResponse {
       return this.delegate.{{operationId}}(
         {{#allParams}}{{#lambda.trim}}
         {{#hasFormParams}}{{^isFormParam}}{{paramName}},{{/isFormParam}}{{/hasFormParams}}
