@@ -4,7 +4,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.annotation.Root;
-import ru.tinkoff.kora.resilient.kora.CircuitBreaker;
+import ru.tinkoff.kora.resilient.circuitbreaker.annotation.CircuitBreaker;
 
 import java.io.IOException;
 

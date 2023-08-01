@@ -19,7 +19,7 @@ import static com.squareup.javapoet.CodeBlock.joining;
 
 public class FallbackKoraAspect implements KoraAspect {
 
-    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.kora.Fallback";
+    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.fallback.annotation.Fallback";
 
     private final ProcessingEnvironment env;
 
@@ -50,9 +50,9 @@ public class FallbackKoraAspect implements KoraAspect {
                 .map(e -> String.valueOf(e.getValue().getValue())).findFirst())
             .orElseThrow();
 
-        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.fallback.FallbackManager"));
+        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.fallback.FallbackManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
-        var fallbackType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.fallback.Fallback"));
+        var fallbackType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.fallback.Fallback"));
         var fieldFallback = aspectContext.fieldFactory().constructorInitialized(
             fallbackType, CodeBlock.of("$L.get($S);", fieldManager, name));
 

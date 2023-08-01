@@ -3,7 +3,7 @@ package ru.tinkoff.kora.resilient.annotation.processor.aop;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.*;
-import ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException;
+import ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException;
 
 import java.io.IOException;
 

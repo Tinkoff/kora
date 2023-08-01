@@ -1,7 +1,7 @@
 package ru.tinkoff.kora.resilient.annotation.processor.aop.testdata;
 
 import ru.tinkoff.kora.common.Component;
-import ru.tinkoff.kora.resilient.kora.Fallback;
+import ru.tinkoff.kora.resilient.fallback.annotation.Fallback;
 
 @Component
 public class FallbackIncorrectSignatureTarget {

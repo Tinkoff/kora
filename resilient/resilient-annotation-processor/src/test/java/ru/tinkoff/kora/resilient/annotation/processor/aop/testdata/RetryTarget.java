@@ -6,8 +6,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tinkoff.kora.common.Component;
 import ru.tinkoff.kora.common.annotation.Root;
-import ru.tinkoff.kora.resilient.kora.Retry;
-import ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException;
+import ru.tinkoff.kora.resilient.retry.annotation.Retry;
+import ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;

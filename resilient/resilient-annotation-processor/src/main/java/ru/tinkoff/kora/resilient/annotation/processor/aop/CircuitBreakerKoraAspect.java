@@ -21,7 +21,7 @@ import static com.squareup.javapoet.CodeBlock.joining;
 
 public class CircuitBreakerKoraAspect implements KoraAspect {
 
-    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.kora.CircuitBreaker";
+    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.circuitbreaker.annotation.CircuitBreaker";
 
     private final ProcessingEnvironment env;
 
@@ -46,9 +46,9 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
                 .map(e -> String.valueOf(e.getValue().getValue())).findFirst())
             .orElseThrow();
 
-        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerManager"));
+        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
-        var circuitType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreaker"));
+        var circuitType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker"));
         var fieldCircuit = aspectContext.fieldFactory().constructorInitialized(circuitType,
             CodeBlock.of("$L.get($S);", fieldManager, circuitBreakerName));
 
@@ -74,7 +74,7 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
             ? CodeBlock.of("return")
             : CodeBlock.of("return t", superMethod.toString());
 
-        final DeclaredType cbException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException"));
+        final DeclaredType cbException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
 
         return CodeBlock.builder().add("""
             var _circuitBreaker = $L;

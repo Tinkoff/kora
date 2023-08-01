@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException
+import ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

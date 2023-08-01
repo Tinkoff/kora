@@ -4,8 +4,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreaker;
-import ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerMetrics;
+import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker;
+import ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerMetrics;
 
 import javax.annotation.Nonnull;
 import java.util.Map;

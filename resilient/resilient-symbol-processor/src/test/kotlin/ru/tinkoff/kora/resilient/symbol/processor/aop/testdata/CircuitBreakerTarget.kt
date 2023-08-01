@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.common.annotation.Root
-import ru.tinkoff.kora.resilient.kora.CircuitBreaker
+import ru.tinkoff.kora.resilient.circuitbreaker.annotation.CircuitBreaker
 
 @Component
 @Root

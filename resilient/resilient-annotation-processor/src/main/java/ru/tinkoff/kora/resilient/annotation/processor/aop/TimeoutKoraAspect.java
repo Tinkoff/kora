@@ -21,7 +21,7 @@ import static com.squareup.javapoet.CodeBlock.joining;
 
 public class TimeoutKoraAspect implements KoraAspect {
 
-    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.kora.Timeout";
+    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.timeout.annotation.Timeout";
 
     private final ProcessingEnvironment env;
 
@@ -46,11 +46,11 @@ public class TimeoutKoraAspect implements KoraAspect {
                 .map(e -> String.valueOf(e.getValue().getValue())).findFirst())
             .orElseThrow();
 
-        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutManager"));
+        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
-        var metricsType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutMetrics"));
+        var metricsType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutMetrics"));
         var fieldMetrics = aspectContext.fieldFactory().constructorParam(metricsType, List.of(AnnotationSpec.builder(Nullable.class).build()));
-        var timeouterType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.Timeout"));
+        var timeouterType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.Timeout"));
         var fieldTimeout = aspectContext.fieldFactory().constructorInitialized(timeouterType,
             CodeBlock.of("$L.get($S)", fieldManager, timeoutName));
 
@@ -85,7 +85,7 @@ public class TimeoutKoraAspect implements KoraAspect {
 
     private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException"));
+        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
 
         return CodeBlock.builder().add("""
             return $L
@@ -102,7 +102,7 @@ public class TimeoutKoraAspect implements KoraAspect {
 
     private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.timeout.TimeoutExhaustedException"));
+        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
 
         return CodeBlock.builder().add("""
             return $L

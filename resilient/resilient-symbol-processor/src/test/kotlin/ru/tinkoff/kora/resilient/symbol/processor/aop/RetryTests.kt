@@ -6,7 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.tinkoff.kora.resilient.kora.retry.RetryExhaustedException
+import ru.tinkoff.kora.resilient.retry.RetryExhaustedException
 import ru.tinkoff.kora.resilient.symbol.processor.aop.testdata.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

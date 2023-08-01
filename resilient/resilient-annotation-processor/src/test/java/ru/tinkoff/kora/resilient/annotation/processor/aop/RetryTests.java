@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.tinkoff.kora.resilient.annotation.processor.aop.testdata.*;
-import ru.tinkoff.kora.resilient.kora.retry.RetryExhaustedException;
+import ru.tinkoff.kora.resilient.retry.RetryExhaustedException;
 
 import java.time.Duration;
 

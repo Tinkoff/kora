@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.flow
 import org.slf4j.LoggerFactory
 import ru.tinkoff.kora.common.Component
 import ru.tinkoff.kora.common.annotation.Root
-import ru.tinkoff.kora.resilient.kora.Retry
+import ru.tinkoff.kora.resilient.retry.annotation.Retry
 import java.util.concurrent.atomic.AtomicInteger
 
 @Component

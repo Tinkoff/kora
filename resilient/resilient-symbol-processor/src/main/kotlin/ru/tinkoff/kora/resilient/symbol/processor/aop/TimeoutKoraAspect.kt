@@ -23,7 +23,7 @@ import java.util.concurrent.Future
 class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
 
     companion object {
-        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.kora.Timeout"
+        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.timeout.annotation.Timeout"
         val MEMBER_CALLABLE = MemberName("java.util.concurrent", "Callable")
         val timeoutMember = MemberName("kotlinx.coroutines", "withTimeout")
         val timeoutCancelMember = MemberName("kotlinx.coroutines", "TimeoutCancellationException")
@@ -33,7 +33,7 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val whileMember = MemberName("kotlinx.coroutines.flow", "takeWhile")
         val systemMember = MemberName("java.lang", "System")
         val atomicMember = MemberName("java.util.concurrent.atomic", "AtomicLong")
-        val timeoutKoraMember = MemberName("ru.tinkoff.kora.resilient.kora.timeout", "TimeoutExhaustedException")
+        val timeoutKoraMember = MemberName("ru.tinkoff.kora.resilient.timeout", "TimeoutExhaustedException")
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
@@ -52,12 +52,12 @@ class TimeoutKoraAspect(val resolver: Resolver) : KoraAspect {
         val annotation = method.annotations.filter { a -> a.annotationType.resolve().toClassName().canonicalName == ANNOTATION_TYPE }.first()
         val timeoutName = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "value" }.map { arg -> arg.value.toString() }.first()
 
-        val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.timeout.TimeoutMetrics")!!.asType(listOf()).makeNullable()
+        val metricType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.TimeoutMetrics")!!.asType(listOf()).makeNullable()
         val fieldMetric = aspectContext.fieldFactory.constructorParam(metricType, listOf())
-        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.timeout.TimeoutManager")!!.asType(listOf())
+        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.TimeoutManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
         val fieldTimeout = aspectContext.fieldFactory.constructorInitialized(
-            resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.timeout.Timeout")!!.asType(listOf()),
+            resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.timeout.Timeout")!!.asType(listOf()),
             CodeBlock.of("%L[%S]", fieldManager, timeoutName)
         )
 

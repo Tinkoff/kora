@@ -6,7 +6,7 @@ import ru.tinkoff.kora.config.common.Config;
 import ru.tinkoff.kora.config.common.DefaultConfigExtractorsModule;
 import ru.tinkoff.kora.config.common.origin.SimpleConfigOrigin;
 import ru.tinkoff.kora.config.hocon.HoconConfigFactory;
-import ru.tinkoff.kora.resilient.kora.ResilientModule;
+import ru.tinkoff.kora.resilient.ResilientModule;
 
 @KoraApp
 public interface AppWithConfig extends ResilientModule, DefaultConfigExtractorsModule {

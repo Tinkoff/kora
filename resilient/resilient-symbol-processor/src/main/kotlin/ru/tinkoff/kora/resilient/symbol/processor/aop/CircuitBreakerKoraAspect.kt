@@ -25,7 +25,7 @@ import javax.tools.Diagnostic
 class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
 
     companion object {
-        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.kora.CircuitBreaker"
+        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.circuitbreaker.annotation.CircuitBreaker"
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
@@ -44,9 +44,9 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
         val annotation = method.annotations.filter { a -> a.annotationType.resolve().toClassName().canonicalName == ANNOTATION_TYPE }.first()
         val circuitBreakerName = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "value" }.map { arg -> arg.value.toString() }.first()
 
-        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerManager")!!.asType(listOf())
+        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreakerManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
-        val circuitType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreaker")!!.asType(listOf())
+        val circuitType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.circuitbreaker.CircuitBreaker")!!.asType(listOf())
         val fieldCircuit = aspectContext.fieldFactory.constructorInitialized(
             circuitType,
             CodeBlock.of("%L[%S]", fieldManager, circuitBreakerName)
@@ -77,7 +77,7 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
                 %L
                 %L.releaseOnSuccess()
                 %L
-            } catch (e: ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerNotPermittedException) {
+            } catch (e: ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException) {
                 throw e
             } catch (e: java.lang.Exception) {
                 %L.releaseOnError(e)
@@ -100,7 +100,7 @@ class CircuitBreakerKoraAspect(val resolver: Resolver) : KoraAspect {
                     %L.acquire()
                     %M(%L)
                     %L.releaseOnSuccess()
-                } catch (e: ru.tinkoff.kora.resilient.kora.circuitbreaker.CircuitBreakerNotPermittedException) {
+                } catch (e: ru.tinkoff.kora.resilient.circuitbreaker.CallNotPermittedException) {
                     throw e
                 } catch (e: java.lang.Exception) {
                     %L.releaseOnError(e)

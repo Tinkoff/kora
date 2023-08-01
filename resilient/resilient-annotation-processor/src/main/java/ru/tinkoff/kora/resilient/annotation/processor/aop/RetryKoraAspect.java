@@ -19,9 +19,9 @@ import static com.squareup.javapoet.CodeBlock.joining;
 
 public class RetryKoraAspect implements KoraAspect {
 
-    private static final ClassName RETRY_STATUS = ClassName.get("ru.tinkoff.kora.resilient.kora.retry", "Retry", "RetryState", "RetryStatus");
-    private static final ClassName RETRY_EXCEPTION = ClassName.get("ru.tinkoff.kora.resilient.kora.retry", "RetryExhaustedException");
-    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.kora.Retry";
+    private static final ClassName RETRY_STATUS = ClassName.get("ru.tinkoff.kora.resilient.retry", "Retry", "RetryState", "RetryStatus");
+    private static final ClassName RETRY_EXCEPTION = ClassName.get("ru.tinkoff.kora.resilient.retry", "RetryExhaustedException");
+    private static final String ANNOTATION_TYPE = "ru.tinkoff.kora.resilient.retry.annotation.Retry";
 
     private final ProcessingEnvironment env;
 
@@ -46,9 +46,9 @@ public class RetryKoraAspect implements KoraAspect {
                 .map(e -> String.valueOf(e.getValue().getValue())).findFirst())
             .orElseThrow();
 
-        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.retry.RetryManager"));
+        var managerType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.RetryManager"));
         var fieldManager = aspectContext.fieldFactory().constructorParam(managerType, List.of());
-        var retrierType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.kora.retry.Retry"));
+        var retrierType = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.retry.Retry"));
         var fieldRetrier = aspectContext.fieldFactory().constructorInitialized(retrierType,
             CodeBlock.of("$L.get($S);", fieldManager, retryableName));
 
