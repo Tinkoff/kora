@@ -106,6 +106,7 @@ class RetryKoraAspect(val resolver: Resolver) : KoraAspect {
                         }
                     }
                 }
+                addStatement("return@use _result")
             }
             .unindent()
             .build()
