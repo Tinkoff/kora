@@ -72,46 +72,39 @@ class RetryableKoraAspect(val resolver: Resolver) : KoraAspect {
 
     private fun buildBodySync(method: KSFunctionDeclaration, superCall: String, retryName: String, fieldRetrier: String): CodeBlock {
         return CodeBlock.builder()
-            .add("return %L.asState()", fieldRetrier).indent().add("\n")
-            .controlFlow(".use { _state ->", fieldRetrier) {
-                addStatement("val _suppressed = %T<Exception>();", ArrayList::class)
-                addStatement("lateinit var _result: %T", method.returnType?.resolve()?.toTypeName())
-                controlFlow("while (true)") {
-                    controlFlow("try") {
-                        add("_result = ").add(buildMethodCall(method, superCall)).add("\n")
-                        addStatement("break")
-                        nextControlFlow("catch (_e: Exception)")
-                        addStatement("val _status = _state.onException(_e)")
-                        controlFlow("when (_status)") {
-                            controlFlow("%T.REJECTED ->", MEMBER_RETRY_STATUS) {
-                                addStatement("_suppressed.forEach { _e.addSuppressed(it) }")
-                                addStatement("throw _e")
+            .add("val _state = %L.asState()", fieldRetrier).add("\n")
+            .addStatement("val _suppressed = %T<Exception>()", ArrayList::class)
+            .controlFlow("while (true)") {
+                controlFlow("try") {
+                    add("return ").add(buildMethodCall(method, superCall)).add("\n")
+                    nextControlFlow("catch (_e: Exception)")
+                    addStatement("val _status = _state.onException(_e)")
+                    controlFlow("when (_status)") {
+                        controlFlow("%T.REJECTED ->", MEMBER_RETRY_STATUS) {
+                            addStatement("_suppressed.forEach { _e.addSuppressed(it) }")
+                            addStatement("throw _e")
+                        }
+                        controlFlow("%T.ACCEPTED ->", MEMBER_RETRY_STATUS) {
+                            addStatement("_suppressed.add(_e)")
+                            if (method.isSuspend()) {
+                                addStatement("%M(_state.delayNanos.%M)", MEMBER_DELAY, MEMBER_TIME)
+                            } else {
+                                addStatement("_state.doDelay()")
                             }
-                            controlFlow("%T.ACCEPTED ->", MEMBER_RETRY_STATUS) {
-                                addStatement("_suppressed.add(_e)")
-                                if (method.isSuspend()) {
-                                    addStatement("%M(_state.delayNanos.%M)", MEMBER_DELAY, MEMBER_TIME)
-                                } else {
-                                    addStatement("_state.doDelay()")
-                                }
-                            }
-                            controlFlow("%T.EXHAUSTED ->", MEMBER_RETRY_STATUS) {
-                                add(
-                                    """
+                        }
+                        controlFlow("%T.EXHAUSTED ->", MEMBER_RETRY_STATUS) {
+                            add(
+                                """
                                     val _exhaustedException = %M(_state.getAttempts(), _e)
                                     _suppressed.forEach { _e.addSuppressed(it) }
                                     throw _exhaustedException
                                     
                                     """.trimIndent(), MEMBER_RETRY_EXCEPTION
-                                )
-                            }
+                            )
                         }
                     }
                 }
-                addStatement("return@use _result")
             }
-            .unindent()
-            .add("\n")
             .build()
     }
 
