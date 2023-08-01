@@ -25,9 +25,9 @@ import java.util.concurrent.Future
 class RetryKoraAspect(val resolver: Resolver) : KoraAspect {
 
     companion object {
-        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.kora.Retry"
-        private val MEMBER_RETRY_STATUS = ClassName("ru.tinkoff.kora.resilient.kora.retry", "Retry", "RetryState", "RetryStatus")
-        private val MEMBER_RETRY_EXCEPTION = MemberName("ru.tinkoff.kora.resilient.kora.retry", "RetryExhaustedException")
+        const val ANNOTATION_TYPE: String = "ru.tinkoff.kora.resilient.retry.annotation.Retry"
+        private val MEMBER_RETRY_STATUS = ClassName("ru.tinkoff.kora.resilient.retry", "Retry", "RetryState", "RetryStatus")
+        private val MEMBER_RETRY_EXCEPTION = MemberName("ru.tinkoff.kora.resilient.retry", "RetryExhaustedException")
         private val MEMBER_DELAY = MemberName("kotlinx.coroutines", "delay")
         private val MEMBER_TIME = MemberName("kotlin.time.Duration.Companion", "nanoseconds")
         private val MEMBER_FLOW = MemberName("kotlinx.coroutines.flow", "flow")
@@ -51,9 +51,9 @@ class RetryKoraAspect(val resolver: Resolver) : KoraAspect {
         val annotation = method.annotations.filter { a -> a.annotationType.resolve().toClassName().canonicalName == ANNOTATION_TYPE }.first()
         val retryableName = annotation.arguments.asSequence().filter { arg -> arg.name!!.getShortName() == "value" }.map { arg -> arg.value.toString() }.first()
 
-        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.retry.RetryManager")!!.asType(listOf())
+        val managerType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.RetryManager")!!.asType(listOf())
         val fieldManager = aspectContext.fieldFactory.constructorParam(managerType, listOf())
-        val retrierType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.kora.retry.Retry")!!.asType(listOf())
+        val retrierType = resolver.getClassDeclarationByName("ru.tinkoff.kora.resilient.retry.Retry")!!.asType(listOf())
         val fieldRetrier = aspectContext.fieldFactory.constructorInitialized(
             retrierType,
             CodeBlock.of("%L[%S]", fieldManager, retryableName)
@@ -106,7 +106,6 @@ class RetryKoraAspect(val resolver: Resolver) : KoraAspect {
                         }
                     }
                 }
-                addStatement("return@use _result")
             }
             .unindent()
             .build()
