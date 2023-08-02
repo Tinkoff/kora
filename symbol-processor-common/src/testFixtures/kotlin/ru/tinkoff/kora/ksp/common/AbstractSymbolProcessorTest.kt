@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestInstance
 import reactor.core.publisher.Mono
+import ru.tinkoff.kora.common.Context
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -184,8 +185,8 @@ abstract class AbstractSymbolProcessorTest {
 
         @SuppressWarnings("unchecked")
         fun <T> invoke(method: String, vararg args: Any?): T? {
-            for (objectClassMethod in objectClass.memberFunctions) {
-                if (objectClassMethod.name == method && objectClassMethod.parameters.size == args.size + 1) {
+            for (repositoryClassMethod in objectClass.memberFunctions) {
+                if (repositoryClassMethod.name == method && repositoryClassMethod.parameters.size == args.size + 1) {
                     try {
                         val realArgs = Array(args.size + 1) {
                             if (it == 0) {
@@ -195,10 +196,10 @@ abstract class AbstractSymbolProcessorTest {
                             }
                         }
 
-                        val result = if (objectClassMethod.isSuspend) {
-                            runBlocking { objectClassMethod.callSuspend(*realArgs) }
+                        val result = if (repositoryClassMethod.isSuspend) {
+                            runBlocking(Context.Kotlin.asCoroutineContext(Context.current())) { repositoryClassMethod.callSuspend(*realArgs) }
                         } else {
-                            objectClassMethod.call(*realArgs)
+                            repositoryClassMethod.call(*realArgs)
                         }
                         return when (result) {
                             is Mono<*> -> result.block()
