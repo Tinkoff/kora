@@ -9,5 +9,4 @@ data class MethodData(
     val outputLogLevel: Level?,
     val resultLogLevel: Level?,
     val parameters: List<MethodParameterData>,
-    val isVoid: Boolean
 )

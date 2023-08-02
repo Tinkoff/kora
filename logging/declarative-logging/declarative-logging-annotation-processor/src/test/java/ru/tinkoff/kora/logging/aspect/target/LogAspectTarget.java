@@ -3,7 +3,7 @@ package ru.tinkoff.kora.logging.aspect.target;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import ru.tinkoff.kora.logging.annotation.Log;
+import ru.tinkoff.kora.logging.common.annotation.Log;
 
 import static org.slf4j.event.Level.INFO;
 import static org.slf4j.event.Level.TRACE;

@@ -40,7 +40,7 @@ public abstract class AbstractLogAspectTest extends AbstractAnnotationProcessorT
     @Override
     protected String commonImports() {
         return super.commonImports() + """
-            import ru.tinkoff.kora.logging.annotation.Log;
+            import ru.tinkoff.kora.logging.common.annotation.Log;
             import static org.slf4j.event.Level.*;
             """;
     }

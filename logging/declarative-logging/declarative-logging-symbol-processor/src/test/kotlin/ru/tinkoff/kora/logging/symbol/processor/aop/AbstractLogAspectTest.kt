@@ -1,7 +1,6 @@
 package ru.tinkoff.kora.logging.symbol.processor.aop
 
 import com.fasterxml.jackson.core.JsonGenerator
-import com.google.devtools.ksp.KspExperimental
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.InstanceOfAssertFactories
 import org.intellij.lang.annotations.Language
@@ -19,7 +18,6 @@ import ru.tinkoff.kora.ksp.common.AbstractSymbolProcessorTest
 import ru.tinkoff.kora.logging.common.arg.StructuredArgument
 import ru.tinkoff.kora.logging.common.arg.StructuredArgumentWriter
 
-@OptIn(KspExperimental::class)
 abstract class AbstractLogAspectTest : AbstractSymbolProcessorTest() {
     protected var loggers = mutableMapOf<String, Logger>()
     protected var factory = Mockito.mock(ILoggerFactory::class.java)
@@ -37,7 +35,7 @@ abstract class AbstractLogAspectTest : AbstractSymbolProcessorTest() {
 
     override fun commonImports(): String {
         return super.commonImports() + """
-            import ru.tinkoff.kora.logging.annotation.Log
+            import ru.tinkoff.kora.logging.common.annotation.Log
             import org.slf4j.event.Level.*
             import org.slf4j.Logger
             import org.slf4j.LoggerFactory

@@ -1,8 +1,7 @@
 dependencies {
+    implementation project(':aop:aop-annotation-processor')
 
-    api project(':aop:aop-annotation-processor')
-
-    testImplementation project(':logging:declarative-logging:declarative-logging-annotation')
+    testImplementation project(':logging:logging-common')
     testImplementation testFixtures(project(':annotation-processor-common'))
     testImplementation project(':logging:logging-logback')
 }

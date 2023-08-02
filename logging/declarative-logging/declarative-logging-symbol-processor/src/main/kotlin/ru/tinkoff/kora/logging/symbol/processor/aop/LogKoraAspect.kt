@@ -1,27 +1,21 @@
 package ru.tinkoff.kora.logging.symbol.processor.aop
 
-import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getClassDeclarationByName
-import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
-import org.slf4j.ILoggerFactory
-import org.slf4j.Logger
 import org.slf4j.event.Level
 import ru.tinkoff.kora.aop.symbol.processor.KoraAspect
-import ru.tinkoff.kora.logging.annotation.Log
-import ru.tinkoff.kora.logging.common.arg.StructuredArgument
-import ru.tinkoff.kora.logging.symbol.processor.aop.data.MethodData
-import ru.tinkoff.kora.logging.symbol.processor.aop.data.MethodParameterData
-import kotlin.reflect.KClass
-import ru.tinkoff.kora.logging.annotation.Log.`in` as LogIn
-import ru.tinkoff.kora.logging.annotation.Log.out as LogOut
+import ru.tinkoff.kora.ksp.common.AnnotationUtils.findAnnotation
+import ru.tinkoff.kora.ksp.common.AnnotationUtils.findValue
+import ru.tinkoff.kora.ksp.common.AnnotationUtils.isAnnotationPresent
+import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.controlFlow
+import ru.tinkoff.kora.ksp.common.KotlinPoetUtils.nextControlFlow
 
-@KspExperimental
-class LogKoraAspect(resolver: Resolver) : KoraAspect {
+class LogKoraAspect(val resolver: Resolver) : KoraAspect {
 
     private companion object {
         private const val RESULT_FIELD_NAME = "__result"
@@ -33,15 +27,19 @@ class LogKoraAspect(resolver: Resolver) : KoraAspect {
 
         private const val MESSAGE_IN = ">"
         private const val MESSAGE_OUT = "<"
+
+        val logAnnotation = ClassName("ru.tinkoff.kora.logging.common.annotation", "Log")
+        val logInAnnotation = logAnnotation.nestedClass("in")
+        val logOutAnnotation = logAnnotation.nestedClass("out")
+        val logOffAnnotation = logAnnotation.nestedClass("off")
+        val logResultAnnotation = logAnnotation.nestedClass("result")
+        val structuredArgument = ClassName("ru.tinkoff.kora.logging.common.arg", "StructuredArgument")
+        val iLoggerFactoryType = ClassName("org.slf4j", "ILoggerFactory")
+        val loggerType = ClassName("org.slf4j", "Logger")
     }
 
-    private val iLoggerFactoryType = resolver.getClassDeclarationByClass(ILoggerFactory::class).asType(emptyList())
-    private val loggerType = resolver.getClassDeclarationByClass(Logger::class).asType(emptyList())
-    private val unitType = resolver.getClassDeclarationByClass(Unit::class).asStarProjectedType()
-    private val voidType = resolver.getClassDeclarationByClass(Void::class).asStarProjectedType()
-
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(Log::class.java.canonicalName, LogIn::class.java.canonicalName, LogOut::class.java.canonicalName)
+        return setOf(logAnnotation.canonicalName, logInAnnotation.canonicalName, logOutAnnotation.canonicalName)
     }
 
     override fun apply(
@@ -49,128 +47,134 @@ class LogKoraAspect(resolver: Resolver) : KoraAspect {
         superCall: String,
         aspectContext: KoraAspect.AspectContext
     ): KoraAspect.ApplyResult {
-        val loggerFactoryFieldName = aspectContext.fieldFactory.constructorParam(iLoggerFactoryType, emptyList())
+        val loggerFactoryFieldName = aspectContext.fieldFactory.constructorParam(resolver.getClassDeclarationByName(iLoggerFactoryType.canonicalName)!!.asStarProjectedType(), emptyList())
         val declarationName = function.parentDeclaration?.qualifiedName?.asString()
         val loggerName = "${declarationName}.${function.simpleName.getShortName()}"
         val loggerFieldName = aspectContext.fieldFactory.constructorInitialized(
-            loggerType,
+            resolver.getClassDeclarationByName(loggerType.canonicalName)!!.asStarProjectedType(),
             CodeBlock.of("%N.getLogger(%S)", loggerFactoryFieldName, loggerName)
         )
 
-        val methodData = resolveMethodData(function, loggerFieldName, superCall)
-        val result = generator(methodData) {
-            generateInputLog()
-            generateOutputLog()
+        val result = CodeBlock.builder()
+        result.generateInputLog(loggerFieldName, function)
+        result.generateOutputLog(loggerFieldName, function, superCall)
+
+        return KoraAspect.ApplyResult.MethodBody(result.build())
+    }
+
+
+    private fun CodeBlock.Builder.generateInputLog(loggerName: String, function: KSFunctionDeclaration) {
+        val inLogLevel = function.inLogLevel()
+        if (inLogLevel == null) {
+            return
         }
-
-        return KoraAspect.ApplyResult.MethodBody(result)
-    }
-
-    private fun resolveMethodData(
-        function: KSFunctionDeclaration,
-        loggerName: String,
-        superCall: String
-    ): MethodData {
-        val (inputLogLevel, outputLogLevel) = resolveLoggerLevels(function)
-        val resultLogLevel = resolveResultLogLevel(outputLogLevel, function)
-        val returnType = function.returnType?.resolve()!!
-
-        return MethodData(
-            superCall = superCall,
-            loggerName = loggerName,
-            inputLogLevel = inputLogLevel,
-            outputLogLevel = outputLogLevel,
-            resultLogLevel = resultLogLevel,
-            parameters = resolveMethodParametersData(inputLogLevel, function),
-            isVoid = returnType.isVoid()
-        )
-    }
-
-    private fun GeneratorSpec.generateInputLog() {
-        if (methodData.parameters.isEmpty()) {
+        fun CodeBlock.Builder.logInput() {
+            addStatement("%L.%L(%S)", loggerName, inLogLevel.logMethod(), MESSAGE_IN)
+        }
+        if (function.parameters.isEmpty()) {
             logInput()
-        } else {
-            val parametersByLevel = methodData.parameters
-                .filter { it.logLevel != null }
-                .groupBy { it.logLevel!! }
-                .toList()
-                .sortedBy { (level, _) -> level }
-                .takeIf { it.isNotEmpty() }
-                ?: return
-
-            val minimalLogLevel = parametersByLevel.minOf { (level, _) -> level }
-
-            checkLogLevel(minimalLogLevel, false) {
-                codeBlock.beginControlFlow(
-                    "val %L = %T.marker(%S) { gen ->",
-                    DATA_IN_FIELD_NAME,
-                    StructuredArgument::class,
-                    DATA_PARAMETER_NAME
-                )
+            return
+        }
+        val loggedParameters = function.parameters.filter { !it.isAnnotationPresent(logOffAnnotation) }
+        if (loggedParameters.isEmpty()) {
+            logInput()
+            return
+        }
+        val parametersByLevel = loggedParameters.asSequence()
+            .groupBy {
+                val parameterLogLevel = it.parseLogLevel(logAnnotation) ?: Level.DEBUG
+                maxOf(parameterLogLevel, inLogLevel)
             }
-
-            parametersByLevel.forEach { (level, parameters) ->
-                if (level <= methodData.inputLogLevel) {
-                    parameters.forEach { parameter ->
-                        appendFieldToMarkerGenerator(parameter.name, parameter.name)
-                    }
-                } else {
-                    checkLogLevel(level) {
+            .toSortedMap()
+        val minimalParametersLogLevel = parametersByLevel.minOf { it.key }
+        controlFlow("if (%N.%N())", loggerName, minimalParametersLogLevel.isEnabledMethod()) {
+            controlFlow("val %N = %T.marker(%S) { gen -> ", DATA_IN_FIELD_NAME, structuredArgument, DATA_PARAMETER_NAME) {
+                parametersByLevel.forEach { (level, parameters) ->
+                    if (level <= inLogLevel) {
                         parameters.forEach { parameter ->
-                            appendFieldToMarkerGenerator(parameter.name, parameter.name)
+                            appendFieldToMarkerGenerator(parameter.name!!.asString(), parameter.name!!.asString())
+                        }
+                    } else {
+                        controlFlow("if (%N.%N())", loggerName, level.isEnabledMethod()) {
+                            parameters.forEach { parameter ->
+                                appendFieldToMarkerGenerator(parameter.name!!.asString(), parameter.name!!.asString())
+                            }
                         }
                     }
                 }
             }
-
-            codeBlock.endControlFlow()
-
-            logWithMarker(methodData.inputLogLevel, DATA_IN_FIELD_NAME, MESSAGE_IN)
-
-            if (minimalLogLevel > methodData.inputLogLevel) {
-                codeBlock.nextControlFlow("else")
-                logInput()
+            addStatement("%N.%N(%L, %S)", loggerName, inLogLevel.logMethod(), DATA_IN_FIELD_NAME, MESSAGE_IN)
+            if (minimalParametersLogLevel > inLogLevel) {
+                nextControlFlow("else") {
+                    logInput()
+                }
             }
-
-            codeBlock.endControlFlow()
         }
     }
 
-    private fun GeneratorSpec.logInput() {
-        log(methodData.inputLogLevel, MESSAGE_IN)
-    }
+    private fun CodeBlock.Builder.generateOutputLog(loggerName: String, function: KSFunctionDeclaration, superCall: String) {
+        addStatement("val %L = %L(%L)", RESULT_FIELD_NAME, superCall, function.parameters.joinToString(", ") { it.name!!.asString() })
+        val outLogLevel = function.outLogLevel()
+        if (outLogLevel == null) {
+            addStatement("return %N", RESULT_FIELD_NAME)
+            return
+        }
+        fun CodeBlock.Builder.logOutput() {
+            addStatement("%L.%L(%S)", loggerName, outLogLevel.logMethod(), MESSAGE_OUT)
+        }
 
-    private fun GeneratorSpec.logOutput() {
-        log(methodData.outputLogLevel, MESSAGE_OUT)
-    }
-
-    private fun GeneratorSpec.logOutput(outputField: String) {
-        if (methodData.resultLogLevel == null) {
+        val resultLogLevel = function.resultLogLevel()
+        if (resultLogLevel == null) {
             logOutput()
-        } else {
-            checkLogLevel(methodData.resultLogLevel, false) {
-                codeBlock.beginControlFlow(
-                    "val %L = %T.marker(%S) { gen -> ",
-                    DATA_OUT_FIELD_NAME,
-                    StructuredArgument::class,
-                    DATA_PARAMETER_NAME
-                )
-                appendFieldToMarkerGenerator(OUT_PARAMETER_NAME, outputField)
-                codeBlock.endControlFlow()
-                logWithMarker(methodData.outputLogLevel, DATA_OUT_FIELD_NAME, MESSAGE_OUT)
-            }
-
-            if (methodData.resultLogLevel >= methodData.outputLogLevel) {
-                codeBlock.nextControlFlow("else")
-                logOutput()
-            }
-
-            codeBlock.endControlFlow()
+            addStatement("return %N", RESULT_FIELD_NAME)
+            return
         }
+        controlFlow("if (%N.%N())", loggerName, resultLogLevel.isEnabledMethod()) {
+            controlFlow("val %L = %T.marker(%S) { gen -> ", DATA_OUT_FIELD_NAME, structuredArgument, DATA_PARAMETER_NAME) {
+                appendFieldToMarkerGenerator(OUT_PARAMETER_NAME, RESULT_FIELD_NAME)
+            }
+            addStatement("%N.%N(%L, %S)", loggerName, outLogLevel.logMethod(), DATA_OUT_FIELD_NAME, MESSAGE_OUT)
+            if (resultLogLevel >= outLogLevel) {
+                nextControlFlow("else") {
+                    logOutput()
+                }
+            }
+        }
+        addStatement("return %N", RESULT_FIELD_NAME)
     }
 
-    private fun GeneratorSpec.appendFieldToMarkerGenerator(fieldName: String, parameterName: String) {
-        codeBlock.addStatement(
+    private fun KSAnnotated.parseLogLevel(annotation: ClassName): Level? {
+        return this.findAnnotation(annotation)
+            ?.findValue<KSType>("value")
+            ?.declaration?.toString() // ugly enum handling
+            ?.let { Level.valueOf(it) }
+    }
+
+    private fun KSFunctionDeclaration.inLogLevel(): Level? {
+        return this.parseLogLevel(logAnnotation)
+            ?: this.parseLogLevel(logInAnnotation)
+    }
+
+    private fun KSFunctionDeclaration.outLogLevel(): Level? {
+        return this.parseLogLevel(logAnnotation)
+            ?: this.parseLogLevel(logOutAnnotation)
+            ?: this.parseLogLevel(logResultAnnotation)
+    }
+
+    private fun KSFunctionDeclaration.resultLogLevel(): Level? {
+        val logOffAnnotation = this.findAnnotation(logOffAnnotation)
+        if (logOffAnnotation != null) {
+            return null
+        }
+        val logResultValue = this.parseLogLevel(logResultAnnotation)
+        if (logResultValue != null) {
+            return logResultValue
+        }
+        return Level.DEBUG
+    }
+
+    private fun CodeBlock.Builder.appendFieldToMarkerGenerator(fieldName: String, parameterName: String) {
+        addStatement(
             "%L.writeStringField(%S, %L.toString())",
             MARKER_GENERATOR_PARAMETER_NAME,
             fieldName,
@@ -178,135 +182,6 @@ class LogKoraAspect(resolver: Resolver) : KoraAspect {
         )
     }
 
-    private fun GeneratorSpec.generateOutputLog() {
-        if (methodData.outputLogLevel == null) {
-            superCall()
-        } else {
-            if (methodData.isVoid) {
-                superCall()
-                logOutput()
-            } else {
-                storedSuperCall().let { output ->
-                    logOutput(output)
-                    returning(output)
-                }
-            }
-        }
-    }
-
-    private fun resolveMethodParametersData(
-        methodOutLogLevel: Level?,
-        function: KSFunctionDeclaration,
-    ): List<MethodParameterData> {
-        return if (methodOutLogLevel == null) {
-            emptyList()
-        } else {
-            function.parameters.map {
-                MethodParameterData(
-                    name = it.name!!.asString(),
-                    logLevel = if (it.isAnnotationPresent(Log.off::class)) {
-                        null
-                    } else {
-                        val parameterLogLevel = it.getAnnotationsByType(Log::class).firstOrNull()?.value ?: Level.DEBUG
-                        maxOf(parameterLogLevel, methodOutLogLevel)
-                    }
-                )
-            }
-        }
-    }
-
-    private fun resolveLoggerLevels(function: KSFunctionDeclaration): Pair<Level?, Level?> {
-        val baseLogAnnotation = function.getAnnotationsByType(Log::class).firstOrNull()
-
-        return if (baseLogAnnotation == null) {
-            val inputLogLevel = function.getAnnotationsByType(Log.`in`::class).firstOrNull()?.value
-            val outputLogLevel = function.getAnnotationsByType(Log.out::class).firstOrNull()?.value
-
-            inputLogLevel to outputLogLevel
-        } else {
-            baseLogAnnotation.value to baseLogAnnotation.value
-        }
-    }
-
-    private fun resolveResultLogLevel(outLogLevel: Level?, function: KSFunctionDeclaration): Level? {
-        val logOffAnnotation = function.getAnnotationsByType(Log.off::class).firstOrNull()
-
-        if (logOffAnnotation != null) {
-            return null
-        }
-
-        val logResultValue = function.getAnnotationsByType(Log.result::class).firstOrNull()?.value
-
-        return if (outLogLevel == null && logResultValue == null) {
-            null
-        } else {
-            logResultValue ?: Level.DEBUG
-        }
-    }
-
-    private fun GeneratorSpec.superCall() {
-        codeBlock.addStatement("%L", prepareSuperCall())
-    }
-
-    private fun GeneratorSpec.storedSuperCall(): String {
-        codeBlock.addStatement("val %L = %L", RESULT_FIELD_NAME, prepareSuperCall())
-        return RESULT_FIELD_NAME
-    }
-
-    private fun GeneratorSpec.returning(propertyName: String) {
-        codeBlock.addStatement("return·%L", propertyName)
-    }
-
-    private fun GeneratorSpec.prepareSuperCall(): String {
-        return "${methodData.superCall}(${methodData.parameters.joinToString(", ") { it.name }})"
-    }
-
-    private fun GeneratorSpec.log(logLevel: Level?, message: String) {
-        log(logLevel) { logMethod ->
-            codeBlock.addStatement("%L.%L(%S)", methodData.loggerName, logMethod, message)
-        }
-    }
-
-    private fun GeneratorSpec.logWithMarker(logLevel: Level?, marker: String, message: String) {
-        log(logLevel) { logMethod ->
-            codeBlock.addStatement("%L.%L(%L, %S)", methodData.loggerName, logMethod, marker, message)
-        }
-    }
-
-    private fun log(logLevel: Level?, action: (String) -> Unit) {
-        logLevel?.let { action(it.name.lowercase()) }
-    }
-
-    private fun GeneratorSpec.checkLogLevel(logLevel: Level?, forceEndFlow: Boolean = true, action: () -> Unit) {
-        val checkLogLevelMethod = logLevel?.let {
-            "is${it.name.lowercase().replaceFirstChar { c -> c.uppercase() }}Enabled"
-        }
-
-        if (checkLogLevelMethod != null) {
-            codeBlock.beginControlFlow("if (%L.%L)", methodData.loggerName, checkLogLevelMethod)
-            action()
-            if (forceEndFlow) {
-                codeBlock.endControlFlow()
-            }
-        } else {
-            action()
-        }
-    }
-
-    private fun KSType.isVoid(): Boolean {
-        return unitType == this || voidType == this
-    }
-
-    private fun generator(methodData: MethodData, builderAction: GeneratorSpec.() -> Unit): CodeBlock {
-        return GeneratorSpec(methodData).also(builderAction).build()
-    }
-
-    private fun Resolver.getClassDeclarationByClass(type: KClass<*>) =
-        getClassDeclarationByName(type.java.canonicalName)
-        ?: error("Could not found class ${type.java.canonicalName} in classpath")
-}
-
-class GeneratorSpec(val methodData: MethodData) {
-    val codeBlock = CodeBlock.builder()
-    fun build() = codeBlock.build()
+    private fun Level.logMethod() = this.name.lowercase()
+    private fun Level.isEnabledMethod() = "is${this.name.lowercase().replaceFirstChar { c -> c.uppercase() }}Enabled"
 }

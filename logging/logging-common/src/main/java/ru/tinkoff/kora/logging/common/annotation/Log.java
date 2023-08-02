@@ -1,4 +1,4 @@
-package ru.tinkoff.kora.logging.annotation;
+package ru.tinkoff.kora.logging.common.annotation;
 
 import org.slf4j.event.Level;
 import ru.tinkoff.kora.common.AopAnnotation;
