@@ -1,13 +1,11 @@
 package ru.tinkoff.kora.logging.symbol.processor.aop
 
-import com.google.devtools.ksp.KspExperimental
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.slf4j.event.Level
-import java.util.Objects
+import java.util.*
 
-@KspExperimental
 class LogAspectSuspendTest : AbstractLogAspectTest() {
 
     @Test

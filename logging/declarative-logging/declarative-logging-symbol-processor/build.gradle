@@ -1,12 +1,13 @@
+plugins {
+    id "com.google.devtools.ksp"
+}
+
 apply from: "${project.rootDir}/kotlin-plugin.gradle"
 
 dependencies {
     implementation project(':symbol-processor-common')
     implementation project(':aop:aop-symbol-processor')
 
-//    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
-//    testImplementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0'
-//    testImplementation 'com.google.guava:guava:31.1-jre'
     testImplementation project(':logging:logging-logback')
     testImplementation testFixtures(project(':symbol-processor-common'))
 

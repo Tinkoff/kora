@@ -17,7 +17,6 @@ import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -244,8 +243,9 @@ public abstract class AbstractAnnotationProcessorTest {
 
         @SuppressWarnings("unchecked")
         public <T> T invoke(String methodName, Object... args) {
-            for (var method : objectClass.getMethods()) {
+            for (var method : objectClass.getDeclaredMethods()) {
                 if (method.getName().equals(methodName) && method.getParameters().length == args.length) {
+                    method.setAccessible(true);
                     try {
                         var result = method.invoke(this.object, args);
                         if (result instanceof Mono<?> mono) {
