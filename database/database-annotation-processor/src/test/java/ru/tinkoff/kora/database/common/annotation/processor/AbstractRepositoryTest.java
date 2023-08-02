@@ -9,44 +9,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public abstract class AbstractRepositoryTest extends AbstractAnnotationProcessorTest {
-    protected static class TestRepository {
-        public final Class<?> repositoryClass;
-        private final Object repositoryObject;
-
-        protected TestRepository(Class<?> repositoryClass, Object repositoryObject) {
-            this.repositoryClass = repositoryClass;
-            this.repositoryObject = repositoryObject;
-        }
-
-        @SuppressWarnings("unchecked")
-        public <T> T invoke(String method, Object... args) {
-            for (var repositoryClassMethod : repositoryClass.getDeclaredMethods()) {
-                if (repositoryClassMethod.getName().equals(method) && repositoryClassMethod.getParameters().length == args.length) {
-                    try {
-                        repositoryClassMethod.setAccessible(true);
-                        var result = repositoryClassMethod.invoke(this.repositoryObject, args);
-                        if (result instanceof Mono<?> mono) {
-                            return (T) mono.block();
-                        }
-                        if (result instanceof Future<?> future) {
-                            return (T) future.get();
-                        }
-                        return (T) result;
-                    } catch (InvocationTargetException e) {
-                        if (e.getTargetException() instanceof RuntimeException re) {
-                            throw re;
-                        } else {
-                            throw new RuntimeException(e);
-                        }
-                    } catch (IllegalAccessException | ExecutionException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-            throw new IllegalArgumentException();
-        }
-    }
-
     @Override
     protected String commonImports() {
         return super.commonImports() + """
