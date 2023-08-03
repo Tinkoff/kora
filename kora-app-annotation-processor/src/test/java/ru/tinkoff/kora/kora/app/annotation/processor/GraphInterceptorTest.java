@@ -17,12 +17,12 @@ public class GraphInterceptorTest extends AbstractKoraAppTest {
                 class TestRoot {}
                 class TestClass {}
                 class TestInterceptor implements GraphInterceptor<TestClass> {
-                    public Mono<TestClass> init(TestClass value) {
-                        return Mono.just(value);
+                    public TestClass init(TestClass value) {
+                        return value;
                     }
                 
-                    public Mono<TestClass> release(TestClass value) {
-                        return Mono.just(value);
+                    public TestClass release(TestClass value) {
+                        return value;
                     }
                 }
 
@@ -55,12 +55,12 @@ public class GraphInterceptorTest extends AbstractKoraAppTest {
             public interface ExampleApplication {
                 class TestRoot {}
                 class TestInterceptor implements GraphInterceptor<TestRoot> {
-                    public Mono<TestRoot> init(TestRoot value) {
-                        return Mono.just(value);
+                    public TestRoot init(TestRoot value) {
+                        return value;
                     }
                 
-                    public Mono<TestRoot> release(TestRoot value) {
-                        return Mono.just(value);
+                    public TestRoot release(TestRoot value) {
+                        return value;
                     }
                 }
 
@@ -71,7 +71,7 @@ public class GraphInterceptorTest extends AbstractKoraAppTest {
                 
                 default TestInterceptor interceptor() {
                     return new TestInterceptor();
-                }                
+                }
             }
             """);
         assertThat(draw.getNodes()).hasSize(2);

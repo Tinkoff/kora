@@ -2,8 +2,6 @@ package ru.tinkoff.kora.kora.app.annotation.processor;
 
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ComponentTest extends AbstractKoraAppTest {
     @Test
     public void testComponentAnnotatedClass() {
@@ -19,7 +17,7 @@ class ComponentTest extends AbstractKoraAppTest {
             }
             """);
         assertThat(draw.getNodes()).hasSize(2);
-        draw.init().block();
+        draw.init();
     }
 
     @Test
@@ -48,6 +46,6 @@ class ComponentTest extends AbstractKoraAppTest {
             }
             """);
         assertThat(draw.getNodes()).hasSize(3);
-        draw.init().block();
+        draw.init();
     }
 }
