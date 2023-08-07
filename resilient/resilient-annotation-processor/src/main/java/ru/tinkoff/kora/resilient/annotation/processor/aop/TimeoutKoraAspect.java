@@ -1,6 +1,7 @@
 package ru.tinkoff.kora.resilient.annotation.processor.aop;
 
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingErrorException;
@@ -85,7 +86,7 @@ public class TimeoutKoraAspect implements KoraAspect {
 
     private CodeBlock buildBodyMono(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
+        final ClassName timeoutException = ClassName.get("ru.tinkoff.kora.resilient.timeout", "TimeoutExhaustedException");
 
         return CodeBlock.builder().add("""
             return $L
@@ -102,7 +103,7 @@ public class TimeoutKoraAspect implements KoraAspect {
 
     private CodeBlock buildBodyFlux(ExecutableElement method, String superCall, String timeoutName, String fieldTimeout, String fieldMetrics) {
         final CodeBlock superMethod = buildMethodCall(method, superCall);
-        final DeclaredType timeoutException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
+        final ClassName timeoutException = ClassName.get("ru.tinkoff.kora.resilient.timeout", "TimeoutExhaustedException");
 
         return CodeBlock.builder().add("""
             return $L

@@ -1,5 +1,6 @@
 package ru.tinkoff.kora.resilient.annotation.processor.aop;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import ru.tinkoff.kora.annotation.processor.common.MethodUtils;
 import ru.tinkoff.kora.annotation.processor.common.ProcessingError;
@@ -74,7 +75,7 @@ public class CircuitBreakerKoraAspect implements KoraAspect {
             ? CodeBlock.of("return")
             : CodeBlock.of("return t", superMethod.toString());
 
-        final DeclaredType cbException = env.getTypeUtils().getDeclaredType(env.getElementUtils().getTypeElement("ru.tinkoff.kora.resilient.timeout.TimeoutExhaustedException"));
+        final ClassName cbException = ClassName.get("ru.tinkoff.kora.resilient.timeout", "TimeoutExhaustedException");
 
         return CodeBlock.builder().add("""
             var _circuitBreaker = $L;
