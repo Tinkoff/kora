@@ -13,7 +13,7 @@ public class KoraApplication {
         var log = LoggerFactory.getLogger(graphDraw.getRoot());
         log.debug("Application initializing...");
         try {
-            var graph = graphDraw.init().block();
+            var graph = graphDraw.init();
             var end = System.currentTimeMillis();
             try {
                 var uptime = ManagementFactory.getRuntimeMXBean().getUptime() / 1000.0;
@@ -21,7 +21,18 @@ public class KoraApplication {
             } catch (Throwable ex) {
                 log.info("Application initialized in {}ms", end - start);
             }
-            var thread = new Thread(() -> graph.release().block());
+            var thread = new Thread(() -> {
+                try {
+                    graph.release();
+                    log.error("Application released");
+                } catch (Exception e) {
+                    log.error("Application release error", e);
+                    try {
+                        Thread.sleep(100);// so async logger is able to write exception to log
+                    } catch (InterruptedException ignore) {}
+                    System.exit(-1);
+                }
+            });
             thread.setName("kora-shutdown");
             Runtime.getRuntime().addShutdownHook(thread);
             return graph;

@@ -20,7 +20,7 @@ class MonoCacheAopTests extends CacheRunner {
         }
 
         var graphDraw = createGraphDraw();
-        var graph = graphDraw.init().block();
+        var graph = graphDraw.init();
         var values = graphDraw.getNodes()
             .stream()
             .map(graph::get)
